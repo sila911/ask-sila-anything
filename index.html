@@ -95,29 +95,62 @@
             </div>
 
             <!-- Form -->
-            <form id="amaForm" class="space-y-4">
-                <textarea id="question" rows="5" placeholder="Type your question here..."
-                    class="w-full rounded-2xl p-4 bg-white/30 dark:bg-black/50 backdrop-blur-xl border border-white/20 focus:outline-none resize-none"></textarea>
+            <form id="amaForm" class="mt-4">
+                <div class="relative group">
 
-                <div class="flex justify-between gap-3">
-                    <button type="button" id="shuffleBtn"
-                        class="px-5 py-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium transition active:scale-95">
-                        <i class="fa-solid fa-shuffle mr-2"></i>Shuffle
+                    <textarea id="question" rows="6" placeholder="Ask Sila anything..."
+                        class="w-full rounded-3xl p-4 px-14 bg-white/40 dark:bg-black/40 backdrop-blur-2xl border border-white/20 focus:outline-none resize-none placeholder-gray-500 dark:placeholder-gray-400 focus:ring-1 focus:ring-white/40 transition-all"></textarea>
+
+                    <button type="button" id="shuffleBtn" class="absolute bottom-3 left-3 w-10 h-10 flex items-center justify-center rounded-full
+                   text-gray-600 dark:text-gray-300 transition-all duration-200
+                   hover:bg-white/50 dark:hover:bg-white/10 hover:text-black dark:hover:text-white"
+                        title="Random Question">
+                        <i class="fa-solid fa-shuffle"></i>
                     </button>
 
-                    <button type="submit"
-                        class="px-6 py-2 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-medium transition active:scale-95">
-                        <span id="sendText"><i class="fa-brands fa-telegram mr-2"></i>Send</span>
+                    <button type="submit" id="submitBtn"
+                        class="absolute bottom-3 right-3 w-10 h-10 flex items-center justify-center rounded-full 
+           bg-gray-900 dark:bg-white text-white dark:text-black
+           hover:scale-110 active:scale-90 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i id="sendIcon"
+                            class="fa-solid fa-paper-plane text-sm translate-x-[-1px] translate-y-[1px]"></i>
                     </button>
+
                 </div>
             </form>
         </div>
     </main>
 
     <!-- Footer -->
-    <footer class="bg-white/20 dark:bg-black/40 backdrop-blur-xl border-t border-white/20 p-4 text-center text-xs">
-        © 2026 Ask Sila · Automated AMA System
+    <footer class="bg-white/20 dark:bg-black/40 backdrop-blur-xl border-t border-white/20
+         p-4 text-center text-sm flex flex-col items-center gap-2">
+
+
+        <span class="flex gap-4 text-lg">
+            <span class="opacity-70">
+                © 2026 Ask Sila Anything |
+            </span>
+            <a href="https://github.com/sila911" target="_blank" class="opacity-60 hover:opacity-100 transition">
+                <i class="fa-brands fa-github"></i>
+            </a>
+
+            <a href="https://www.linkedin.com/in/sila-sem-78b3872b8/" target="_blank"
+                class="opacity-60 hover:text-blue-500 transition">
+                <i class="fa-brands fa-linkedin"></i>
+            </a>
+
+            <a href="https://www.instagram.com/siladc/" target="_blank"
+                class="opacity-60 hover:text-pink-500 transition">
+                <i class="fa-brands fa-instagram"></i>
+            </a>
+
+            <a href="https://www.facebook.com/silaadc" target="_blank"
+                class="opacity-60 hover:text-blue-600 transition">
+                <i class="fa-brands fa-facebook"></i>
+            </a>
+        </span>
     </footer>
+
     <!-- THANK YOU POPUP -->
     <div id="thankYouModal" class="fixed inset-0 hidden z-50 bg-black/40 backdrop-blur-sm
          flex items-center justify-center" onclick="closeThankYouPopup()">
@@ -143,11 +176,11 @@
 
     <!-- JavaScript -->
     <script>
-        /* Telegram Config */
+        /* Telegram Config - MAKE SURE THESE ARE CORRECT */
         const BOT_TOKEN = '7522747677:AAFf5uSN3ULEK24c_870o9G-mVLBuZbS_R8';
         const CHAT_ID = '1543040976';
 
-        /* Theme */
+        /* Theme Logic */
         const html = document.documentElement;
         if (localStorage.getItem('theme') === 'dark') html.classList.add('dark');
 
@@ -159,6 +192,11 @@
         /* Random Questions */
         const questions = [
             "What motivates you every day?",
+            "Be honest, did you think I was cute the first time you saw me?",
+            "What is a 'red flag' in a partner that you secretly like? 🚩",
+            "If we got married, who would win the arguments?",
+            "Have you ever stalked your crush's profile and accidentally liked a photo from 2 years ago?",
+            "What's your favorite way to spend a weekend?",
             "What is your biggest goal right now?",
             "What advice would you give your younger self?",
             "What inspires you the most?",
@@ -166,23 +204,27 @@
         ];
 
         document.getElementById('shuffleBtn').onclick = () => {
-            question.value = questions[Math.floor(Math.random() * questions.length)];
+            const input = document.getElementById('question');
+            input.value = questions[Math.floor(Math.random() * questions.length)];
         };
 
-        /* Send to Telegram */
+        /* Send to Telegram Logic (FIXED) */
         document.getElementById('amaForm').addEventListener('submit', async e => {
             e.preventDefault();
-            if (!question.value.trim()) return;
 
-            sendText.textContent = 'Sending...';
+            const input = document.getElementById('question');
+            const btn = document.getElementById('submitBtn');
+            const icon = document.getElementById('sendIcon');
 
-            const message =
-                `Ask Sila Anything:
+            // 1. Validation: Don't send empty messages
+            if (!input.value.trim()) return;
 
-${question.value}
+            // 2. Loading State: Change Icon to Spinner
+            btn.disabled = true; // Disable button
+            const originalIconClass = icon.className;
+            icon.className = "fa-solid fa-circle-notch fa-spin"; // Spinner Icon
 
-----------------------------------------
-This is an automated notification sent from the ask-sila website.`;
+            const message = `Ask Sila Anything:\n\n${input.value}\n\n------------------\nSent via Web App`;
 
             try {
                 const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
@@ -191,28 +233,29 @@ This is an automated notification sent from the ask-sila website.`;
                     body: JSON.stringify({ chat_id: CHAT_ID, text: message })
                 });
 
-                sendText.textContent = res.ok ? 'Sent!' : 'Error';
                 if (res.ok) {
-                    question.value = '';
+                    input.value = ''; // Clear input
                     showThankYouPopup();
+                } else {
+                    alert('Error sending message. Please try again.');
                 }
-
-
-            } catch {
-                sendText.textContent = 'Failed';
+            } catch (error) {
+                console.error(error);
+                alert('Network Error. Please check your internet.');
+            } finally {
+                // 3. Reset Button State
+                btn.disabled = false;
+                icon.className = originalIconClass; // Restore Paper Plane
             }
         });
 
+        // Popup Logic
         function showThankYouPopup() {
             document.getElementById('thankYouModal').classList.remove('hidden');
         }
-
         function closeThankYouPopup() {
             document.getElementById('thankYouModal').classList.add('hidden');
         }
-
-
-
     </script>
 
 </body>
