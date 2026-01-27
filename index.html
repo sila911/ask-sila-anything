@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- SEO -->
+    <title>Ask Sila Anything | Anonymous Questions</title>
+    <meta name="description"
+        content="Ask Sila Anything anonymously. Share questions, thoughts, or ideas directly with Sila through a modern glass-style web app." />
+    <meta name="keywords" content="Ask Me Anything, AMA, Ask Sila, Anonymous Questions, Telegram AMA" />
+    <meta name="author" content="Sila" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Ask Sila Anything" />
+    <meta property="og:description" content="Send anonymous questions to Sila using a beautiful iOS-style AMA page." />
+    <meta property="og:type" content="website" />
+
+    <!-- Tailwind CDN -->
+    <script>
+        tailwind = {
+            config: {
+                darkMode: 'class'
+            }
+        }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+    <!-- Mesh Gradient -->
+    <style>
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(at 20% 20%, #a855f7, transparent 40%),
+                radial-gradient(at 80% 30%, #3b82f6, transparent 40%),
+                radial-gradient(at 50% 80%, #ec4899, transparent 40%);
+            animation: float 18s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes float {
+            0% {
+                filter: hue-rotate(0deg);
+            }
+
+            50% {
+                filter: hue-rotate(25deg);
+            }
+
+            100% {
+                filter: hue-rotate(0deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col text-gray-900 dark:text-gray-100">
+
+    <!-- Header -->
+    <header class="flex justify-between items-center p-4">
+        <span class="font-semibold">AMA</span>
+
+        <button id="themeToggle"
+            class="px-4 py-2 rounded-full bg-white/30 dark:bg-black/40 backdrop-blur-xl border border-white/20 transition active:scale-95">
+            <i class="fa-solid fa-moon"></i>
+        </button>
+    </header>
+
+    <!-- Main -->
+    <main class="flex-1 flex items-center justify-center px-4">
+        <div
+            class="w-[90%] max-w-2xl bg-white/20 dark:bg-black/40 backdrop-blur-2xl border border-white/20 rounded-3xl p-6">
+
+            <!-- Profile -->
+            <div class="flex flex-col items-center text-center mb-5">
+                <img src="./img/sila2.jpg" alt="Sila profile"
+                    class="w-24 h-24 rounded-full border border-white/30 mb-3" />
+
+                <h1 class="text-2xl font-bold">Ask Sila Anything</h1>
+
+                <p class="text-sm opacity-80 mt-1">
+                    Feel free to ask any question. Your message will be sent directly and privately.
+                </p>
+
+                <p class="text-xs opacity-70 mt-2 max-w-md">
+                    I’m Sila, a curious learner who enjoys technology, creativity, and meaningful conversations that
+                    help people grow together.
+                </p>
+            </div>
+
+            <!-- Form -->
+            <form id="amaForm" class="space-y-4">
+                <textarea id="question" rows="5" placeholder="Type your question here..."
+                    class="w-full rounded-2xl p-4 bg-white/30 dark:bg-black/50 backdrop-blur-xl border border-white/20 focus:outline-none resize-none"></textarea>
+
+                <div class="flex justify-between gap-3">
+                    <button type="button" id="shuffleBtn"
+                        class="px-5 py-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium transition active:scale-95">
+                        <i class="fa-solid fa-shuffle mr-2"></i>Shuffle
+                    </button>
+
+                    <button type="submit"
+                        class="px-6 py-2 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-medium transition active:scale-95">
+                        <span id="sendText"><i class="fa-brands fa-telegram mr-2"></i>Send</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white/20 dark:bg-black/40 backdrop-blur-xl border-t border-white/20 p-4 text-center text-xs">
+        © 2026 Ask Sila · Automated AMA System
+    </footer>
+    <!-- THANK YOU POPUP -->
+    <div id="thankYouModal" class="fixed inset-0 hidden z-50 bg-black/40 backdrop-blur-sm
+         flex items-center justify-center" onclick="closeThankYouPopup()">
+
+        <div class="bg-white/30 dark:bg-black/50 backdrop-blur-2xl border border-white/20
+           rounded-3xl p-6 text-center w-[85%] max-w-sm" onclick="event.stopPropagation()">
+
+            <div class="text-4xl text-green-400 mb-3">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+
+            <h2 class="text-lg font-semibold mb-1">
+                Thank you for your question!
+            </h2>
+
+            <p class="text-sm opacity-80">
+                Sila will reply to you on <b>Instagram</b> soon.<br>
+                Please stay connected 💙
+            </p>
+        </div>
+    </div>
+
+
+    <!-- JavaScript -->
+    <script>
+        /* Telegram Config */
+        const BOT_TOKEN = '7522747677:AAFf5uSN3ULEK24c_870o9G-mVLBuZbS_R8';
+        const CHAT_ID = '1543040976';
+
+        /* Theme */
+        const html = document.documentElement;
+        if (localStorage.getItem('theme') === 'dark') html.classList.add('dark');
+
+        document.getElementById('themeToggle').onclick = () => {
+            html.classList.toggle('dark');
+            localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+        };
+
+        /* Random Questions */
+        const questions = [
+            "What motivates you every day?",
+            "What is your biggest goal right now?",
+            "What advice would you give your younger self?",
+            "What inspires you the most?",
+            "What is something people don’t know about you?"
+        ];
+
+        document.getElementById('shuffleBtn').onclick = () => {
+            question.value = questions[Math.floor(Math.random() * questions.length)];
+        };
+
+        /* Send to Telegram */
+        document.getElementById('amaForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            if (!question.value.trim()) return;
+
+            sendText.textContent = 'Sending...';
+
+            const message =
+                `Ask Sila Anything:
+
+${question.value}
+
+----------------------------------------
+This is an automated notification sent from the ask-sila website.`;
+
+            try {
+                const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: CHAT_ID, text: message })
+                });
+
+                sendText.textContent = res.ok ? 'Sent!' : 'Error';
+                if (res.ok) {
+                    question.value = '';
+                    showThankYouPopup();
+                }
+
+
+            } catch {
+                sendText.textContent = 'Failed';
+            }
+        });
+
+        function showThankYouPopup() {
+            document.getElementById('thankYouModal').classList.remove('hidden');
+        }
+
+        function closeThankYouPopup() {
+            document.getElementById('thankYouModal').classList.add('hidden');
+        }
+
+
+
+    </script>
+
+</body>
+
+</html>
