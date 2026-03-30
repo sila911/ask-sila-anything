@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background:
+        radial-gradient(at 20% 20%, #a855f7, transparent 40%),
+        radial-gradient(at 80% 30%, #3b82f6, transparent 40%),
+        radial-gradient(at 50% 80%, #ec4899, transparent 40%);
+    animation: float 18s ease-in-out infinite;
+    z-index: -1;
+  }
+
+  @keyframes float {
+    0% {
+      filter: hue-rotate(0deg);
+    }
+    50% {
+      filter: hue-rotate(25deg);
+    }
+    100% {
+      filter: hue-rotate(0deg);
+    }
+  }
+}
