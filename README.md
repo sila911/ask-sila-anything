@@ -7,7 +7,7 @@ A beautiful, modern anonymous question form built with React, Vite, and Tailwind
 - 🎨 Beautiful glassmorphism UI with animated gradient background
 - 🌓 Dark/Light mode toggle with localStorage persistence
 - 🎲 Random question suggestions
-- 📤 Direct Telegram bot integration
+- 📤 Secure Telegram delivery through backend API
 - ⚡ Built with React and Vite for optimal performance
 - 📱 Fully responsive design
 - 🔒 Anonymous submissions
@@ -30,6 +30,14 @@ npm install
 npm run dev
 ```
 
+`npm run dev` now starts both backend API and Vite frontend together.
+
+If you need frontend only:
+
+```bash
+npm run dev:frontend
+```
+
 Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ### Build for Production
@@ -48,12 +56,15 @@ npm run preview
 
 ## Configuration
 
-Edit the Telegram credentials in `src/components/QuestionForm.jsx`:
+Create a `.env` file in project root:
 
-```javascript
-const BOT_TOKEN = 'your_bot_token'
-const CHAT_ID = 'your_chat_id'
+```bash
+PORT=3001
+TELEGRAM_BOT_TOKEN=your_bot_token
+TELEGRAM_CHAT_ID=your_chat_id
 ```
+
+You can copy from `.env.example`.
 
 ## Project Structure
 
@@ -75,7 +86,8 @@ src/
 - **React 18** - UI framework
 - **Vite** - Build tool and dev server
 - **Tailwind CSS** - Styling
-- **Font Awesome** - Icons
+- **React Icons** - Icons
+- **Express + dotenv** - Secure backend endpoint and env management
 - **Telegram Bot API** - Message delivery
 
 ## License

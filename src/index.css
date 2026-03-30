@@ -3,15 +3,53 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --app-text: #18212b;
+    --app-muted: #4a5a68;
+    --card-bg: rgba(248, 252, 255, 0.45);
+    --card-border: rgba(255, 255, 255, 0.5);
+    --input-bg: rgba(255, 255, 255, 0.58);
+    --input-border: rgba(196, 212, 227, 0.64);
+    --icon-chip: rgba(233, 242, 251, 0.62);
+    --icon-chip-hover: rgba(222, 235, 248, 0.78);
+    --bg-grad-1: #7dd3fc;
+    --bg-grad-2: #22d3ee;
+    --bg-grad-3: #e3afdb;
+  }
+
+  .dark {
+    --app-text: #e5edf5;
+    --app-muted: #aab8c5;
+    --card-bg: rgba(10, 22, 34, 0.44);
+    --card-border: rgba(126, 155, 181, 0.3);
+    --input-bg: rgba(9, 19, 31, 0.56);
+    --input-border: rgba(88, 116, 141, 0.5);
+    --icon-chip: rgba(18, 34, 49, 0.6);
+    --icon-chip-hover: rgba(27, 49, 69, 0.78);
+    --bg-grad-1: #0e7490;
+    --bg-grad-2: #1d4ed8;
+    --bg-grad-3: #334155;
+  }
+
+  body {
+    color: var(--app-text);
+    background-color: #eef4f9;
+  }
+
+  .dark body {
+    background-color: #050b13;
+  }
+
   body::before {
     content: "";
     position: fixed;
     inset: 0;
     background:
-        radial-gradient(at 20% 20%, #a855f7, transparent 40%),
-        radial-gradient(at 80% 30%, #3b82f6, transparent 40%),
-        radial-gradient(at 50% 80%, #ec4899, transparent 40%);
+      radial-gradient(at 18% 18%, var(--bg-grad-1), transparent 42%),
+      radial-gradient(at 78% 26%, var(--bg-grad-2), transparent 40%),
+      radial-gradient(at 50% 82%, var(--bg-grad-3), transparent 45%);
     animation: float 18s ease-in-out infinite;
+    opacity: 0.72;
     z-index: -1;
   }
 
@@ -25,5 +63,49 @@
     100% {
       filter: hue-rotate(0deg);
     }
+  }
+
+  @keyframes theme-pop {
+    0% {
+      transform: rotate(-90deg) scale(0.8);
+      opacity: 0.45;
+    }
+    70% {
+      transform: rotate(10deg) scale(1.08);
+      opacity: 1;
+    }
+    100% {
+      transform: rotate(0deg) scale(1);
+      opacity: 1;
+    }
+  }
+
+  .theme-toggle-btn {
+    box-shadow: 0 0 0 rgba(34, 211, 238, 0);
+    transition: box-shadow 0.25s ease;
+  }
+
+  .theme-toggle-btn:hover {
+    box-shadow: 0 0 16px rgba(34, 211, 238, 0.22);
+  }
+
+  .theme-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    animation: theme-pop 0.45s ease;
+    transition: transform 0.35s ease, filter 0.35s ease, color 0.35s ease;
+  }
+
+  .theme-icon--sun {
+    color: #eaa5e8;
+    transform: rotate(180deg);
+    filter: drop-shadow(0 0 8px rgba(245, 181, 239, 0.6));
+  }
+
+  .theme-icon--moon {
+    color: #2563eb;
+    transform: rotate(0deg);
+    filter: drop-shadow(0 0 8px rgba(37, 99, 235, 0.45));
   }
 }

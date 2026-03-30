@@ -1,44 +1,50 @@
+import { FaFacebookF, FaGithub, FaInstagram, FaLinkedinIn } from 'react-icons/fa'
+
 export default function Footer() {
   return (
-    <footer className="bg-white/20 dark:bg-black/40 backdrop-blur-xl border-t border-white/20 p-4 text-center text-sm flex flex-col items-center gap-2">
-      <span className="flex gap-4 text-lg">
-        <span className="opacity-70">
+    <footer className="bg-[color:var(--card-bg)] backdrop-blur-xl border-t border-[color:var(--card-border)] p-4 text-center text-sm flex flex-col items-center gap-2">
+      <span className="flex gap-3 text-lg items-center">
+        <span className="text-[color:var(--app-muted)] text-sm">
           © 2026 Ask Sila Anything |
         </span>
         <a
           href="https://github.com/sila911"
           target="_blank"
           rel="noopener noreferrer"
-          className="opacity-60 hover:opacity-100 transition"
+          className="w-9 h-9 rounded-full flex items-center justify-center bg-[color:var(--icon-chip)] text-[color:var(--app-text)] hover:bg-[color:var(--icon-chip-hover)] transition"
+          aria-label="GitHub"
         >
-          <i className="fa-brands fa-github"></i>
+          <FaGithub size={16} />
         </a>
 
         <a
           href="https://www.linkedin.com/in/sila-sem-78b3872b8/"
           target="_blank"
           rel="noopener noreferrer"
-          className="opacity-60 hover:text-blue-500 transition"
+          className="w-9 h-9 rounded-full flex items-center justify-center bg-[color:var(--icon-chip)] text-[color:var(--app-text)] hover:text-blue-500 hover:bg-[color:var(--icon-chip-hover)] transition"
+          aria-label="LinkedIn"
         >
-          <i className="fa-brands fa-linkedin"></i>
+          <FaLinkedinIn size={16} />
         </a>
 
         <a
           href="https://www.instagram.com/siladc/"
           target="_blank"
           rel="noopener noreferrer"
-          className="opacity-60 hover:text-pink-500 transition"
+          className="w-9 h-9 rounded-full flex items-center justify-center bg-[color:var(--icon-chip)] text-[color:var(--app-text)] hover:text-pink-500 hover:bg-[color:var(--icon-chip-hover)] transition"
+          aria-label="Instagram"
         >
-          <i className="fa-brands fa-instagram"></i>
+          <FaInstagram size={16} />
         </a>
 
         <a
           href="https://www.facebook.com/silaadc"
           target="_blank"
           rel="noopener noreferrer"
-          className="opacity-60 hover:text-blue-600 transition"
+          className="w-9 h-9 rounded-full flex items-center justify-center bg-[color:var(--icon-chip)] text-[color:var(--app-text)] hover:text-blue-600 hover:bg-[color:var(--icon-chip-hover)] transition"
+          aria-label="Facebook"
         >
-          <i className="fa-brands fa-facebook"></i>
+          <FaFacebookF size={15} />
         </a>
       </span>
     </footer>

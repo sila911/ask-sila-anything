@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { FiLoader, FiSend, FiShuffle } from 'react-icons/fi'
 
 const QUESTIONS = [
   "What motivates you every day?",
@@ -11,9 +12,6 @@ const QUESTIONS = [
   "Who is your crush right now?",
   "What is something people don't know about you?"
 ]
-
-const BOT_TOKEN = '7522747677:AAFf5uSN3ULEK24c_870o9G-mVLBuZbS_R8'
-const CHAT_ID = '1543040976'
 
 export default function QuestionForm({ onSuccess }) {
   const [question, setQuestion] = useState('')
@@ -32,23 +30,34 @@ export default function QuestionForm({ onSuccess }) {
     setIsLoading(true)
 
     try {
-      const message = `Ask Sila Anything:\n\n${question}\n\n------------------\nSent via Web App`
-
-      const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      const res = await fetch('/api/telegram/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: CHAT_ID, text: message })
+        body: JSON.stringify({ question: question.trim() })
       })
 
       if (res.ok) {
         setQuestion('')
         onSuccess()
       } else {
-        alert('Error sending message. Please try again.')
+        const contentType = res.headers.get('content-type') || ''
+        let message = `Error sending message (${res.status}).`
+
+        if (contentType.includes('application/json')) {
+          const data = await res.json().catch(() => ({}))
+          message = data.message || message
+        } else {
+          const text = await res.text().catch(() => '')
+          if (text) {
+            message = text.slice(0, 160)
+          }
+        }
+
+        alert(message)
       }
     } catch (error) {
       console.error(error)
-      alert('Network Error. Please check your internet.')
+      alert('Cannot reach API server. Run npm run dev (it now starts backend + frontend).')
     } finally {
       setIsLoading(false)
     }
@@ -62,28 +71,32 @@ export default function QuestionForm({ onSuccess }) {
           onChange={(e) => setQuestion(e.target.value)}
           rows="6"
           placeholder="Ask Sila anything..."
-          className="w-full rounded-3xl p-4 px-14 bg-white/40 dark:bg-black/40 backdrop-blur-2xl border border-white/20 focus:outline-none resize-none placeholder-gray-500 dark:placeholder-gray-400 focus:ring-1 focus:ring-white/40 transition-all"
+          className="w-full rounded-3xl p-4 px-14 bg-[color:var(--input-bg)] border border-[color:var(--input-border)] focus:outline-none resize-none text-[color:var(--app-text)] placeholder-[color:var(--app-muted)] focus:ring-2 focus:ring-cyan-300/40 dark:focus:ring-cyan-500/35 transition-all"
         />
 
         <button
           type="button"
           onClick={handleShuffle}
           className="absolute bottom-3 left-3 w-10 h-10 flex items-center justify-center rounded-full
-             text-gray-600 dark:text-gray-300 transition-all duration-200
-             hover:bg-white/50 dark:hover:bg-white/10 hover:text-black dark:hover:text-white"
+             bg-[color:var(--icon-chip)] text-[color:var(--app-text)] transition-all duration-200
+             hover:bg-[color:var(--icon-chip-hover)] hover:scale-105"
           title="Random Question"
         >
-          <i className="fa-solid fa-shuffle"></i>
+          <FiShuffle size={16} />
         </button>
 
         <button
           type="submit"
           disabled={isLoading}
           className="absolute bottom-3 right-3 w-10 h-10 flex items-center justify-center rounded-full
-             bg-gray-900 dark:bg-white text-white dark:text-black
+             bg-cyan-700 dark:bg-cyan-500 text-white dark:text-slate-950
              hover:scale-110 active:scale-90 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <i className={`fa-solid ${isLoading ? 'fa-circle-notch fa-spin' : 'fa-paper-plane'} text-sm translate-x-[-1px] translate-y-[1px]`}></i>
+          {isLoading ? (
+            <FiLoader size={16} className="animate-spin" />
+          ) : (
+            <FiSend size={15} className="translate-x-[-1px] translate-y-[1px]" />
+          )}
         </button>
       </div>
     </form>
