@@ -14,8 +14,8 @@
     --icon-chip-hover: rgba(215, 231, 245, 0.94);
     --bg-base: #e4edf8;
     --bg-grad-1: #cbdaf0;
-    --bg-grad-2: #7f9ff7;
-    --bg-grad-3: #f3bfd8;
+    --bg-grad-2: #6486e3;
+    --bg-grad-3: #dc96b8;
     --bg-grid: rgba(255, 255, 255, 0.34);
     --bg-grid-strong: rgba(255, 255, 255, 0.52);
     --glass-glow: rgba(126, 161, 255, 0.26);
@@ -34,10 +34,10 @@
     --input-border: rgba(88, 116, 141, 0.5);
     --icon-chip: rgba(18, 34, 49, 0.6);
     --icon-chip-hover: rgba(27, 49, 69, 0.78);
-    --bg-base: #040b16;
+    --bg-base: #172a47;
     --bg-grad-1: #1a315b;
     --bg-grad-2: #3a58d4;
-    --bg-grad-3: #6b2d62;
+    --bg-grad-3: #437d5e;
     --bg-grid: rgba(148, 168, 204, 0.1);
     --bg-grid-strong: rgba(182, 204, 232, 0.15);
     --glass-glow: rgba(111, 149, 255, 0.2);
