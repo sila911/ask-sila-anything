@@ -42,15 +42,22 @@ export default function QuestionForm({ onSuccess }) {
       } else {
         const contentType = res.headers.get('content-type') || ''
         let message = `Error sending message (${res.status}).`
+        let serverMessage = ''
 
         if (contentType.includes('application/json')) {
           const data = await res.json().catch(() => ({}))
-          message = data.message || message
+          serverMessage = data.message || ''
         } else {
           const text = await res.text().catch(() => '')
           if (text) {
-            message = text.slice(0, 160)
+            serverMessage = text.slice(0, 160)
           }
+        }
+
+        if (serverMessage) {
+          message = serverMessage
+        } else if (res.status === 500) {
+          message = 'API server error (500). For local development, run npm run dev to start backend + frontend.'
         }
 
         alert(message)
@@ -67,6 +74,8 @@ export default function QuestionForm({ onSuccess }) {
     <form onSubmit={handleSubmit} className="mt-4">
       <div className="relative group">
         <textarea
+          id="question"
+          name="question"
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           rows="6"

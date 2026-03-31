@@ -48,6 +48,19 @@ npm run build
 
 The optimized build will be in the `dist` folder.
 
+### Deploy on Vercel
+
+This project includes a Vercel serverless API endpoint at `/api/telegram/send`.
+
+In your Vercel project settings, add these environment variables:
+
+```bash
+TELEGRAM_BOT_TOKEN=your_bot_token
+TELEGRAM_CHAT_ID=your_chat_id
+```
+
+After deployment, the frontend will call the same-origin API route automatically.
+
 ### Preview Production Build
 
 ```bash
