@@ -27,7 +27,20 @@ export default function Header() {
 
   return (
     <header className="flex justify-between items-center p-4">
-      <span className="font-semibold tracking-wide">AMA</span>
+      <a
+        href="" 
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Open Sila profile"
+        className="theme-toggle-btn inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[color:var(--icon-chip)] border border-[color:var(--card-border)] text-[color:var(--app-text)] hover:bg-[color:var(--icon-chip-hover)] transition active:scale-95"
+      >
+        <img
+          src="/sila2.jpg"
+          alt="Sila profile"
+          className="w-7 h-7 rounded-full object-cover"
+        />
+        <span className="font-semibold tracking-wide">Sila</span>
+      </a>
 
       <button
         onClick={handleThemeToggle}

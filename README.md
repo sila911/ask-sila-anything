@@ -82,16 +82,40 @@ You can copy from `.env.example`.
 ## Project Structure
 
 ```
-src/
-├── components/
-│   ├── Header.jsx        # Theme toggle and AMA branding
-│   ├── Profile.jsx       # Profile section with image and bio
-│   ├── QuestionForm.jsx  # Main form with shuffle and submit
-│   ├── Footer.jsx        # Social links footer
-│   └── ThankYouModal.jsx # Success message modal
-├── App.jsx               # Main app component
-├── main.jsx              # React entry point
-└── index.css             # Global styles with Tailwind
+.
+├── api/                     # Vercel serverless API routes
+│   ├── health.js            # Health check endpoint
+│   └── telegram/            # Telegram-related API handlers
+│       └── send.js          # POST /api/telegram/send handler
+├── img/                     # Source image assets
+│   └── sila2.jpg            # Profile image source copy
+├── public/                  # Static public files served as-is
+│   ├── favicon.svg          # Browser tab icon
+│   └── sila2.jpg            # Public profile image used by UI
+├── server/                  # Local Express backend for development
+│   ├── index.js             # Express server entry and routes
+│   └── lib/                 # Shared backend utilities
+│       └── telegram.js      # Telegram delivery service logic
+├── src/                     # React frontend source code
+│   ├── components/          # Reusable UI components
+│   │   ├── Footer.jsx       # Footer and social links
+│   │   ├── Header.jsx       # Top header and theme controls
+│   │   ├── Profile.jsx      # Profile card section
+│   │   ├── QuestionForm.jsx # Main question submit form
+│   │   └── ThankYouModal.jsx # Success modal after submit
+│   ├── App.jsx              # Root app component
+│   ├── index.css            # Main global styles
+│   ├── input.css            # Tailwind CSS input source
+│   ├── main.jsx             # React app bootstrap file
+│   └── output.css           # Generated Tailwind CSS output
+├── .env.example             # Sample environment variable template
+├── .gitignore               # Git ignore rules
+├── index.html               # Vite HTML entry template
+├── package.json             # Scripts and dependencies
+├── postcss.config.js        # PostCSS configuration
+├── README.md                # Project documentation
+├── tailwind.config.js       # Tailwind configuration
+└── vite.config.js           # Vite dev/build configuration
 ```
 
 ## Technologies
