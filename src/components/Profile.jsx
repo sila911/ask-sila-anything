@@ -4,7 +4,7 @@ export default function Profile() {
       <img
         src="/sila2.jpg"
         alt="Sila profile"
-        className="w-24 h-24 rounded-full border border-[color:var(--card-border)] mb-3"
+        className="w-24 h-24 rounded-full object-cover border border-[color:var(--card-border)] ring-2 ring-white/40 dark:ring-slate-200/20 shadow-[0_10px_28px_rgba(20,45,88,0.2)] dark:shadow-[0_14px_32px_rgba(0,0,0,0.45)] mb-3"
       />
 
       <h1 className="text-2xl font-bold">Ask Sila Anything</h1>

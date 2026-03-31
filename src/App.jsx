@@ -21,7 +21,7 @@ export default function App() {
       <Header />
 
       <main className="flex-1 flex items-center justify-center px-4">
-        <div className="w-[90%] max-w-2xl bg-[color:var(--card-bg)] backdrop-blur-2xl border border-[color:var(--card-border)] rounded-3xl p-6 shadow-[0_10px_50px_rgba(5,20,35,0.16)] dark:shadow-[0_14px_56px_rgba(0,0,0,0.5)]">
+        <div className="glass-shell glass-shell--3d w-[92%] max-w-2xl rounded-[2rem] p-6 sm:p-8">
           <Profile />
           <QuestionForm onSuccess={handleSuccess} />
         </div>

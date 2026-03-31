@@ -32,23 +32,23 @@ export default function Header() {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Open Sila profile"
-        className="theme-toggle-btn inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[color:var(--icon-chip)] border border-[color:var(--card-border)] text-[color:var(--app-text)] hover:bg-[color:var(--icon-chip-hover)] transition active:scale-95"
+        className="theme-toggle-btn inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[color:var(--icon-chip)] border border-[color:var(--card-border)] text-[color:var(--app-text)] hover:bg-[color:var(--icon-chip-hover)] transition active:scale-95"
       >
         <img
           src="/sila2.jpg"
           alt="Sila profile"
-          className="w-7 h-7 rounded-full object-cover"
+          className="w-6 h-6 rounded-full object-cover"
         />
-        <span className="font-semibold tracking-wide">Sila</span>
+        <span className="text-sm font-semibold tracking-wide">Sila</span>
       </a>
 
       <button
         onClick={handleThemeToggle}
         aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-        className="theme-toggle-btn px-4 py-2 rounded-full bg-[color:var(--icon-chip)] border border-[color:var(--card-border)] text-[color:var(--app-text)] hover:bg-[color:var(--icon-chip-hover)] transition active:scale-95"
+        className="theme-toggle-btn inline-flex h-10 w-10 items-center justify-center rounded-full bg-[color:var(--icon-chip)] border border-[color:var(--card-border)] text-[color:var(--app-text)] hover:bg-[color:var(--icon-chip-hover)] transition active:scale-95"
       >
         <span className={`theme-icon ${isDark ? 'theme-icon--sun' : 'theme-icon--moon'}`}>
-          {isDark ? <FiSun size={18} /> : <FiMoon size={18} />}
+          {isDark ? <FiSun size={17} /> : <FiMoon size={18} />}
         </span>
       </button>
     </header>

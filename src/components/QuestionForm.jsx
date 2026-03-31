@@ -87,8 +87,9 @@ export default function QuestionForm({ onSuccess }) {
           type="button"
           onClick={handleShuffle}
           className="absolute bottom-3 left-3 w-10 h-10 flex items-center justify-center rounded-full
-             bg-[color:var(--icon-chip)] text-[color:var(--app-text)] transition-all duration-200
-             hover:bg-[color:var(--icon-chip-hover)] hover:scale-105"
+             bg-white/90 dark:bg-slate-800/95 text-slate-700 dark:text-slate-100 border border-slate-300/85 dark:border-slate-500/70
+             shadow-[0_8px_18px_rgba(15,23,42,0.2)] dark:shadow-[0_8px_18px_rgba(0,0,0,0.45)]
+             transition-all duration-200 hover:bg-white dark:hover:bg-slate-700 hover:scale-105"
           title="Random Question"
         >
           <FiShuffle size={16} />

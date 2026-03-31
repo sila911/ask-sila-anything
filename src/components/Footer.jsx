@@ -2,7 +2,7 @@ import { FaFacebookF, FaGithub, FaInstagram, FaLinkedinIn } from 'react-icons/fa
 
 export default function Footer() {
   return (
-    <footer className="bg-[color:var(--card-bg)] backdrop-blur-xl border-t border-[color:var(--card-border)] p-4 text-center text-sm flex flex-col items-center gap-2">
+    <footer className="mt-24 sm:mt-28 bg-[color:var(--card-bg)] backdrop-blur-xl border-t border-[color:var(--card-border)] p-4 text-center text-sm flex flex-col items-center gap-2">
       <span className="flex gap-3 text-lg items-center">
         <span className="text-[color:var(--app-muted)] text-sm">
           © 2026 Ask Sila Anything |
