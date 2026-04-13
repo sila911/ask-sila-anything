@@ -28,10 +28,9 @@ export default function Header() {
   return (
     <header className="flex justify-between items-center p-4">
       <a
-        href="" 
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Open Sila profile"
+        href="#"
+        onClick={(e) => e.preventDefault()}
+        aria-label="Story Studio home"
         className="theme-toggle-btn inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[color:var(--icon-chip)] border border-[color:var(--card-border)] text-[color:var(--app-text)] hover:bg-[color:var(--icon-chip-hover)] transition active:scale-95"
       >
         <img
@@ -39,7 +38,7 @@ export default function Header() {
           alt="Sila profile"
           className="w-6 h-6 rounded-full object-cover"
         />
-        <span className="text-sm font-semibold tracking-wide">Sila</span>
+        <span className="text-sm font-semibold tracking-wide">Story Studio</span>
       </a>
 
       <button

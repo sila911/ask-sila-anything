@@ -13,7 +13,7 @@ const QUESTIONS = [
   "What is something people don't know about you?"
 ]
 
-export default function QuestionForm({ onSuccess }) {
+export default function QuestionForm({ onSuccess, onSubmitQuestion }) {
   const [question, setQuestion] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -25,7 +25,23 @@ export default function QuestionForm({ onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    if (!question.trim()) return
+    const nextQuestion = question.trim()
+    if (!nextQuestion) return
+
+    if (onSubmitQuestion) {
+      setIsLoading(true)
+      try {
+        await onSubmitQuestion(nextQuestion)
+        setQuestion('')
+        onSuccess()
+      } catch (error) {
+        console.error(error)
+        alert('Cannot save question now. Please try again.')
+      } finally {
+        setIsLoading(false)
+      }
+      return
+    }
 
     setIsLoading(true)
 
@@ -33,7 +49,7 @@ export default function QuestionForm({ onSuccess }) {
       const res = await fetch('/api/telegram/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: question.trim() })
+        body: JSON.stringify({ question: nextQuestion })
       })
 
       if (res.ok) {
