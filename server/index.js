@@ -1,11 +1,13 @@
 import dotenv from 'dotenv'
 import express from 'express'
+import { PrismaClient } from '@prisma/client'
 import { sendTelegramQuestion } from './lib/telegram.js'
 
 dotenv.config()
 
 const app = express()
 const port = Number(process.env.PORT || 3001)
+const prisma = new PrismaClient()
 
 app.use(express.json())
 
@@ -19,7 +21,7 @@ app.use((req, res, next) => {
     res.setHeader('Vary', 'Origin')
   }
 
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
 
   if (req.method === 'OPTIONS') {
@@ -31,6 +33,105 @@ app.use((req, res, next) => {
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true })
+})
+
+function asDate(value, fallback = new Date()) {
+  if (!value) return fallback
+  const next = new Date(value)
+  return Number.isNaN(next.getTime()) ? fallback : next
+}
+
+app.get('/api/questions', async (_req, res) => {
+  const questions = await prisma.question.findMany({
+    orderBy: { createdAt: 'desc' },
+  })
+  res.json(questions)
+})
+
+app.put('/api/questions/replace', async (req, res) => {
+  const { questions } = req.body || {}
+  if (!Array.isArray(questions)) {
+    return res.status(400).json({ message: 'questions must be an array.' })
+  }
+
+  const payload = questions.map((item) => ({
+    id: String(item.id),
+    question: String(item.question || ''),
+    status: String(item.status || 'pending'),
+    createdAt: asDate(item.createdAt),
+    answeredAt: item.answeredAt ? asDate(item.answeredAt) : null,
+  }))
+
+  const nextQuestions = await prisma.$transaction(async (tx) => {
+    await tx.question.deleteMany()
+    if (payload.length) {
+      await tx.question.createMany({ data: payload })
+    }
+    return tx.question.findMany({ orderBy: { createdAt: 'desc' } })
+  })
+
+  return res.json(nextQuestions)
+})
+
+app.get('/api/designs', async (_req, res) => {
+  const designs = await prisma.design.findMany({
+    orderBy: { updatedAt: 'desc' },
+  })
+  res.json(designs)
+})
+
+app.put('/api/designs/replace', async (req, res) => {
+  const { designs } = req.body || {}
+  if (!Array.isArray(designs)) {
+    return res.status(400).json({ message: 'designs must be an array.' })
+  }
+
+  const payload = designs.map((item) => ({
+    id: String(item.id),
+    text: String(item.text || ''),
+    style: item.style || {},
+    imageDataUrl: String(item.imageDataUrl || ''),
+    createdAt: asDate(item.createdAt),
+    updatedAt: asDate(item.updatedAt),
+    stats: item.stats || { copies: 0, downloads: 0, shares: 0 },
+  }))
+
+  const nextDesigns = await prisma.$transaction(async (tx) => {
+    await tx.design.deleteMany()
+    if (payload.length) {
+      await tx.design.createMany({ data: payload })
+    }
+    return tx.design.findMany({ orderBy: { updatedAt: 'desc' } })
+  })
+
+  return res.json(nextDesigns)
+})
+
+app.get('/api/events', async (_req, res) => {
+  const events = await prisma.event.findMany({
+    orderBy: { createdAt: 'desc' },
+  })
+  res.json(events)
+})
+
+app.post('/api/events', async (req, res) => {
+  const { type, meta } = req.body || {}
+  if (!type || !String(type).trim()) {
+    return res.status(400).json({ message: 'Event type is required.' })
+  }
+
+  await prisma.event.create({
+    data: {
+      type: String(type).trim(),
+      meta: meta || {},
+    },
+  })
+
+  const events = await prisma.event.findMany({
+    orderBy: { createdAt: 'desc' },
+  })
+
+  return res.status(201).json(events)
 })
 
 app.post('/api/telegram/send', async (req, res) => {
@@ -59,6 +160,11 @@ app.post('/api/telegram/send', async (req, res) => {
   }
 
   return res.status(200).json({ ok: true })
+})
+
+app.use((error, _req, res, _next) => {
+  console.error(error)
+  res.status(500).json({ message: 'Internal server error.' })
 })
 
 app.listen(port, () => {

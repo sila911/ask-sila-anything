@@ -110,7 +110,7 @@ export default function CreateDesignPage({
     onNotify?.('Image generated', 'Question and answer story preview is ready.', 'success')
   }
 
-  const saveDesign = () => {
+  const saveDesign = async () => {
     if (!selectedQuestion?.question) {
       setMessage('Select a question first.')
       return
@@ -121,15 +121,22 @@ export default function CreateDesignPage({
     design.questionId = selectedQuestion.id
     design.questionText = selectedQuestion.question
     design.answerText = answer
-    onSave(design)
 
-    if (answer.trim()) {
-      onQuestionAnswered(selectedQuestion.id)
+    try {
+      await onSave(design)
+
+      if (answer.trim()) {
+        await onQuestionAnswered(selectedQuestion.id)
+      }
+
+      setMessage('Saved. This question is marked as answered.')
+      onEvent('design_saved', { hasImage: Boolean(imageDataUrl) })
+      onNotify?.('Saved', 'Answer card saved to library.', 'success')
+    } catch (error) {
+      console.error(error)
+      setMessage('Save failed. Check your API and MySQL connection.')
+      onNotify?.('Save failed', 'Could not save answer card to database.', 'error')
     }
-
-    setMessage('Saved. This question is marked as answered.')
-    onEvent('design_saved', { hasImage: Boolean(imageDataUrl) })
-    onNotify?.('Saved', 'Answer card saved to library.', 'success')
   }
 
   const copyImage = async () => {

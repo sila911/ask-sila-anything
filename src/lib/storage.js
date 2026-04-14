@@ -1,26 +1,31 @@
-const DESIGNS_KEY = 'sila-story-designs-v1'
-const EVENTS_KEY = 'sila-story-events-v1'
-const QUESTIONS_KEY = 'sila-user-questions-v1'
+async function requestJSON(path, options = {}) {
+  const response = await fetch(path, {
+    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    ...options,
+  })
 
-function readJSON(key, fallback) {
-  try {
-    const raw = localStorage.getItem(key)
-    return raw ? JSON.parse(raw) : fallback
-  } catch {
-    return fallback
+  const contentType = response.headers.get('content-type') || ''
+  const data = contentType.includes('application/json')
+    ? await response.json().catch(() => null)
+    : await response.text().catch(() => '')
+
+  if (!response.ok) {
+    const message = (data && data.message) || `Request failed with status ${response.status}.`
+    throw new Error(message)
   }
+
+  return data
 }
 
-function writeJSON(key, data) {
-  localStorage.setItem(key, JSON.stringify(data))
+export async function getDesigns() {
+  return requestJSON('/api/designs')
 }
 
-export function getDesigns() {
-  return readJSON(DESIGNS_KEY, [])
-}
-
-export function saveDesigns(designs) {
-  writeJSON(DESIGNS_KEY, designs)
+export async function saveDesigns(designs) {
+  return requestJSON('/api/designs/replace', {
+    method: 'PUT',
+    body: JSON.stringify({ designs }),
+  })
 }
 
 export function createDesign({ text, style, imageDataUrl }) {
@@ -40,12 +45,15 @@ export function createDesign({ text, style, imageDataUrl }) {
   }
 }
 
-export function getQuestions() {
-  return readJSON(QUESTIONS_KEY, [])
+export async function getQuestions() {
+  return requestJSON('/api/questions')
 }
 
-export function saveQuestions(questions) {
-  writeJSON(QUESTIONS_KEY, questions)
+export async function saveQuestions(questions) {
+  return requestJSON('/api/questions/replace', {
+    method: 'PUT',
+    body: JSON.stringify({ questions }),
+  })
 }
 
 export function createQuestion(question) {
@@ -71,17 +79,13 @@ export function markQuestionAnswered(questions, questionId) {
   })
 }
 
-export function getEvents() {
-  return readJSON(EVENTS_KEY, [])
+export async function getEvents() {
+  return requestJSON('/api/events')
 }
 
-export function addEvent(type, meta = {}) {
-  const next = [...getEvents(), {
-    id: crypto.randomUUID(),
-    type,
-    meta,
-    createdAt: new Date().toISOString(),
-  }]
-  writeJSON(EVENTS_KEY, next)
-  return next
+export async function addEvent(type, meta = {}) {
+  return requestJSON('/api/events', {
+    method: 'POST',
+    body: JSON.stringify({ type, meta }),
+  })
 }

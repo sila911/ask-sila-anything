@@ -24,3 +24,5 @@ dist-ssr
 # Old files
 index.html.bak
 img/
+
+/src/generated/prisma

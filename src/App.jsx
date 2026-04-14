@@ -45,9 +45,22 @@ export default function App() {
   const [adminToast, setAdminToast] = useState(null)
 
   useEffect(() => {
-    setDesigns(getDesigns())
-    setEvents(getEvents())
-    setQuestions(getQuestions())
+    const loadData = async () => {
+      try {
+        const [nextDesigns, nextEvents, nextQuestions] = await Promise.all([
+          getDesigns(),
+          getEvents(),
+          getQuestions(),
+        ])
+        setDesigns(nextDesigns)
+        setEvents(nextEvents)
+        setQuestions(nextQuestions)
+      } catch (error) {
+        console.error(error)
+      }
+    }
+
+    loadData()
 
     const params = new URLSearchParams(window.location.search)
     const token = params.get('adminToken')
@@ -62,10 +75,10 @@ export default function App() {
     return [...designs].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
   }, [designs])
 
-  const addDesign = (design) => {
+  const addDesign = async (design) => {
     const next = [design, ...designs]
-    setDesigns(next)
-    saveDesigns(next)
+    const persisted = await saveDesigns(next)
+    setDesigns(persisted)
   }
 
   const showAdminToast = (title, detail = '', type = 'success') => {
@@ -83,33 +96,42 @@ export default function App() {
     return () => clearTimeout(timer)
   }, [adminToast])
 
-  const trackEvent = (type, meta = {}) => {
-    const nextEvents = addEvent(type, meta)
-    setEvents(nextEvents)
+  const trackEvent = async (type, meta = {}) => {
+    try {
+      const nextEvents = await addEvent(type, meta)
+      setEvents(nextEvents)
+    } catch (error) {
+      console.error(error)
+    }
   }
 
   const submitUserQuestion = async (questionText) => {
     const nextQuestion = createQuestion(questionText)
     const next = [nextQuestion, ...questions]
-    setQuestions(next)
-    saveQuestions(next)
+    const persisted = await saveQuestions(next)
+    setQuestions(persisted)
     trackEvent('question_submitted')
   }
 
-  const markAnswered = (questionId) => {
+  const markAnswered = async (questionId) => {
     const next = markQuestionAnswered(questions, questionId)
-    setQuestions(next)
-    saveQuestions(next)
+    const persisted = await saveQuestions(next)
+    setQuestions(persisted)
     trackEvent('question_answered', { questionId })
     showAdminToast('Question marked answered', 'Question status updated in inbox.', 'info')
   }
 
-  const removeDesign = (id) => {
-    const next = designs.filter((design) => design.id !== id)
-    setDesigns(next)
-    saveDesigns(next)
-    trackEvent('design_deleted')
-    showAdminToast('Deleted', 'Answer card removed from library.', 'info')
+  const removeDesign = async (id) => {
+    try {
+      const next = designs.filter((design) => design.id !== id)
+      const persisted = await saveDesigns(next)
+      setDesigns(persisted)
+      trackEvent('design_deleted')
+      showAdminToast('Deleted', 'Answer card removed from library.', 'info')
+    } catch (error) {
+      console.error(error)
+      showAdminToast('Delete failed', 'Could not remove answer card from database.', 'error')
+    }
   }
 
   const reuseDesign = (design) => {
