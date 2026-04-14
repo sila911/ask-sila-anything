@@ -7,6 +7,7 @@
     "dev": "concurrently \"npm:server\" \"vite\"",
     "server": "node server/index.js",
     "dev:frontend": "vite",
+    "postinstall": "prisma generate",
     "build": "vite build",
     "preview": "vite preview"
   },
