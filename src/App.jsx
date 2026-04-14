@@ -17,6 +17,7 @@ import {
   getDesigns,
   getEvents,
   getQuestions,
+  importLegacyLocalStorageOnce,
   markQuestionAnswered,
   saveDesigns,
   saveQuestions,
@@ -47,6 +48,7 @@ export default function App() {
   useEffect(() => {
     const loadData = async () => {
       try {
+        await importLegacyLocalStorageOnce()
         const [nextDesigns, nextEvents, nextQuestions] = await Promise.all([
           getDesigns(),
           getEvents(),

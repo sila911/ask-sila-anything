@@ -17,6 +17,58 @@ async function requestJSON(path, options = {}) {
   return data
 }
 
+const LEGACY_KEYS = {
+  designs: 'sila-story-designs-v1',
+  events: 'sila-story-events-v1',
+  questions: 'sila-user-questions-v1',
+}
+
+const LEGACY_MIGRATION_FLAG_KEY = 'sila-storage-migrated-to-db-v1'
+
+function readLegacyJSON(key) {
+  try {
+    const raw = localStorage.getItem(key)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+export async function importLegacyLocalStorageOnce() {
+  const alreadyMigrated = localStorage.getItem(LEGACY_MIGRATION_FLAG_KEY) === '1'
+  if (alreadyMigrated) {
+    return { imported: false, skipped: true, reason: 'already_migrated' }
+  }
+
+  const designs = readLegacyJSON(LEGACY_KEYS.designs)
+  const events = readLegacyJSON(LEGACY_KEYS.events)
+  const questions = readLegacyJSON(LEGACY_KEYS.questions)
+
+  if (!designs.length && !events.length && !questions.length) {
+    localStorage.setItem(LEGACY_MIGRATION_FLAG_KEY, '1')
+    return { imported: false, skipped: true, reason: 'no_legacy_data' }
+  }
+
+  const result = await requestJSON('/api/import/local-storage', {
+    method: 'POST',
+    body: JSON.stringify({ designs, events, questions }),
+  })
+
+  if (result.imported || result.reason === 'database_not_empty') {
+    localStorage.setItem(LEGACY_MIGRATION_FLAG_KEY, '1')
+  }
+
+  if (result.imported) {
+    localStorage.removeItem(LEGACY_KEYS.designs)
+    localStorage.removeItem(LEGACY_KEYS.events)
+    localStorage.removeItem(LEGACY_KEYS.questions)
+  }
+
+  return result
+}
+
 export async function getDesigns() {
   return requestJSON('/api/designs')
 }
