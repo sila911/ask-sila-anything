@@ -91,29 +91,25 @@ After login, admin workspace includes:
 - `Library`: saved answer cards
 - `Admin`: analytics dashboard
 
-## Project Structure (Current)
-
-```
 src/
-	App.jsx
-	index.css
-	components/
-		AdminAuthModal.jsx
-		AdminDashboardPage.jsx
-		AdminToastCard.jsx
-		CreateDesignPage.jsx
-		Footer.jsx
-		Header.jsx
-		LibraryPage.jsx
-		NavTabs.jsx
-		Profile.jsx
-		QuestionForm.jsx
-		ThankYouModal.jsx
-	lib/
-		adminAccess.js
-		imageRenderer.js
-		storage.js
-```
+├── components/              # UI building blocks and page views
+│   ├── AdminAuthModal.jsx   # Popup for admin login/authentication
+│   ├── AdminDashboardPage.jsx # Main view for administrative tasks
+│   ├── AdminToastCard.jsx   # Notification alerts for admin actions
+│   ├── CreateDesignPage.jsx # Interface for uploading or creating designs
+│   ├── Footer.jsx           # Global site footer
+│   ├── Header.jsx           # Global navigation bar and branding
+│   ├── LibraryPage.jsx      # Gallery or collection view of items
+│   ├── NavTabs.jsx          # Tab-based navigation component
+│   ├── Profile.jsx          # User profile and settings display
+│   ├── QuestionForm.jsx     # Form for user input or feedback
+│   └── ThankYouModal.jsx    # Success confirmation popup
+├── lib/                     # Utility functions and logic
+│   ├── adminAccess.js       # Permission checks and admin logic
+│   ├── imageRenderer.js     # Helper for processing and displaying images
+│   └── storage.js           # Logic for LocalStorage or Cloud storage
+├── App.jsx                  # Root component (routing and global state)
+└── index.css                # Global styles and Tailwind CSS imports
 
 ## License
 
