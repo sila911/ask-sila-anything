@@ -1,115 +1,100 @@
 # Ask Sila Story Studio
 
-A frontend-first React app where users submit questions, and admins create answer images for stories.
+A full-stack application where users submit questions and admins create styled answer images for social media stories.
 
-## What It Does
+## Architecture & Features
+
+The project has been migrated from a frontend-only `localStorage` app to a robust **Full-Stack** architecture with a Laravel backend and MySQL database.
 
 ### User Flow
-- Users only see the original ask page.
-- Users can submit a question (no customization controls).
-- Questions are stored locally in browser storage.
+- **Submit Questions**: Users can ask anything through a simple, sleek interface.
+- **Recently Asked**: A public list of recent questions. 
+- **Auto-Answers**: Once an admin replies, the answer is displayed directly under the question in the public list.
+- **Relative Timing**: Question timestamps show as "just now", "5 mins ago", etc.
 
 ### Admin Flow
-- Admin login is hidden behind a footer trigger (`Sila`).
-- Admin access requires password (first login sets it on that browser).
-- Optional encrypted admin link can be generated and shared.
-- Admin selects a user question, writes an answer, and generates a styled story image.
+- **Secured Access**: Admin login is hidden behind the `Sila` footer trigger and secured by **Laravel Sanctum**.
+- **Answer Creator**: Admins select a user question, write an answer, and can style a beautiful image for Instagram/Facebook stories.
+- **Persistent Storage**: All questions and designs are stored in a MySQL database.
+- **Telegram Notifications**: Real-time notifications sent to a Telegram bot whenever a new user question is received.
 
 ### Story Generator
-- Renders question (top) and answer (bottom) in one image.
-- Shows asked timestamp in format like `Apr 14, 26 | 00:04:58` (top-right).
-- Supports image copy/download and quick open to IG/FB story pages.
-
-### Admin Dashboard
-- Metrics: Questions, Pending, Designs, Rendered, Copies, Downloads, Share Clicks.
-- Responsive cards and responsive recent-events view.
-- Popup toast card feedback for admin actions.
-
-## Important Security Note
-
-Current admin protection is frontend/browser-level (localStorage + Web Crypto). This is good for local/private usage, but not full production-grade backend security.
+- Renders question (top) and answer (bottom) in one high-quality image.
+- Supports instant **Copy to Clipboard** (browser permitting) or **Download**.
+- Quick-open links to Instagram and Facebook story creation pages.
 
 ## Tech Stack
 
-- React 18
-- Vite
-- Tailwind CSS
-- React Icons
-- Web Crypto API (admin token/password utility)
-- LocalStorage (questions, designs, events)
+### Frontend
+- **React 18** + **Vite**
+- **Tailwind CSS**
+- **React Icons**
 
-## Setup
+### Backend
+- **Laravel 12** (PHP 8.2+)
+- **MySQL**
+- **Laravel Sanctum** (API Authentication)
+- **Telegram Bot API** (Notifications)
 
-### Prerequisites
-- Node.js 16+
-- npm
+## Project Structure
 
-### Install
-
-```bash
-npm install
+```text
+/backend          # Laravel application
+/frontend         # Vite + React application
+setup.sql         # Database schema for manual setup
 ```
 
-### Run (Frontend Only)
+## Setup & Installation
 
-```bash
-npm run dev:frontend
-```
+### Backend Setup (Laravel)
 
-Open `http://localhost:5173`.
+1.  Navigate to `backend/`.
+2.  Install dependencies:
+    ```bash
+    composer install
+    ```
+3.  Configure environment:
+    ```bash
+    cp .env.example .env
+    php artisan key:generate
+    ```
+4.  Configure your database in `.env` (DB_DATABASE, DB_USERNAME, etc.).
+5.  (Optional) Set your Telegram Bot credentials:
+    ```text
+    TELEGRAM_BOT_TOKEN=your_token
+    TELEGRAM_CHAT_ID=your_chat_id
+    ```
+6.  Run migrations:
+    ```bash
+    php artisan migrate
+    ```
+7.  Start the server:
+    ```bash
+    php artisan serve
+    ```
 
-### Run (Existing Full Dev Script)
+### Frontend Setup (Vite)
 
-```bash
-npm run dev
-```
+1.  Navigate to `frontend/`.
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+3.  Start development server:
+    ```bash
+    npm run dev
+    ```
 
-This starts both the old server process and frontend. Current app flow works frontend-only.
-
-### Build
-
-```bash
-npm run build
-```
-
-### Preview Build
-
-```bash
-npm run preview
-```
+The frontend is configured to proxy `/api` requests to `http://127.0.0.1:8000`.
 
 ## Admin Access
 
-1. Open app.
-2. Click `Sila` in footer.
-3. Enter password:
-- First time: creates admin password on this browser.
-- Next times: must match existing password.
-
-After login, admin workspace includes:
-- `Create`: answer generator
-- `Library`: saved answer cards
-- `Admin`: analytics dashboard
-
-src/
-├── components/              # UI building blocks and page views
-│   ├── AdminAuthModal.jsx   # Popup for admin login/authentication
-│   ├── AdminDashboardPage.jsx # Main view for administrative tasks
-│   ├── AdminToastCard.jsx   # Notification alerts for admin actions
-│   ├── CreateDesignPage.jsx # Interface for uploading or creating designs
-│   ├── Footer.jsx           # Global site footer
-│   ├── Header.jsx           # Global navigation bar and branding
-│   ├── LibraryPage.jsx      # Gallery or collection view of items
-│   ├── NavTabs.jsx          # Tab-based navigation component
-│   ├── Profile.jsx          # User profile and settings display
-│   ├── QuestionForm.jsx     # Form for user input or feedback
-│   └── ThankYouModal.jsx    # Success confirmation popup
-├── lib/                     # Utility functions and logic
-│   ├── adminAccess.js       # Permission checks and admin logic
-│   ├── imageRenderer.js     # Helper for processing and displaying images
-│   └── storage.js           # Logic for LocalStorage or Cloud storage
-├── App.jsx                  # Root component (routing and global state)
-└── index.css                # Global styles and Tailwind CSS imports
+1. Open the app and click `Sila` in the footer.
+2. Login with your admin credentials (default user is created via migrations/seeders).
+3. Workspace includes:
+   - `Create`: Answer generator and persistent reply tool.
+   - `Library`: Gallery of saved answers.
+   - `Admin`: Analytics dashboard for metrics (questions, views, shares).
 
 ## License
 
