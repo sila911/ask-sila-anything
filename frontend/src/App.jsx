@@ -175,22 +175,11 @@ export default function App() {
       return { ok: false, message: "Password must be at least 4 characters." };
     }
 
-    if (needsTokenValidation) {
-      const valid = await validateEncryptedAdminToken(adminToken, password);
-      if (!valid) {
-        return {
-          ok: false,
-          message: "Invalid password or expired encrypted admin link.",
-        };
-      }
-    }
-
     const verify = await verifyOrSetupPassword(password);
     if (!verify.ok) {
-      return { ok: false, message: "Wrong admin password." };
+      return { ok: false, message: verify.message || "Wrong admin password." };
     }
 
-    setSessionPassword(password);
     setIsAdminUnlocked(true);
     setIsAdminModalOpen(false);
     setViewMode("admin");
@@ -207,22 +196,9 @@ export default function App() {
   };
 
   const createEncryptedAdminLink = async () => {
-    if (!sessionPassword) {
-      setLinkMessage("Login again before creating secure link.");
-      return;
-    }
-
-    const token = await createEncryptedAdminToken(sessionPassword, 180);
-    const url = new URL(window.location.href);
-    url.searchParams.set("adminToken", token);
-    await navigator.clipboard.writeText(url.toString());
-    setLinkMessage("Encrypted admin link copied (valid 3 hours).");
-    trackEvent("admin_link_copied");
-    showAdminToast(
-      "Encrypted link copied",
-      "Admin access link copied to clipboard.",
-      "success",
-    );
+    // This feature is now deprecated as we use session tokens, 
+    // but I'll keep the button for now or it can be removed later.
+    showAdminToast("Feature disabled", "Session tokens are handled by the server.", "info");
   };
 
   return (
@@ -293,22 +269,13 @@ export default function App() {
                     setSessionPassword("");
                     setViewMode("user");
                     setActiveTab("create");
+                    localStorage.removeItem("sila-admin-token");
                   }}
                   className="inline-flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl border border-rose-300 text-rose-700 dark:text-rose-300"
                   title="Logout admin"
                   aria-label="Logout admin"
                 >
                   <FiLogOut size={16} />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={createEncryptedAdminLink}
-                  className="inline-flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
-                  title="Copy encrypted admin link"
-                  aria-label="Copy encrypted admin link"
-                >
-                  <FiLink2 size={16} />
                 </button>
               </div>
             </div>
@@ -355,8 +322,6 @@ export default function App() {
 
       <AdminAuthModal
         isOpen={isAdminModalOpen}
-        hasPassword={hasAdminPassword()}
-        requiresToken={needsTokenValidation}
         onClose={() => setIsAdminModalOpen(false)}
         onSubmit={handleAdminAuth}
       />

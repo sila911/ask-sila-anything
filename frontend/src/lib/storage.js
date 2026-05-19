@@ -1,7 +1,18 @@
 async function requestJSON(path, options = {}) {
+  const token = localStorage.getItem("sila-admin-token");
+  const headers = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    ...(options.headers || {}),
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
   const response = await fetch(path, {
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
     ...options,
+    headers,
   });
 
   const contentType = response.headers.get("content-type") || "";

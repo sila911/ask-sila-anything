@@ -1,107 +1,67 @@
-const ADMIN_HASH_KEY = 'sila-admin-password-hash-v1'
+const ADMIN_TOKEN_KEY = 'sila-admin-token'
+const ADMIN_EMAIL = 'semsila.dev@gmail.com'
 
-function bytesToBase64(bytes) {
-  let binary = ''
-  for (let i = 0; i < bytes.length; i += 1) {
-    binary += String.fromCharCode(bytes[i])
-  }
-  return btoa(binary)
-}
-
-function base64ToBytes(base64) {
-  const binary = atob(base64)
-  const bytes = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i += 1) {
-    bytes[i] = binary.charCodeAt(i)
-  }
-  return bytes
-}
-
-function bytesToHex(bytes) {
-  return Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('')
-}
-
-async function deriveAesKey(password, saltBytes) {
-  const enc = new TextEncoder()
-  const baseKey = await crypto.subtle.importKey(
-    'raw',
-    enc.encode(password),
-    'PBKDF2',
-    false,
-    ['deriveKey'],
-  )
-
-  return crypto.subtle.deriveKey(
-    {
-      name: 'PBKDF2',
-      salt: saltBytes,
-      iterations: 150000,
-      hash: 'SHA-256',
+async function requestJSON(path, options = {}) {
+  const response = await fetch(path, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
     },
-    baseKey,
-    { name: 'AES-GCM', length: 256 },
-    false,
-    ['encrypt', 'decrypt'],
-  )
-}
+    ...options
+  })
 
-export async function hashPassword(password) {
-  const data = new TextEncoder().encode(password)
-  const digest = await crypto.subtle.digest('SHA-256', data)
-  return bytesToHex(new Uint8Array(digest))
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    throw new Error(data.message || 'Auth request failed.')
+  }
+  return data
 }
 
 export function hasAdminPassword() {
-  return Boolean(localStorage.getItem(ADMIN_HASH_KEY))
+  // Now we check for a session token instead of just a local hash
+  return Boolean(localStorage.getItem(ADMIN_TOKEN_KEY))
 }
 
 export async function verifyOrSetupPassword(password) {
-  const nextHash = await hashPassword(password)
-  const stored = localStorage.getItem(ADMIN_HASH_KEY)
-
-  if (!stored) {
-    localStorage.setItem(ADMIN_HASH_KEY, nextHash)
-    return { ok: true, created: true }
-  }
-
-  return { ok: stored === nextHash, created: false }
-}
-
-export async function createEncryptedAdminToken(password, ttlMinutes = 120) {
-  const salt = crypto.getRandomValues(new Uint8Array(16))
-  const iv = crypto.getRandomValues(new Uint8Array(12))
-  const key = await deriveAesKey(password, salt)
-
-  const payload = {
-    role: 'admin',
-    exp: Date.now() + ttlMinutes * 60 * 1000,
-  }
-
-  const plain = new TextEncoder().encode(JSON.stringify(payload))
-  const cipher = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plain)
-
-  return [
-    bytesToBase64(salt),
-    bytesToBase64(iv),
-    bytesToBase64(new Uint8Array(cipher)),
-  ].join('.')
-}
-
-export async function validateEncryptedAdminToken(token, password) {
   try {
-    const [saltB64, ivB64, cipherB64] = token.split('.')
-    if (!saltB64 || !ivB64 || !cipherB64) return false
+    const data = await requestJSON('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email: ADMIN_EMAIL, password })
+    })
 
-    const salt = base64ToBytes(saltB64)
-    const iv = base64ToBytes(ivB64)
-    const cipher = base64ToBytes(cipherB64)
-    const key = await deriveAesKey(password, salt)
-
-    const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, cipher)
-    const payload = JSON.parse(new TextDecoder().decode(plain))
-
-    return payload?.role === 'admin' && Number(payload?.exp || 0) > Date.now()
-  } catch {
-    return false
+    if (data.token) {
+      localStorage.setItem(ADMIN_TOKEN_KEY, data.token)
+      return { ok: true, created: false }
+    }
+  } catch (error) {
+    return { ok: false, message: error.message }
   }
+  return { ok: false }
 }
+
+export async function requestPasswordReset() {
+  return requestJSON('/api/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email: ADMIN_EMAIL })
+  })
+}
+
+export async function submitPasswordReset(code, newPassword) {
+  return requestJSON('/api/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({
+      email: ADMIN_EMAIL,
+      code,
+      password: newPassword,
+      password_confirmation: newPassword
+    })
+  })
+}
+
+export function logoutAdmin() {
+  localStorage.removeItem(ADMIN_TOKEN_KEY)
+}
+
+// Legacy functions kept for compatibility during transition if needed
+export async function createEncryptedAdminToken() { return '' }
+export async function validateEncryptedAdminToken() { return false }

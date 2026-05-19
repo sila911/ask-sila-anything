@@ -3,10 +3,10 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && composer install",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:frontend": "cd frontend && npm run dev",
-    "dev:backend": "cd backend && php artisan serve --port=3001",
+    "dev:backend": "cd backend && php artisan serve --host=127.0.0.1 --port=3001",
     "build:frontend": "cd frontend && npm run build"
   },
   "devDependencies": {

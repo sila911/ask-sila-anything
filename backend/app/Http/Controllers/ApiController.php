@@ -6,7 +6,9 @@ use App\Models\Design;
 use App\Models\Event;
 use App\Models\Question;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class ApiController extends Controller
 {
@@ -41,7 +43,7 @@ class ApiController extends Controller
                     'parse_mode' => 'Markdown',
                 ]);
             } catch (\Exception $e) {
-                \Log::error("Telegram notification failed: " . $e->getMessage());
+                Log::error("Telegram notification failed: " . $e->getMessage());
             }
         }
 
@@ -56,8 +58,8 @@ class ApiController extends Controller
             return response()->json(['message' => 'questions must be an array.'], 400);
         }
 
-        \DB::transaction(function () use ($questions) {
-            Question::truncate();
+        DB::transaction(function () use ($questions) {
+            Question::query()->delete();
             foreach ($questions as $item) {
                 Question::create([
                     'id' => $item['id'],
@@ -84,8 +86,8 @@ class ApiController extends Controller
             return response()->json(['message' => 'designs must be an array.'], 400);
         }
 
-        \DB::transaction(function () use ($designs) {
-            Design::truncate();
+        DB::transaction(function () use ($designs) {
+            Design::query()->delete();
             foreach ($designs as $item) {
                 Design::create([
                     'id' => $item['id'],
