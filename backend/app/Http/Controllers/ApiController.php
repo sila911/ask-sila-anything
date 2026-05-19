@@ -125,4 +125,29 @@ class ApiController extends Controller
 
         return response()->json(Event::orderBy('createdAt', 'desc')->get(), 201);
     }
+
+    public function sendTelegram(Request $request)
+    {
+        $request->validate([
+            'question' => 'required|string',
+        ]);
+
+        $text = $request->input('question');
+
+        $botToken = env('TELEGRAM_BOT_TOKEN');
+        $chatId = env('TELEGRAM_CHAT_ID');
+
+        if ($botToken && $chatId) {
+            try {
+                Http::post("https://api.telegram.org/bot{$botToken}/sendMessage", [
+                    'chat_id' => $chatId,
+                    'text' => $text,
+                ]);
+            } catch (\Exception $e) {
+                Log::error("Telegram notification failed: " . $e->getMessage());
+            }
+        }
+
+        return response()->json(['message' => 'Processed'], 200);
+    }
 }

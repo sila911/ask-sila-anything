@@ -29,6 +29,17 @@ import {
   verifyOrSetupPassword,
 } from "./lib/adminAccess";
 
+function timeAgo(dateString) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now - date) / 1000);
+
+  if (diffInSeconds < 60) return "just now";
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} mins ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+  return `${Math.floor(diffInSeconds / 86400)} days ago`;
+}
+
 export default function App() {
   const [viewMode, setViewMode] = useState("user");
   const [activeTab, setActiveTab] = useState("create");
@@ -223,28 +234,44 @@ export default function App() {
                   Recently Asked
                 </h2>
                 <div className="flex flex-col gap-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                  {questions.map((q) => (
-                    <div
-                      key={q.id}
-                      className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500/30 transition-all group"
-                    >
-                      <p className="text-[color:var(--app-text)] leading-relaxed mb-2">
-                        {q.question}
-                      </p>
-                      <div className="flex items-center justify-between text-xs text-[color:var(--app-muted)]">
-                        <span>
-                          {new Date(q.createdAt).toLocaleDateString(undefined, {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
-                        </span>
-                        <span className="px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {q.status}
-                        </span>
+                  {questions.map((q) => {
+                    const designWithAnswer = designs.find((d) => d.questionId === q.id);
+
+                    return (
+                      <div
+                        key={q.id}
+                        className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500/30 transition-all group"
+                      >
+                        <p className="text-[color:var(--app-text)] leading-relaxed mb-2">
+                          {q.question}
+                        </p>
+
+                        {designWithAnswer && designWithAnswer.answerText && (
+                          <div className="mb-3 pl-3 border-l-2 border-cyan-500/50">
+                            <p className="text-xs uppercase tracking-wider text-cyan-500/80 font-bold mb-1">
+                              Answer
+                            </p>
+                            <p className="text-sm text-[color:var(--app-muted)] leading-relaxed">
+                              {designWithAnswer.answerText}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between text-[10px] sm:text-xs text-[color:var(--app-muted)]">
+                          <span>{timeAgo(q.createdAt)}</span>
+                          <span
+                            className={`px-3 py-1 rounded-full border transition-all ${
+                              q.status === "answered"
+                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                : "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
+                            }`}
+                          >
+                            {q.status === "pending" ? "padding" : q.status}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

@@ -1,3 +1,4 @@
+
 -- Create Database
 CREATE DATABASE IF NOT EXISTS ask_sila_anything;
 USE ask_sila_anything;

@@ -139,33 +139,35 @@ export default function CreateDesignPage({
       return;
     }
 
-    const combinedText = `Q: ${selectedQuestion.question}\nA: ${answer}`;
-
     try {
-      const res = await fetch("/api/telegram/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: combinedText }),
-      });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body?.message || "Telegram send failed");
-      }
-
       if (answer.trim()) {
         await onQuestionAnswered(selectedQuestion.id);
       }
 
-      setMessage("Sent to Telegram. This question is marked as answered.");
-      onEvent("telegram_sent", { hasImage: Boolean(imageDataUrl) });
-      onNotify?.("Sent", "Question sent to Telegram.", "success");
+      // Also save to our local library database
+      const designData = {
+        id: crypto.randomUUID(),
+        questionId: selectedQuestion.id,
+        questionText: selectedQuestion.question,
+        answerText: answer,
+        text: `Q: ${selectedQuestion.question}\nA: ${answer}`,
+        style,
+        imageDataUrl: imageDataUrl || "",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        stats: { copies: 0, downloads: 0, shares: 0 },
+      };
+      await onSave(designData);
+
+      setMessage("Answer saved to library.");
+      onEvent("answer_saved", { hasImage: Boolean(imageDataUrl) });
+      onNotify?.("Saved", "Answer saved to library and displayed publicly.", "success");
     } catch (error) {
       console.error(error);
-      setMessage("Send failed. Check server/Telegram configuration.");
+      setMessage("Save failed. Check server configuration.");
       onNotify?.(
-        "Send failed",
-        error.message || "Could not send to Telegram.",
+        "Save failed",
+        error.message || "Could not save the answer.",
         "error",
       );
     }
@@ -259,16 +261,27 @@ export default function CreateDesignPage({
             </p>
           </div>
 
-          <label className="block text-sm">
-            <span className="text-[color:var(--app-muted)]">Admin Answer</span>
-            <textarea
-              value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-              rows={5}
-              className="mt-1 w-full rounded-2xl p-4 bg-[color:var(--input-bg)] border border-[color:var(--input-border)] focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
-              placeholder="Write your answer here..."
-            />
-          </label>
+          <div className="flex flex-col gap-2">
+            <label className="block text-sm">
+              <span className="text-[color:var(--app-muted)]">Admin Answer</span>
+              <textarea
+                value={answer}
+                onChange={(e) => setAnswer(e.target.value)}
+                rows={5}
+                className="mt-1 w-full rounded-2xl p-4 bg-[color:var(--input-bg)] border border-[color:var(--input-border)] focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+                placeholder="Write your answer here..."
+              />
+            </label>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={saveDesign}
+                className="rounded-xl px-4 py-2 bg-cyan-600 text-white font-bold hover:bg-cyan-500 transition-colors inline-flex items-center gap-2 text-sm shadow-md"
+              >
+                <FiSave size={14} /> Submit Reply
+              </button>
+            </div>
+          </div>
 
           <div className="grid grid-cols-2 gap-3 text-sm">
             <label className="space-y-1">

@@ -16,14 +16,23 @@ async function requestJSON(path, options = {}) {
   });
 
   const contentType = response.headers.get("content-type") || "";
-  const data = contentType.includes("application/json")
-    ? await response.json().catch(() => null)
-    : await response.text().catch(() => "");
+  let data;
+  let isJson = false;
+
+  if (contentType.includes("application/json")) {
+    data = await response.json().catch(() => null);
+    isJson = true;
+  } else {
+    data = await response.text().catch(() => "");
+  }
 
   if (!response.ok) {
-    const message =
-      (data && data.message) ||
-      `Request failed with status ${response.status}.`;
+    let message = `Request failed with status ${response.status}.`;
+    if (isJson && data && data.message) {
+      message = data.message;
+    } else if (!isJson && typeof data === "string" && data.includes("<!DOCTYPE html>")) {
+      message = `Server Error: Received HTML instead of JSON. Check if the backend is running and the proxy is correct.`;
+    }
     throw new Error(message);
   }
 
