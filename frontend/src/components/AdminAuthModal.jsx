@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { FiEye, FiEyeOff } from 'react-icons/fi'
 import { requestPasswordReset, submitPasswordReset } from '../lib/adminAccess'
 
 export default function AdminAuthModal({
@@ -9,6 +10,7 @@ export default function AdminAuthModal({
   const [view, setView] = useState('login') // 'login', 'forgot', 'reset'
   const [password, setPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
@@ -18,6 +20,7 @@ export default function AdminAuthModal({
     if (!isOpen) {
       setPassword('')
       setNewPassword('')
+      setShowPassword(false)
       setCode('')
       setError('')
       setMessage('')
@@ -83,14 +86,23 @@ export default function AdminAuthModal({
             <form onSubmit={handleLogin} className="mt-4 space-y-4">
               <label className="block text-sm">
                 <span className="text-[color:var(--app-muted)] font-medium">Password</span>
-                <input
-                  type="password"
-                  autoFocus
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="mt-1 h-11 w-full rounded-xl px-3 bg-[color:var(--input-bg)] border border-[color:var(--input-border)] focus:outline-none focus:ring-2 focus:ring-cyan-500/30"
-                  required
-                />
+                <div className="relative mt-1">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    autoFocus
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="h-11 w-full rounded-xl pl-3 pr-10 bg-[color:var(--input-bg)] border border-[color:var(--input-border)] focus:outline-none focus:ring-2 focus:ring-cyan-500/30"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[color:var(--app-muted)] hover:text-cyan-500"
+                  >
+                    {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                  </button>
+                </div>
               </label>
 
               {error && <p className="text-sm text-rose-500">{error}</p>}
@@ -158,13 +170,22 @@ export default function AdminAuthModal({
 
               <label className="block text-sm">
                 <span className="text-[color:var(--app-muted)] font-medium">New Password</span>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="mt-1 h-11 w-full rounded-xl px-3 bg-[color:var(--input-bg)] border border-[color:var(--input-border)]"
-                  required
-                />
+                <div className="relative mt-1">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="h-11 w-full rounded-xl pl-3 pr-10 bg-[color:var(--input-bg)] border border-[color:var(--input-border)] focus:outline-none focus:ring-2 focus:ring-cyan-500/30"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[color:var(--app-muted)] hover:text-cyan-500"
+                  >
+                    {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                  </button>
+                </div>
               </label>
 
               {error && <p className="text-sm text-rose-500">{error}</p>}
