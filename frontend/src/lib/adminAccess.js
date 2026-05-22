@@ -1,67 +1,54 @@
-const ADMIN_TOKEN_KEY = 'sila-admin-token'
+import { supabase } from './supabase'
+
 const ADMIN_EMAIL = 'semsila.dev@gmail.com'
 
-async function requestJSON(path, options = {}) {
-  const response = await fetch(path, {
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    },
-    ...options
-  })
-
-  const data = await response.json().catch(() => ({}))
-  if (!response.ok) {
-    throw new Error(data.message || 'Auth request failed.')
-  }
-  return data
-}
-
 export function hasAdminPassword() {
-  // Now we check for a session token instead of just a local hash
-  return Boolean(localStorage.getItem(ADMIN_TOKEN_KEY))
+  // Check if there is an active session
+  return !!supabase.auth.getSession()
 }
 
 export async function verifyOrSetupPassword(password) {
   try {
-    const data = await requestJSON('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email: ADMIN_EMAIL, password })
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: ADMIN_EMAIL,
+      password: password,
     })
 
-    if (data.token) {
-      localStorage.setItem(ADMIN_TOKEN_KEY, data.token)
+    if (error) {
+      return { ok: false, message: error.message }
+    }
+
+    if (data.session) {
       return { ok: true, created: false }
     }
   } catch (error) {
     return { ok: false, message: error.message }
   }
-  return { ok: false }
+  return { ok: false, message: 'Login failed.' }
 }
 
 export async function requestPasswordReset() {
-  return requestJSON('/api/auth/forgot-password', {
-    method: 'POST',
-    body: JSON.stringify({ email: ADMIN_EMAIL })
+  const { error } = await supabase.auth.resetPasswordForEmail(ADMIN_EMAIL, {
+    redirectTo: window.location.origin + '/reset-password',
   })
+  
+  if (error) throw new Error(error.message)
+  return { message: 'Reset link sent to email.' }
 }
 
-export async function submitPasswordReset(code, newPassword) {
-  return requestJSON('/api/auth/reset-password', {
-    method: 'POST',
-    body: JSON.stringify({
-      email: ADMIN_EMAIL,
-      code,
-      password: newPassword,
-      password_confirmation: newPassword
-    })
+export async function submitPasswordReset(newPassword) {
+  const { error } = await supabase.auth.updateUser({
+    password: newPassword
   })
+
+  if (error) throw new Error(error.message)
+  return { message: 'Password updated successfully.' }
 }
 
-export function logoutAdmin() {
-  localStorage.removeItem(ADMIN_TOKEN_KEY)
+export async function logoutAdmin() {
+  await supabase.auth.signOut()
 }
 
-// Legacy functions kept for compatibility during transition if needed
+// Legacy functions kept for compatibility
 export async function createEncryptedAdminToken() { return '' }
 export async function validateEncryptedAdminToken() { return false }
