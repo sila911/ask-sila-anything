@@ -18,6 +18,7 @@ import {
   getDesigns,
   getEvents,
   getQuestions,
+  likeQuestion,
   markQuestionAnswered,
   saveDesigns,
   saveQuestions,
@@ -55,6 +56,13 @@ export default function App() {
   const [linkMessage, setLinkMessage] = useState("");
   const [sessionPassword, setSessionPassword] = useState("");
   const [adminToast, setAdminToast] = useState(null);
+  const [likedQuestions, setLikedQuestions] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("likedQuestions") || "[]");
+    } catch {
+      return [];
+    }
+  });
 
   useEffect(() => {
     const loadData = async () => {
@@ -125,6 +133,44 @@ export default function App() {
     } catch (error) {
       console.error(error);
       throw error; // Re-throw to be handled by the form component's try-catch
+    }
+  };
+
+  const handleLike = async (id) => {
+    const isCurrentlyLiked = likedQuestions.includes(id);
+
+    // Optimistic Update
+    setQuestions((prev) =>
+      prev.map((q) =>
+        q.id === id
+          ? {
+              ...q,
+              likes_count: isCurrentlyLiked
+                ? Math.max(0, (q.likes_count || 0) - 1)
+                : (q.likes_count || 0) + 1,
+            }
+          : q
+      )
+    );
+
+    let nextLiked;
+    if (isCurrentlyLiked) {
+      nextLiked = likedQuestions.filter((lid) => lid !== id);
+    } else {
+      nextLiked = [...likedQuestions, id];
+    }
+
+    setLikedQuestions(nextLiked);
+    localStorage.setItem("likedQuestions", JSON.stringify(nextLiked));
+
+    try {
+      const data = isCurrentlyLiked ? await unlikeQuestion(id) : await likeQuestion(id);
+      // Sync with server count
+      setQuestions((prev) =>
+        prev.map((q) => (q.id === id ? { ...q, likes_count: data.likes_count } : q))
+      );
+    } catch (error) {
+      console.error("Failed to toggle like:", error);
     }
   };
 
@@ -242,7 +288,7 @@ export default function App() {
                     const charCodeSum = q.id.toString().split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
                     const tagIndex = charCodeSum % 4;
                     const tags = ["General", "Personal", "Ask Sila", "Curiosity"];
-                    const likeCount = (charCodeSum % 25) + 5;
+                    const isLiked = likedQuestions.includes(q.id);
 
                     return (
                       <div
@@ -295,15 +341,24 @@ export default function App() {
                         {/* Card Footer Row: Interactions + Status */}
                         <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
                           <div className="flex items-center gap-4">
-                            <button className="flex items-center gap-1.5 text-xs text-white/40 hover:text-rose-400 transition-colors group/heart">
+                            <button 
+                              onClick={() => handleLike(q.id)}
+                              className={`flex items-center gap-1.5 transition-colors duration-200 group/heart ${
+                                isLiked 
+                                  ? "text-red-500" 
+                                  : "text-slate-600 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400"
+                              }`}
+                            >
                               <FiHeart 
                                 size={14} 
-                                className="group-hover/heart:fill-rose-400/20 transition-all" 
+                                className={`transition-all ${isLiked ? "fill-red-500" : "group-hover/heart:fill-rose-400/20"}`} 
                               />
-                              <span className="font-medium">{likeCount}</span>
+                              <span className={`text-xs md:text-sm font-medium ${isLiked ? "text-red-500" : "text-slate-700 dark:text-slate-300"}`}>
+                                {q.likes_count || 0}
+                              </span>
                             </button>
                           </div>
-                          
+
                           <span className={`text-[10px] font-bold px-3 py-1 rounded-full tracking-wider ${
                             q.status === "answered" 
                               ? "text-emerald-400 bg-emerald-400/10 border border-emerald-400/20" 

@@ -17,6 +17,40 @@ class ApiController extends Controller
         return response()->json(Question::orderBy('createdAt', 'desc')->get());
     }
 
+    public function likeQuestion($id)
+    {
+        $question = Question::find($id);
+
+        if (!$question) {
+            return response()->json(['message' => 'Question not found'], 404);
+        }
+
+        $question->increment('likes_count');
+
+        return response()->json([
+            'message' => 'Liked successfully',
+            'likes_count' => $question->likes_count
+        ], 200);
+    }
+
+    public function unlikeQuestion($id)
+    {
+        $question = Question::find($id);
+
+        if (!$question) {
+            return response()->json(['message' => 'Question not found'], 404);
+        }
+
+        if ($question->likes_count > 0) {
+            $question->decrement('likes_count');
+        }
+
+        return response()->json([
+            'message' => 'Unliked successfully',
+            'likes_count' => $question->likes_count
+        ], 200);
+    }
+
     public function addQuestion(Request $request)
     {
         $request->validate([

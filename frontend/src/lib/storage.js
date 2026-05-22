@@ -80,6 +80,18 @@ export async function addQuestion(question) {
   });
 }
 
+export async function likeQuestion(id) {
+  return requestJSON(`/api/questions/${id}/like`, {
+    method: "POST",
+  });
+}
+
+export async function unlikeQuestion(id) {
+  return requestJSON(`/api/questions/${id}/unlike`, {
+    method: "POST",
+  });
+}
+
 export async function saveQuestions(questions) {
   return requestJSON("/api/questions/replace", {
     method: "PUT",
