@@ -19,6 +19,7 @@ import {
   getEvents,
   getQuestions,
   likeQuestion,
+  unlikeQuestion,
   markQuestionAnswered,
   saveDesigns,
   saveQuestions,
@@ -56,6 +57,8 @@ export default function App() {
   const [linkMessage, setLinkMessage] = useState("");
   const [sessionPassword, setSessionPassword] = useState("");
   const [adminToast, setAdminToast] = useState(null);
+  const [filterMode, setFilterMode] = useState("all");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [likedQuestions, setLikedQuestions] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("likedQuestions") || "[]");
@@ -274,102 +277,181 @@ export default function App() {
             </div>
 
             {questions.length > 0 && (
-              <div className="glass-shell glass-shell--3d w-full rounded-[2rem] p-6 sm:p-8">
-                <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
-                  Recently Asked
-                </h2>
-                <div className="w-full flex flex-col gap-6 p-4 overflow-y-auto">
-                  {questions.map((q) => {
-                    const designWithAnswer = designs.find((d) => 
-                      d.questionId && d.questionId.toString().toLowerCase() === q.id.toString().toLowerCase()
-                    );
-                    // Deterministic pseudo-random values based on question ID
-                    const charCodeSum = q.id.toString().split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-                    const tagIndex = charCodeSum % 4;
-                    const tags = ["General", "Personal", "Ask Sila", "Curiosity"];
-                    const isLiked = likedQuestions.includes(q.id);
-
-                    return (
-                      <div
-                        key={q.id}
-                        className="relative w-full h-auto flex flex-col gap-4 p-5 rounded-2xl bg-white/90 border border-slate-200 text-slate-900 dark:bg-white/5 dark:border-white/10 dark:text-white"
+              <div className="w-full max-w-md mx-auto rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md overflow-hidden flex flex-col">
+                <div className="relative z-50 w-full flex items-center justify-between p-5 mb-2">
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
+                    Recently Asked
+                  </h2>
+                  
+                  <div className="relative inline-block text-left">
+                    <button
+                      type="button"
+                      onClick={() => setIsFilterOpen(!isFilterOpen)}
+                      className="inline-flex items-center justify-between gap-2 bg-slate-100 text-slate-800 dark:bg-white/5 dark:text-slate-200 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs font-medium backdrop-blur-md transition-all duration-200"
+                    >
+                      <span>
+                        {filterMode === "all" && "All"}
+                        {filterMode === "top" && "Top React"}
+                        {filterMode === "oldest" && "Oldest"}
+                      </span>
+                      <svg
+                        className={`w-3 h-3 transition-transform duration-200 ${isFilterOpen ? "rotate-180" : ""}`}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
                       >
-                        {/* Header Row: User Avatar + Info (left), Tag (right) */}
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center text-white shadow-lg border border-white/10">
-                              <span className="text-lg">👻</span>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+
+                    {isFilterOpen && (
+                      <>
+                        {/* Invisible Backdrop to close menu */}
+                        <div 
+                          className="fixed inset-0 z-[90]" 
+                          onClick={() => setIsFilterOpen(false)}
+                        ></div>
+                        
+                        <div className="absolute right-0 top-full mt-1.5 w-36 rounded-xl bg-[#1e293b]/95 dark:bg-black/90 border border-white/10 shadow-2xl p-1 flex flex-col gap-0.5 z-[100] animate-in fade-in slide-in-from-top-2 duration-150">
+                          <button
+                            onClick={() => {
+                              setFilterMode("all");
+                              setIsFilterOpen(false);
+                            }}
+                            className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-all font-medium ${
+                              filterMode === "all" 
+                                ? "bg-slate-200 text-slate-900 dark:bg-white/10 dark:text-white" 
+                                : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
+                            }`}
+                          >
+                            All
+                          </button>
+                          <button
+                            onClick={() => {
+                              setFilterMode("top");
+                              setIsFilterOpen(false);
+                            }}
+                            className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-all font-medium ${
+                              filterMode === "top" 
+                                ? "bg-slate-200 text-slate-900 dark:bg-white/10 dark:text-white" 
+                                : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
+                            }`}
+                          >
+                            Top React
+                          </button>
+                          <button
+                            onClick={() => {
+                              setFilterMode("oldest");
+                              setIsFilterOpen(false);
+                            }}
+                            className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-all font-medium ${
+                              filterMode === "oldest" 
+                                ? "bg-slate-200 text-slate-900 dark:bg-white/10 dark:text-white" 
+                                : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
+                            }`}
+                          >
+                            Oldest
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="relative z-10 w-full flex flex-col gap-4 p-2 sm:p-4 md:p-6 overflow-visible">
+                  {[...questions]
+                    .sort((a, b) => {
+                      if (filterMode === "top") {
+                        return (b.likes_count || 0) - (a.likes_count || 0);
+                      }
+                      if (filterMode === "oldest") {
+                        return new Date(a.createdAt) - new Date(b.createdAt);
+                      }
+                      return new Date(b.createdAt) - new Date(a.createdAt);
+                    })
+                    .map((q) => {
+                      const designWithAnswer = designs.find((d) => 
+                        d.questionId && d.questionId.toString().toLowerCase() === q.id.toString().toLowerCase()
+                      );
+                      // Deterministic pseudo-random values based on question ID
+                      const charCodeSum = q.id.toString().split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                      const tagIndex = charCodeSum % 4;
+                      const tags = ["General", "Personal", "Ask Sila", "Curiosity"];
+                      const isLiked = likedQuestions.includes(q.id);
+
+                      return (
+                        <div
+                          key={q.id}
+                          className="relative w-full h-auto flex flex-col gap-3.5 p-3.5 sm:p-5 rounded-2xl bg-white/90 border border-slate-200 text-slate-900 dark:bg-white/5 dark:border-white/10 dark:text-white backdrop-blur-md"
+                        >
+                          {/* Header Row: User Avatar + Info (left), Tag (right) */}
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center shrink-0 overflow-hidden text-white shadow-lg border border-white/10">
+                                <span className="text-lg">👻</span>
+                              </div>
+                              <div>
+                                <p className="text-slate-800 dark:text-slate-100 font-medium">Anonymous</p>
+                                <p className="text-slate-500 dark:text-slate-400 text-xs">{timeAgo(q.createdAt)}</p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-slate-800 dark:text-slate-100 font-medium">Anonymous asked:</p>
-                              <p className="text-slate-500 dark:text-slate-400 text-xs">{timeAgo(q.createdAt)}</p>
+                            <div className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-cyan-400 whitespace-nowrap font-bold">
+                              <span>{tags[tagIndex]}</span>
+                              <FiTag size={12} className="stroke-[2.5]" />
                             </div>
                           </div>
-                          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-[10px] text-cyan-400 font-bold uppercase tracking-wider">
-                            <FiTag size={10} />
-                            <span>{tags[tagIndex]}</span>
-                          </div>
-                        </div>
 
-                        {/* Question Body Text */}
-                        <div className="w-full block break-words whitespace-normal mb-1">
-                          <p className="text-slate-950 dark:text-white text-sm md:text-base font-semibold break-words mt-2">
-                            "{q.question}"
-                          </p>
-                        </div>
-
-                        {/* Nested Reply Block (Facebook Comment Style) */}
-                        {designWithAnswer && (designWithAnswer.answerText || designWithAnswer.text) && (
-                          <div className="w-full p-4 rounded-xl bg-slate-100 border-l-2 border-cyan-500 flex flex-col gap-2 mt-2 dark:bg-black/20">
-                            <div className="flex items-center gap-2">
-                              <img 
-                                src="/sila2.jpg" 
-                                className="w-6 h-6 rounded-full object-cover border border-cyan-500/30" 
-                                alt="Sila" 
-                              />
-                              <p className="font-semibold text-xs text-cyan-400">
-                                Sila replied:
-                              </p>
-                            </div>
-                            <p className="text-slate-800 dark:text-zinc-200 text-sm pl-7 break-words">
-                              {designWithAnswer.answerText || (designWithAnswer.text && designWithAnswer.text.includes('\nA: ') ? designWithAnswer.text.split('\nA: ')[1] : designWithAnswer.text)}
+                          {/* Question Body Text */}
+                          <div className="w-full block break-words whitespace-normal mb-1">
+                            <p className="text-slate-950 dark:text-white text-sm md:text-base font-semibold break-words mt-2">
+                              "{q.question}"
                             </p>
                           </div>
-                        )}
 
-                        {/* Card Footer Row: Interactions + Status */}
-                        <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <button 
-                              onClick={() => handleLike(q.id)}
-                              className={`flex items-center gap-1.5 transition-colors duration-200 group/heart ${
-                                isLiked 
-                                  ? "text-red-500" 
-                                  : "text-slate-600 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400"
-                              }`}
-                            >
-                              <FiHeart 
-                                size={14} 
-                                className={`transition-all ${isLiked ? "fill-red-500" : "group-hover/heart:fill-rose-400/20"}`} 
-                              />
-                              <span className={`text-xs md:text-sm font-medium ${isLiked ? "text-red-500" : "text-slate-700 dark:text-slate-300"}`}>
-                                {q.likes_count || 0}
-                              </span>
-                            </button>
+                          {/* Nested Reply Block (Facebook Comment Style) */}
+                          {designWithAnswer && (designWithAnswer.answerText || designWithAnswer.text) && (
+                            <div className="w-full p-3 sm:p-4 rounded-xl bg-slate-100 border-l-2 border-cyan-500 flex flex-col gap-1.5 mt-1 dark:bg-black/20">
+                              <div className="flex items-center gap-2">
+                                <img 
+                                  src="/sila2.jpg" 
+                                  className="w-6 h-6 rounded-full object-cover border border-cyan-500/30" 
+                                  alt="Sila" 
+                                />
+                                <p className="font-semibold text-xs text-cyan-400">
+                                  Sila replied:
+                                </p>
+                              </div>
+                              <p className="text-slate-800 dark:text-zinc-200 text-xs sm:text-sm pl-2 sm:pl-7 break-words whitespace-normal">
+                                {designWithAnswer.answerText || (designWithAnswer.text && designWithAnswer.text.includes('\nA: ') ? designWithAnswer.text.split('\nA: ')[1] : designWithAnswer.text)}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Card Footer Row: Interactions */}
+                          <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <button 
+                                onClick={() => handleLike(q.id)}
+                                className={`flex items-center gap-1.5 transition-colors duration-200 group/heart ${
+                                  isLiked 
+                                    ? "text-red-500" 
+                                    : "text-slate-600 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400"
+                                }`}
+                              >
+                                <FiHeart 
+                                  size={14} 
+                                  className={`transition-all ${isLiked ? "fill-red-500" : "group-hover/heart:fill-rose-400/20"}`} 
+                                />
+                                <span className={`text-xs md:text-sm font-medium ${isLiked ? "text-red-500" : "text-slate-700 dark:text-slate-300"}`}>
+                                  {q.likes_count || 0}
+                                </span>
+                              </button>
+                            </div>
                           </div>
-
-                          <span className={`text-[10px] font-bold px-3 py-1 rounded-full tracking-wider ${
-                            q.status === "answered" 
-                              ? "text-emerald-400 bg-emerald-400/10 border border-emerald-400/20" 
-                              : "text-amber-400 bg-amber-400/10 border border-amber-400/20"
-                          }`}>
-                            {q.status.toUpperCase()}
-                          </span>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                 </div>
               </div>
             )}
