@@ -279,7 +279,7 @@ export default function App() {
                   <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
                   Recently Asked
                 </h2>
-                <div className="w-full flex flex-col gap-6 p-4 overflow-y-auto">
+                <div className="w-full flex flex-col gap-4 p-2 sm:p-4 md:p-6 overflow-y-auto">
                   {questions.map((q) => {
                     const designWithAnswer = designs.find((d) => 
                       d.questionId && d.questionId.toString().toLowerCase() === q.id.toString().toLowerCase()
@@ -293,22 +293,22 @@ export default function App() {
                     return (
                       <div
                         key={q.id}
-                        className="relative w-full h-auto flex flex-col gap-4 p-5 rounded-2xl bg-white/90 border border-slate-200 text-slate-900 dark:bg-white/5 dark:border-white/10 dark:text-white"
+                        className="relative w-full h-auto flex flex-col gap-3.5 p-3.5 sm:p-5 rounded-2xl bg-white/90 border border-slate-200 text-slate-900 dark:bg-white/5 dark:border-white/10 dark:text-white backdrop-blur-md"
                       >
                         {/* Header Row: User Avatar + Info (left), Tag (right) */}
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center text-white shadow-lg border border-white/10">
+                            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center shrink-0 overflow-hidden text-white shadow-lg border border-white/10">
                               <span className="text-lg">👻</span>
                             </div>
                             <div>
-                              <p className="text-slate-800 dark:text-slate-100 font-medium">Anonymous asked:</p>
+                              <p className="text-slate-800 dark:text-slate-100 font-medium">Anonymous</p>
                               <p className="text-slate-500 dark:text-slate-400 text-xs">{timeAgo(q.createdAt)}</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-[10px] text-cyan-400 font-bold uppercase tracking-wider">
-                            <FiTag size={10} />
+                          <div className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-cyan-400 whitespace-nowrap font-bold">
                             <span>{tags[tagIndex]}</span>
+                            <FiTag size={12} className="stroke-[2.5]" />
                           </div>
                         </div>
 
@@ -321,7 +321,7 @@ export default function App() {
 
                         {/* Nested Reply Block (Facebook Comment Style) */}
                         {designWithAnswer && (designWithAnswer.answerText || designWithAnswer.text) && (
-                          <div className="w-full p-4 rounded-xl bg-slate-100 border-l-2 border-cyan-500 flex flex-col gap-2 mt-2 dark:bg-black/20">
+                          <div className="w-full p-3 sm:p-4 rounded-xl bg-slate-100 border-l-2 border-cyan-500 flex flex-col gap-1.5 mt-1 dark:bg-black/20">
                             <div className="flex items-center gap-2">
                               <img 
                                 src="/sila2.jpg" 
@@ -332,13 +332,13 @@ export default function App() {
                                 Sila replied:
                               </p>
                             </div>
-                            <p className="text-slate-800 dark:text-zinc-200 text-sm pl-7 break-words">
+                            <p className="text-slate-800 dark:text-zinc-200 text-xs sm:text-sm pl-2 sm:pl-7 break-words whitespace-normal">
                               {designWithAnswer.answerText || (designWithAnswer.text && designWithAnswer.text.includes('\nA: ') ? designWithAnswer.text.split('\nA: ')[1] : designWithAnswer.text)}
                             </p>
                           </div>
                         )}
 
-                        {/* Card Footer Row: Interactions + Status */}
+                        {/* Card Footer Row: Interactions */}
                         <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
                           <div className="flex items-center gap-4">
                             <button 
@@ -358,14 +358,6 @@ export default function App() {
                               </span>
                             </button>
                           </div>
-
-                          <span className={`text-[10px] font-bold px-3 py-1 rounded-full tracking-wider ${
-                            q.status === "answered" 
-                              ? "text-emerald-400 bg-emerald-400/10 border border-emerald-400/20" 
-                              : "text-amber-400 bg-amber-400/10 border border-amber-400/20"
-                          }`}>
-                            {q.status.toUpperCase()}
-                          </span>
                         </div>
                       </div>
                     );
