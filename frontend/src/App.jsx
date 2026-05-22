@@ -247,7 +247,7 @@ export default function App() {
                     return (
                       <div
                         key={q.id}
-                        className="relative w-full h-auto flex flex-col gap-4 p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md"
+                        className="relative w-full h-auto flex flex-col gap-4 p-5 rounded-2xl bg-white/90 border border-slate-200 text-slate-900 dark:bg-white/5 dark:border-white/10 dark:text-white"
                       >
                         {/* Header Row: User Avatar + Info (left), Tag (right) */}
                         <div className="flex items-center justify-between mb-3">
@@ -256,8 +256,8 @@ export default function App() {
                               <span className="text-lg">👻</span>
                             </div>
                             <div>
-                              <p className="text-xs font-bold text-white/90 italic">Anonymous asked:</p>
-                              <p className="text-[10px] text-white/40">{timeAgo(q.createdAt)}</p>
+                              <p className="text-slate-800 dark:text-slate-100 font-medium">Anonymous asked:</p>
+                              <p className="text-slate-500 dark:text-slate-400 text-xs">{timeAgo(q.createdAt)}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-[10px] text-cyan-400 font-bold uppercase tracking-wider">
@@ -268,14 +268,14 @@ export default function App() {
 
                         {/* Question Body Text */}
                         <div className="w-full block break-words whitespace-normal mb-1">
-                          <p className="text-white/95 text-sm md:text-base font-medium leading-relaxed italic border-l-2 border-white/10 pl-3">
+                          <p className="text-slate-950 dark:text-white text-sm md:text-base font-semibold break-words mt-2">
                             "{q.question}"
                           </p>
                         </div>
 
                         {/* Nested Reply Block (Facebook Comment Style) */}
                         {designWithAnswer && (designWithAnswer.answerText || designWithAnswer.text) && (
-                          <div className="w-full p-4 rounded-xl bg-black/20 border-l-2 border-cyan-500 flex flex-col gap-2 mt-2">
+                          <div className="w-full p-4 rounded-xl bg-slate-100 border-l-2 border-cyan-500 flex flex-col gap-2 mt-2 dark:bg-black/20">
                             <div className="flex items-center gap-2">
                               <img 
                                 src="/sila2.jpg" 
@@ -286,7 +286,7 @@ export default function App() {
                                 Sila replied:
                               </p>
                             </div>
-                            <p className="text-white/90 text-sm pl-8 break-words whitespace-normal block leading-relaxed">
+                            <p className="text-slate-800 dark:text-zinc-200 text-sm pl-7 break-words">
                               {designWithAnswer.answerText || (designWithAnswer.text && designWithAnswer.text.includes('\nA: ') ? designWithAnswer.text.split('\nA: ')[1] : designWithAnswer.text)}
                             </p>
                           </div>
