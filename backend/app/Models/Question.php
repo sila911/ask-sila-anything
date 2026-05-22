@@ -12,7 +12,7 @@ class Question extends Model
     const CREATED_AT = 'createdAt';
     const UPDATED_AT = null;
 
-    protected $fillable = ['id', 'question', 'status', 'createdAt', 'answeredAt'];
+    protected $fillable = ['id', 'question', 'status', 'createdAt', 'answeredAt', 'likes_count'];
 
     protected static function boot()
     {
@@ -21,11 +21,15 @@ class Question extends Model
             if (empty($model->id)) {
                 $model->id = (string) Str::ulid();
             }
+            if (!isset($model->likes_count)) {
+                $model->likes_count = 0;
+            }
         });
     }
 
     protected $casts = [
         'createdAt' => 'datetime',
         'answeredAt' => 'datetime',
+        'likes_count' => 'integer',
     ];
 }

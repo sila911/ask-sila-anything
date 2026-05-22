@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { FiLink2, FiLogOut } from "react-icons/fi";
+import { FiLink2, FiLogOut, FiUser, FiHeart, FiTag, FiMessageCircle } from "react-icons/fi";
 import Header from "./components/Header";
 import Profile from "./components/Profile";
 import QuestionForm from "./components/QuestionForm";
@@ -18,6 +18,7 @@ import {
   getDesigns,
   getEvents,
   getQuestions,
+  likeQuestion,
   markQuestionAnswered,
   saveDesigns,
   saveQuestions,
@@ -55,6 +56,13 @@ export default function App() {
   const [linkMessage, setLinkMessage] = useState("");
   const [sessionPassword, setSessionPassword] = useState("");
   const [adminToast, setAdminToast] = useState(null);
+  const [likedQuestions, setLikedQuestions] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("likedQuestions") || "[]");
+    } catch {
+      return [];
+    }
+  });
 
   useEffect(() => {
     const loadData = async () => {
@@ -125,6 +133,44 @@ export default function App() {
     } catch (error) {
       console.error(error);
       throw error; // Re-throw to be handled by the form component's try-catch
+    }
+  };
+
+  const handleLike = async (id) => {
+    const isCurrentlyLiked = likedQuestions.includes(id);
+
+    // Optimistic Update
+    setQuestions((prev) =>
+      prev.map((q) =>
+        q.id === id
+          ? {
+              ...q,
+              likes_count: isCurrentlyLiked
+                ? Math.max(0, (q.likes_count || 0) - 1)
+                : (q.likes_count || 0) + 1,
+            }
+          : q
+      )
+    );
+
+    let nextLiked;
+    if (isCurrentlyLiked) {
+      nextLiked = likedQuestions.filter((lid) => lid !== id);
+    } else {
+      nextLiked = [...likedQuestions, id];
+    }
+
+    setLikedQuestions(nextLiked);
+    localStorage.setItem("likedQuestions", JSON.stringify(nextLiked));
+
+    try {
+      const data = isCurrentlyLiked ? await unlikeQuestion(id) : await likeQuestion(id);
+      // Sync with server count
+      setQuestions((prev) =>
+        prev.map((q) => (q.id === id ? { ...q, likes_count: data.likes_count } : q))
+      );
+    } catch (error) {
+      console.error("Failed to toggle like:", error);
     }
   };
 
@@ -233,40 +279,92 @@ export default function App() {
                   <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
                   Recently Asked
                 </h2>
-                <div className="flex flex-col gap-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                <div className="w-full flex flex-col gap-6 p-4 overflow-y-auto">
                   {questions.map((q) => {
-                    const designWithAnswer = designs.find((d) => d.questionId === q.id);
+                    const designWithAnswer = designs.find((d) => 
+                      d.questionId && d.questionId.toString().toLowerCase() === q.id.toString().toLowerCase()
+                    );
+                    // Deterministic pseudo-random values based on question ID
+                    const charCodeSum = q.id.toString().split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                    const tagIndex = charCodeSum % 4;
+                    const tags = ["General", "Personal", "Ask Sila", "Curiosity"];
+                    const isLiked = likedQuestions.includes(q.id);
 
                     return (
                       <div
                         key={q.id}
-                        className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500/30 transition-all group"
+                        className="relative w-full h-auto flex flex-col gap-4 p-5 rounded-2xl bg-white/90 border border-slate-200 text-slate-900 dark:bg-white/5 dark:border-white/10 dark:text-white"
                       >
-                        <p className="text-[color:var(--app-text)] leading-relaxed mb-2">
-                          {q.question}
-                        </p>
+                        {/* Header Row: User Avatar + Info (left), Tag (right) */}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center text-white shadow-lg border border-white/10">
+                              <span className="text-lg">👻</span>
+                            </div>
+                            <div>
+                              <p className="text-slate-800 dark:text-slate-100 font-medium">Anonymous asked:</p>
+                              <p className="text-slate-500 dark:text-slate-400 text-xs">{timeAgo(q.createdAt)}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-[10px] text-cyan-400 font-bold uppercase tracking-wider">
+                            <FiTag size={10} />
+                            <span>{tags[tagIndex]}</span>
+                          </div>
+                        </div>
 
-                        {designWithAnswer && designWithAnswer.answerText && (
-                          <div className="mb-3 pl-3 border-l-2 border-cyan-500/50">
-                            <p className="text-xs uppercase tracking-wider text-cyan-500/80 font-bold mb-1">
-                              Answer
-                            </p>
-                            <p className="text-sm text-[color:var(--app-muted)] leading-relaxed">
-                              {designWithAnswer.answerText}
+                        {/* Question Body Text */}
+                        <div className="w-full block break-words whitespace-normal mb-1">
+                          <p className="text-slate-950 dark:text-white text-sm md:text-base font-semibold break-words mt-2">
+                            "{q.question}"
+                          </p>
+                        </div>
+
+                        {/* Nested Reply Block (Facebook Comment Style) */}
+                        {designWithAnswer && (designWithAnswer.answerText || designWithAnswer.text) && (
+                          <div className="w-full p-4 rounded-xl bg-slate-100 border-l-2 border-cyan-500 flex flex-col gap-2 mt-2 dark:bg-black/20">
+                            <div className="flex items-center gap-2">
+                              <img 
+                                src="/sila2.jpg" 
+                                className="w-6 h-6 rounded-full object-cover border border-cyan-500/30" 
+                                alt="Sila" 
+                              />
+                              <p className="font-semibold text-xs text-cyan-400">
+                                Sila replied:
+                              </p>
+                            </div>
+                            <p className="text-slate-800 dark:text-zinc-200 text-sm pl-7 break-words">
+                              {designWithAnswer.answerText || (designWithAnswer.text && designWithAnswer.text.includes('\nA: ') ? designWithAnswer.text.split('\nA: ')[1] : designWithAnswer.text)}
                             </p>
                           </div>
                         )}
 
-                        <div className="flex items-center justify-between text-[10px] sm:text-xs text-[color:var(--app-muted)]">
-                          <span>{timeAgo(q.createdAt)}</span>
-                          <span
-                            className={`px-3 py-1 rounded-full border transition-all ${
-                              q.status === "answered"
-                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                                : "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
-                            }`}
-                          >
-                            {q.status === "pending" ? "padding" : q.status}
+                        {/* Card Footer Row: Interactions + Status */}
+                        <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <button 
+                              onClick={() => handleLike(q.id)}
+                              className={`flex items-center gap-1.5 transition-colors duration-200 group/heart ${
+                                isLiked 
+                                  ? "text-red-500" 
+                                  : "text-slate-600 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400"
+                              }`}
+                            >
+                              <FiHeart 
+                                size={14} 
+                                className={`transition-all ${isLiked ? "fill-red-500" : "group-hover/heart:fill-rose-400/20"}`} 
+                              />
+                              <span className={`text-xs md:text-sm font-medium ${isLiked ? "text-red-500" : "text-slate-700 dark:text-slate-300"}`}>
+                                {q.likes_count || 0}
+                              </span>
+                            </button>
+                          </div>
+
+                          <span className={`text-[10px] font-bold px-3 py-1 rounded-full tracking-wider ${
+                            q.status === "answered" 
+                              ? "text-emerald-400 bg-emerald-400/10 border border-emerald-400/20" 
+                              : "text-amber-400 bg-amber-400/10 border border-amber-400/20"
+                          }`}>
+                            {q.status.toUpperCase()}
                           </span>
                         </div>
                       </div>

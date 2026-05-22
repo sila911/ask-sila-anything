@@ -12,6 +12,8 @@ Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
 // Public API Routes (Anyone can see questions, designs, and events)
 Route::get('/questions', [ApiController::class, 'getQuestions']);
 Route::post('/questions', [ApiController::class, 'addQuestion']);
+Route::post('/questions/{id}/like', [ApiController::class, 'likeQuestion']);
+Route::post('/questions/{id}/unlike', [ApiController::class, 'unlikeQuestion']);
 Route::post('/telegram/send', [ApiController::class, 'sendTelegram']);
 Route::get('/designs', [ApiController::class, 'getDesigns']);
 Route::get('/events', [ApiController::class, 'getEvents']);
