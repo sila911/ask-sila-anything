@@ -277,7 +277,7 @@ export default function App() {
 
             {questions.length > 0 && (
               <div className="glass-shell glass-shell--3d w-full rounded-[2rem] p-6 sm:p-8 !overflow-visible">
-                <div className="w-full flex items-center justify-between px-1 mb-6">
+                <div className="relative z-50 w-full flex items-center justify-between px-1 mb-6">
                   <h2 className="text-xl font-bold flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
                     Recently Asked
@@ -312,7 +312,7 @@ export default function App() {
                           onClick={() => setIsFilterOpen(false)}
                         ></div>
                         
-                        <div className="absolute right-0 top-full mt-1.5 w-36 rounded-xl bg-white/95 dark:bg-slate-900/95 border border-slate-200/80 dark:border-white/10 backdrop-blur-xl shadow-xl p-1 flex flex-col gap-0.5 z-[100]">
+                        <div className="absolute right-0 top-full mt-1.5 w-36 rounded-xl bg-[#1e293b]/95 dark:bg-black/90 border border-white/10 shadow-2xl p-1 flex flex-col gap-0.5 z-[100] animate-in fade-in slide-in-from-top-2 duration-150">
                           <button
                             onClick={() => {
                               setFilterMode("all");
@@ -358,7 +358,7 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="w-full flex flex-col gap-4 p-2 sm:p-4 md:p-6 overflow-y-auto">
+                <div className="relative z-10 w-full flex flex-col gap-4 p-2 sm:p-4 md:p-6 overflow-visible">
                   {[...questions]
                     .sort((a, b) => {
                       if (filterMode === "top") {
