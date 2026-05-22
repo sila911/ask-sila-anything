@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { FiLink2, FiLogOut, FiUser, FiHeart, FiTag, FiMessageCircle } from "react-icons/fi";
+import { supabase } from "./lib/supabase";
 import Header from "./components/Header";
 import Profile from "./components/Profile";
 import QuestionForm from "./components/QuestionForm";
@@ -29,6 +30,7 @@ import {
   hasAdminPassword,
   validateEncryptedAdminToken,
   verifyOrSetupPassword,
+  logoutAdmin,
 } from "./lib/adminAccess";
 
 function timeAgo(dateString) {
@@ -85,6 +87,16 @@ export default function App() {
 
     loadData();
 
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN') {
+        setIsAdminUnlocked(true);
+      } else if (event === 'SIGNED_OUT') {
+        setIsAdminUnlocked(false);
+        setViewMode("user");
+      }
+    });
+
     const params = new URLSearchParams(window.location.search);
     const token = params.get("adminToken");
     if (token) {
@@ -92,6 +104,10 @@ export default function App() {
       setNeedsTokenValidation(true);
       setIsAdminModalOpen(true);
     }
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const orderedDesigns = useMemo(() => {
@@ -277,8 +293,8 @@ export default function App() {
             </div>
 
             {questions.length > 0 && (
-              <div className="w-full max-w-md mx-auto rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md overflow-hidden flex flex-col">
-                <div className="relative z-50 w-full flex items-center justify-between p-5 mb-2">
+              <div className="w-full md:max-w-2xl mx-auto flex flex-col gap-4 p-3.5 sm:p-5 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md overflow-visible">
+                <div className="relative z-50 w-full flex items-center justify-between px-1 mb-6">
                   <h2 className="text-xl font-bold flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
                     Recently Asked
@@ -383,7 +399,7 @@ export default function App() {
                       return (
                         <div
                           key={q.id}
-                          className="relative w-full h-auto flex flex-col gap-3.5 p-3.5 sm:p-5 rounded-2xl bg-white/90 border border-slate-200 text-slate-900 dark:bg-white/5 dark:border-white/10 dark:text-white backdrop-blur-md"
+                          className="relative w-full h-auto flex flex-col gap-3.5 p-4 sm:p-5 rounded-2xl bg-white/90 border border-slate-200 text-slate-900 dark:bg-white/5 dark:border-white/10 dark:text-white backdrop-blur-md"
                         >
                           {/* Header Row: User Avatar + Info (left), Tag (right) */}
                           <div className="flex items-center justify-between mb-3">
@@ -471,12 +487,12 @@ export default function App() {
               <div className="inline-flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
+                    await logoutAdmin();
                     setIsAdminUnlocked(false);
                     setSessionPassword("");
                     setViewMode("user");
                     setActiveTab("create");
-                    localStorage.removeItem("sila-admin-token");
                   }}
                   className="inline-flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl border border-rose-300 text-rose-700 dark:text-rose-300"
                   title="Logout admin"

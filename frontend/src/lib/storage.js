@@ -1,55 +1,35 @@
-async function requestJSON(path, options = {}) {
-  const token = localStorage.getItem("sila-admin-token");
-  const headers = {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-    ...(options.headers || {}),
-  };
+import { supabase } from './supabase';
 
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+// Helper for handling Supabase errors
+async function handleSupabase(promise) {
+  const { data, error } = await promise;
+  if (error) {
+    console.error('Supabase Error:', error);
+    throw new Error(error.message);
   }
-
-  const response = await fetch(path, {
-    ...options,
-    headers,
-  });
-
-  const contentType = response.headers.get("content-type") || "";
-  let data;
-  let isJson = false;
-
-  if (contentType.includes("application/json")) {
-    data = await response.json().catch(() => null);
-    isJson = true;
-  } else {
-    data = await response.text().catch(() => "");
-  }
-
-  if (!response.ok) {
-    let message = `Request failed with status ${response.status}.`;
-    if (isJson && data && data.message) {
-      message = data.message;
-    } else if (!isJson && typeof data === "string" && data.includes("<!DOCTYPE html>")) {
-      message = `Server Error: Received HTML instead of JSON. Check if the backend is running and the proxy is correct.`;
-    }
-    throw new Error(message);
-  }
-
   return data;
 }
 
-// Legacy local-storage import removed. The app now only uses the API-backed storage.
-
 export async function getDesigns() {
-  return requestJSON("/api/designs");
+  return handleSupabase(
+    supabase
+      .from('designs')
+      .select('*')
+      .order('updatedAt', { ascending: false })
+  );
 }
 
 export async function saveDesigns(designs) {
-  return requestJSON("/api/designs/replace", {
-    method: "PUT",
-    body: JSON.stringify({ designs }),
-  });
+  // Use upsert to replace or update designs
+  // Note: This logic assumes 'id' is the primary key and will update existing or insert new.
+  // To match the 'replace' behavior of the backend (delete and re-insert), 
+  // we would need to delete all then insert. But upsert is usually better.
+  const { error } = await supabase
+    .from('designs')
+    .upsert(designs);
+  
+  if (error) throw new Error(error.message);
+  return getDesigns();
 }
 
 export function createDesign({ text, style, imageDataUrl }) {
@@ -70,33 +50,85 @@ export function createDesign({ text, style, imageDataUrl }) {
 }
 
 export async function getQuestions() {
-  return requestJSON("/api/questions");
+  return handleSupabase(
+    supabase
+      .from('questions')
+      .select('*')
+      .order('createdAt', { ascending: false })
+  );
 }
 
-export async function addQuestion(question) {
-  return requestJSON("/api/questions", {
-    method: "POST",
-    body: JSON.stringify({ question }),
-  });
+export async function addQuestion(questionText) {
+  const newQuestion = {
+    id: crypto.randomUUID(),
+    question: questionText,
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+  };
+
+  const { error } = await supabase
+    .from('questions')
+    .insert([newQuestion]);
+
+  if (error) throw new Error(error.message);
+  return getQuestions();
 }
 
 export async function likeQuestion(id) {
-  return requestJSON(`/api/questions/${id}/like`, {
-    method: "POST",
-  });
+  // Supabase doesn't have a direct 'increment' method in the JS client without RPC 
+  // or fetching first. We'll use a simple RPC call if available, or fetch and update.
+  // For now, let's assume an RPC 'increment_likes' exists, or we fetch-then-update.
+  
+  const { data: question, error: fetchError } = await supabase
+    .from('questions')
+    .select('likes_count')
+    .eq('id', id)
+    .single();
+
+  if (fetchError) throw new Error(fetchError.message);
+
+  const newCount = (question.likes_count || 0) + 1;
+  
+  const { data, error } = await supabase
+    .from('questions')
+    .update({ likes_count: newCount })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
 }
 
 export async function unlikeQuestion(id) {
-  return requestJSON(`/api/questions/${id}/unlike`, {
-    method: "POST",
-  });
+  const { data: question, error: fetchError } = await supabase
+    .from('questions')
+    .select('likes_count')
+    .eq('id', id)
+    .single();
+
+  if (fetchError) throw new Error(fetchError.message);
+
+  const newCount = Math.max(0, (question.likes_count || 0) - 1);
+  
+  const { data, error } = await supabase
+    .from('questions')
+    .update({ likes_count: newCount })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
 }
 
 export async function saveQuestions(questions) {
-  return requestJSON("/api/questions/replace", {
-    method: "PUT",
-    body: JSON.stringify({ questions }),
-  });
+  const { error } = await supabase
+    .from('questions')
+    .upsert(questions);
+  
+  if (error) throw new Error(error.message);
+  return getQuestions();
 }
 
 export function createQuestion(question) {
@@ -123,12 +155,26 @@ export function markQuestionAnswered(questions, questionId) {
 }
 
 export async function getEvents() {
-  return requestJSON("/api/events");
+  return handleSupabase(
+    supabase
+      .from('events')
+      .select('*')
+      .order('createdAt', { ascending: false })
+  );
 }
 
 export async function addEvent(type, meta = {}) {
-  return requestJSON("/api/events", {
-    method: "POST",
-    body: JSON.stringify({ type, meta }),
-  });
+  const newEvent = {
+    id: crypto.randomUUID(),
+    type,
+    meta,
+    createdAt: new Date().toISOString(),
+  };
+
+  const { error } = await supabase
+    .from('events')
+    .insert([newEvent]);
+
+  if (error) throw new Error(error.message);
+  return getEvents();
 }
