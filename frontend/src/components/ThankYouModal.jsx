@@ -21,8 +21,8 @@ export default function ThankYouModal({ isOpen, onClose }) {
         </h2>
 
         <p className="text-sm text-[color:var(--app-muted)]">
-          Sila will reply to you on <b>Instagram</b> soon.<br />
-          Please stay connected 💙
+          Your question has been sent!<br />
+          Sila will reply to it here on the platform soon. 💙
         </p>
       </div>
     </div>

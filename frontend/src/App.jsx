@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { FiLink2, FiLogOut } from "react-icons/fi";
+import { FiLink2, FiLogOut, FiUser, FiHeart, FiTag, FiMessageCircle } from "react-icons/fi";
 import Header from "./components/Header";
 import Profile from "./components/Profile";
 import QuestionForm from "./components/QuestionForm";
@@ -233,40 +233,83 @@ export default function App() {
                   <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
                   Recently Asked
                 </h2>
-                <div className="flex flex-col gap-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                <div className="w-full flex flex-col gap-6 p-4 overflow-y-auto">
                   {questions.map((q) => {
-                    const designWithAnswer = designs.find((d) => d.questionId === q.id);
+                    const designWithAnswer = designs.find((d) => 
+                      d.questionId && d.questionId.toString().toLowerCase() === q.id.toString().toLowerCase()
+                    );
+                    // Deterministic pseudo-random values based on question ID
+                    const charCodeSum = q.id.toString().split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                    const tagIndex = charCodeSum % 4;
+                    const tags = ["General", "Personal", "Ask Sila", "Curiosity"];
+                    const likeCount = (charCodeSum % 25) + 5;
 
                     return (
                       <div
                         key={q.id}
-                        className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500/30 transition-all group"
+                        className="relative w-full h-auto flex flex-col gap-4 p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md"
                       >
-                        <p className="text-[color:var(--app-text)] leading-relaxed mb-2">
-                          {q.question}
-                        </p>
+                        {/* Header Row: User Avatar + Info (left), Tag (right) */}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center text-white shadow-lg border border-white/10">
+                              <span className="text-lg">👻</span>
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-white/90 italic">Anonymous asked:</p>
+                              <p className="text-[10px] text-white/40">{timeAgo(q.createdAt)}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-[10px] text-cyan-400 font-bold uppercase tracking-wider">
+                            <FiTag size={10} />
+                            <span>{tags[tagIndex]}</span>
+                          </div>
+                        </div>
 
-                        {designWithAnswer && designWithAnswer.answerText && (
-                          <div className="mb-3 pl-3 border-l-2 border-cyan-500/50">
-                            <p className="text-xs uppercase tracking-wider text-cyan-500/80 font-bold mb-1">
-                              Answer
-                            </p>
-                            <p className="text-sm text-[color:var(--app-muted)] leading-relaxed">
-                              {designWithAnswer.answerText}
+                        {/* Question Body Text */}
+                        <div className="w-full block break-words whitespace-normal mb-1">
+                          <p className="text-white/95 text-sm md:text-base font-medium leading-relaxed italic border-l-2 border-white/10 pl-3">
+                            "{q.question}"
+                          </p>
+                        </div>
+
+                        {/* Nested Reply Block (Facebook Comment Style) */}
+                        {designWithAnswer && (designWithAnswer.answerText || designWithAnswer.text) && (
+                          <div className="w-full p-4 rounded-xl bg-black/20 border-l-2 border-cyan-500 flex flex-col gap-2 mt-2">
+                            <div className="flex items-center gap-2">
+                              <img 
+                                src="/sila2.jpg" 
+                                className="w-6 h-6 rounded-full object-cover border border-cyan-500/30" 
+                                alt="Sila" 
+                              />
+                              <p className="font-semibold text-xs text-cyan-400">
+                                Sila replied:
+                              </p>
+                            </div>
+                            <p className="text-white/90 text-sm pl-8 break-words whitespace-normal block leading-relaxed">
+                              {designWithAnswer.answerText || (designWithAnswer.text && designWithAnswer.text.includes('\nA: ') ? designWithAnswer.text.split('\nA: ')[1] : designWithAnswer.text)}
                             </p>
                           </div>
                         )}
 
-                        <div className="flex items-center justify-between text-[10px] sm:text-xs text-[color:var(--app-muted)]">
-                          <span>{timeAgo(q.createdAt)}</span>
-                          <span
-                            className={`px-3 py-1 rounded-full border transition-all ${
-                              q.status === "answered"
-                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                                : "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
-                            }`}
-                          >
-                            {q.status === "pending" ? "padding" : q.status}
+                        {/* Card Footer Row: Interactions + Status */}
+                        <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <button className="flex items-center gap-1.5 text-xs text-white/40 hover:text-rose-400 transition-colors group/heart">
+                              <FiHeart 
+                                size={14} 
+                                className="group-hover/heart:fill-rose-400/20 transition-all" 
+                              />
+                              <span className="font-medium">{likeCount}</span>
+                            </button>
+                          </div>
+                          
+                          <span className={`text-[10px] font-bold px-3 py-1 rounded-full tracking-wider ${
+                            q.status === "answered" 
+                              ? "text-emerald-400 bg-emerald-400/10 border border-emerald-400/20" 
+                              : "text-amber-400 bg-amber-400/10 border border-amber-400/20"
+                          }`}>
+                            {q.status.toUpperCase()}
                           </span>
                         </div>
                       </div>
