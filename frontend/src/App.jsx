@@ -276,8 +276,8 @@ export default function App() {
             </div>
 
             {questions.length > 0 && (
-              <div className="glass-shell glass-shell--3d w-full rounded-[2rem] p-6 sm:p-8 !overflow-visible">
-                <div className="relative z-50 w-full flex items-center justify-between px-1 mb-6">
+              <div className="w-full max-w-md mx-auto rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md overflow-hidden flex flex-col">
+                <div className="relative z-50 w-full flex items-center justify-between p-5 mb-2">
                   <h2 className="text-xl font-bold flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
                     Recently Asked
