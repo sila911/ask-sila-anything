@@ -100,6 +100,28 @@ export async function likeQuestion(id) {
   return data;
 }
 
+export async function incrementQuestionView(id) {
+  const { data: question, error: fetchError } = await supabase
+    .from('questions')
+    .select('views_count')
+    .eq('id', id)
+    .single();
+
+  if (fetchError) throw new Error(fetchError.message);
+
+  const newCount = (question.views_count || 0) + 1;
+  
+  const { data, error } = await supabase
+    .from('questions')
+    .update({ views_count: newCount })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 export async function unlikeQuestion(id) {
   const { data: question, error: fetchError } = await supabase
     .from('questions')

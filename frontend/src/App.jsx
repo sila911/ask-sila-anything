@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { FiLink2, FiLogOut, FiUser, FiHeart, FiTag, FiMessageCircle } from "react-icons/fi";
+import { useEffect, useMemo, useState, useRef } from "react";
+import { FiLink2, FiLogOut, FiUser, FiHeart, FiTag, FiMessageCircle, FiEye } from "react-icons/fi";
 import { supabase } from "./lib/supabase";
 import Header from "./components/Header";
 import CoverBanner from "./components/CoverBanner";
@@ -22,6 +22,7 @@ import {
   getQuestions,
   likeQuestion,
   unlikeQuestion,
+  incrementQuestionView,
   markQuestionAnswered,
   saveDesigns,
   saveQuestions,
@@ -43,6 +44,116 @@ function timeAgo(dateString) {
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} mins ago`;
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
   return `${Math.floor(diffInSeconds / 86400)} days ago`;
+}
+
+function QuestionCard({ q, designs, likedQuestions, handleLike, handleView, timeAgo }) {
+  const cardRef = useRef(null);
+  const hasViewed = useRef(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasViewed.current) {
+          hasViewed.current = true;
+          handleView(q.id);
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [q.id, handleView]);
+
+  const designWithAnswer = designs.find((d) => 
+    d.questionId && d.questionId.toString().toLowerCase() === q.id.toString().toLowerCase()
+  );
+  // Deterministic pseudo-random values based on question ID
+  const charCodeSum = q.id.toString().split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const tagIndex = charCodeSum % 4;
+  const tags = ["General", "Personal", "Ask Sila", "Curiosity"];
+  const isLiked = likedQuestions.includes(q.id);
+
+  return (
+    <div
+      ref={cardRef}
+      key={q.id}
+      className="relative w-full h-auto flex flex-col gap-3.5 p-3 sm:p-5 rounded-2xl bg-white/90 border border-slate-200 text-slate-900 dark:bg-white/5 dark:border-white/10 dark:text-white backdrop-blur-md"
+    >
+      {/* Header Row: User Avatar + Info (left), Tag (right) */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center shrink-0 overflow-hidden text-white shadow-lg border border-white/10">
+            <span className="text-lg">👻</span>
+          </div>
+          <div>
+            <p className="text-slate-800 dark:text-slate-100 font-medium">Anonymous</p>
+            <p className="text-slate-500 dark:text-slate-400 text-xs">{timeAgo(q.createdAt)}</p>
+          </div>
+        </div>
+        <div className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-cyan-400 whitespace-nowrap font-bold">
+          <span>{tags[tagIndex]}</span>
+          <FiTag size={12} className="stroke-[2.5]" />
+        </div>
+      </div>
+
+      {/* Question Body Text */}
+      <div className="w-full block break-words whitespace-normal mb-1">
+        <p className="text-slate-950 dark:text-white text-base md:text-lg font-semibold break-words mt-2">
+          "{q.question}"
+        </p>
+      </div>
+
+      {/* Nested Reply Block (Facebook Comment Style) */}
+      {designWithAnswer && (designWithAnswer.answerText || designWithAnswer.text) && (
+        <div className="w-full p-3 sm:p-4 rounded-xl bg-slate-100 border-l-2 border-cyan-500 flex flex-col gap-1.5 mt-1 dark:bg-black/20">
+          <div className="flex items-center gap-2">
+            <img 
+              src="/sila2.jpg" 
+              className="w-6 h-6 rounded-full object-cover border border-cyan-500/30" 
+              alt="Sila" 
+            />
+            <p className="font-semibold text-xs text-cyan-400">
+              Sila replied:
+            </p>
+          </div>
+          <p className="text-slate-800 dark:text-zinc-200 text-xs sm:text-sm pl-2 sm:pl-7 break-words whitespace-normal">
+            {designWithAnswer.answerText || (designWithAnswer.text && designWithAnswer.text.includes('\nA: ') ? designWithAnswer.text.split('\nA: ')[1] : designWithAnswer.text)}
+          </p>
+        </div>
+      )}
+
+      {/* Card Footer Row: Interactions */}
+      <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => handleLike(q.id)}
+            className={`flex items-center gap-2 transition-colors duration-200 group/heart ${
+              isLiked 
+                ? "text-red-500" 
+                : "text-slate-600 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400"
+            }`}
+          >
+            <FiHeart 
+              size={18} 
+              className={`transition-all ${isLiked ? "fill-red-500" : "group-hover/heart:fill-rose-400/20"}`} 
+            />
+            <span className={`text-sm md:text-base font-semibold ${isLiked ? "text-red-500" : "text-slate-700 dark:text-slate-300"}`}>
+              {q.likes_count || 0}
+            </span>
+          </button>
+        </div>
+
+        <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+          <FiEye size={18} />
+          <span className="text-sm font-semibold">{q.views_count || 0}</span>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function App() {
@@ -191,6 +302,17 @@ export default function App() {
       );
     } catch (error) {
       console.error("Failed to toggle like:", error);
+    }
+  };
+
+  const handleView = async (id) => {
+    try {
+      const data = await incrementQuestionView(id);
+      setQuestions((prev) =>
+        prev.map((q) => (q.id === id ? { ...q, views_count: data.views_count } : q))
+      );
+    } catch (error) {
+      console.error("Failed to increment view:", error);
     }
   };
 
@@ -390,88 +512,17 @@ export default function App() {
                       }
                       return new Date(b.createdAt) - new Date(a.createdAt);
                     })
-                    .map((q) => {
-                      const designWithAnswer = designs.find((d) => 
-                        d.questionId && d.questionId.toString().toLowerCase() === q.id.toString().toLowerCase()
-                      );
-                      // Deterministic pseudo-random values based on question ID
-                      const charCodeSum = q.id.toString().split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-                      const tagIndex = charCodeSum % 4;
-                      const tags = ["General", "Personal", "Ask Sila", "Curiosity"];
-                      const isLiked = likedQuestions.includes(q.id);
-
-                      return (
-                        <div
-                          key={q.id}
-                          className="relative w-full h-auto flex flex-col gap-3.5 p-3 sm:p-5 rounded-2xl bg-white/90 border border-slate-200 text-slate-900 dark:bg-white/5 dark:border-white/10 dark:text-white backdrop-blur-md"
-                        >
-                          {/* Header Row: User Avatar + Info (left), Tag (right) */}
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center shrink-0 overflow-hidden text-white shadow-lg border border-white/10">
-                                <span className="text-lg">👻</span>
-                              </div>
-                              <div>
-                                <p className="text-slate-800 dark:text-slate-100 font-medium">Anonymous</p>
-                                <p className="text-slate-500 dark:text-slate-400 text-xs">{timeAgo(q.createdAt)}</p>
-                              </div>
-                            </div>
-                            <div className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-cyan-400 whitespace-nowrap font-bold">
-                              <span>{tags[tagIndex]}</span>
-                              <FiTag size={12} className="stroke-[2.5]" />
-                            </div>
-                          </div>
-
-                          {/* Question Body Text */}
-                          <div className="w-full block break-words whitespace-normal mb-1">
-                            <p className="text-slate-950 dark:text-white text-base md:text-lg font-semibold break-words mt-2">
-                              "{q.question}"
-                            </p>
-                          </div>
-
-                          {/* Nested Reply Block (Facebook Comment Style) */}
-                          {designWithAnswer && (designWithAnswer.answerText || designWithAnswer.text) && (
-                            <div className="w-full p-3 sm:p-4 rounded-xl bg-slate-100 border-l-2 border-cyan-500 flex flex-col gap-1.5 mt-1 dark:bg-black/20">
-                              <div className="flex items-center gap-2">
-                                <img 
-                                  src="/sila2.jpg" 
-                                  className="w-6 h-6 rounded-full object-cover border border-cyan-500/30" 
-                                  alt="Sila" 
-                                />
-                                <p className="font-semibold text-xs text-cyan-400">
-                                  Sila replied:
-                                </p>
-                              </div>
-                              <p className="text-slate-800 dark:text-zinc-200 text-xs sm:text-sm pl-2 sm:pl-7 break-words whitespace-normal">
-                                {designWithAnswer.answerText || (designWithAnswer.text && designWithAnswer.text.includes('\nA: ') ? designWithAnswer.text.split('\nA: ')[1] : designWithAnswer.text)}
-                              </p>
-                            </div>
-                          )}
-
-                          {/* Card Footer Row: Interactions */}
-                          <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                              <button 
-                                onClick={() => handleLike(q.id)}
-                                className={`flex items-center gap-2 transition-colors duration-200 group/heart ${
-                                  isLiked 
-                                    ? "text-red-500" 
-                                    : "text-slate-600 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400"
-                                }`}
-                              >
-                                <FiHeart 
-                                  size={20} 
-                                  className={`transition-all ${isLiked ? "fill-red-500" : "group-hover/heart:fill-rose-400/20"}`} 
-                                />
-                                <span className={`text-sm md:text-base font-semibold ${isLiked ? "text-red-500" : "text-slate-700 dark:text-slate-300"}`}>
-                                  {q.likes_count || 0}
-                                </span>
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                    .map((q) => (
+                      <QuestionCard
+                        key={q.id}
+                        q={q}
+                        designs={designs}
+                        likedQuestions={likedQuestions}
+                        handleLike={handleLike}
+                        handleView={handleView}
+                        timeAgo={timeAgo}
+                      />
+                    ))}
                 </div>
               </div>
             )}
