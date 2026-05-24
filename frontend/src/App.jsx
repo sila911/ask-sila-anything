@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from "react";
+import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { FiLink2, FiLogOut, FiUser, FiHeart, FiTag, FiMessageCircle, FiEye } from "react-icons/fi";
 import { supabase } from "./lib/supabase";
 import Header from "./components/Header";
@@ -192,6 +193,8 @@ export default function App() {
       return [];
     }
   });
+
+  const [listRef] = useAutoAnimate();
 
   useEffect(() => {
     const loadData = async () => {
@@ -513,7 +516,7 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="relative z-10 w-full flex flex-col gap-4 p-2 sm:p-4 md:p-6 overflow-visible">
+                <div ref={listRef} className="relative z-10 w-full flex flex-col gap-4 p-2 sm:p-4 md:p-6 overflow-visible">
                   {[...questions]
                     .sort((a, b) => {
                       if (filterMode === "top") {
