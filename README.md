@@ -4,19 +4,24 @@ A full-stack application where users submit questions and admins create styled a
 
 ## Architecture & Features
 
-The project has been migrated from a frontend-only `localStorage` app to a robust **Full-Stack** architecture with a Laravel backend and MySQL database.
+The project is built with a **React frontend** and uses **Supabase** for a robust, real-time backend-as-a-service (BaaS) architecture.
 
 ### User Flow
 - **Submit Questions**: Users can ask anything through a simple, sleek interface.
-- **Recently Asked**: A public list of recent questions. 
+- **Recently Asked**: A public list of recent questions with real-time updates. 
 - **Auto-Answers**: Once an admin replies, the answer is displayed directly under the question in the public list.
 - **Relative Timing**: Question timestamps show as "just now", "5 mins ago", etc.
+- **Engagement**: Users can like questions they find interesting.
 
 ### Admin Flow
-- **Secured Access**: Admin login is hidden behind the `Sila` footer trigger and secured by **Laravel Sanctum**.
+- **Secured Access**: Admin login is hidden behind the `Sila` footer trigger and secured by **Supabase Auth**.
 - **Answer Creator**: Admins select a user question, write an answer, and can style a beautiful image for Instagram/Facebook stories.
-- **Persistent Storage**: All questions and designs are stored in a MySQL database.
-- **Telegram Notifications**: Real-time notifications sent to a Telegram bot whenever a new user question is received.
+- **Persistent Storage**: All questions, events, and designs are stored in **Supabase Database**.
+
+### UI & UX
+- **Modern Profile Card**: Features a beautiful cover banner and an overlapping profile avatar for a professional look.
+- **Optimized for Mobile**: Responsive layout with minimized margins and optimized font sizes for better readability on phone devices.
+- **Glassmorphism Design**: Sleek, modern UI with frosted glass effects and smooth transitions.
 
 ### Story Generator
 - Renders question (top) and answer (bottom) in one high-quality image.
@@ -30,48 +35,25 @@ The project has been migrated from a frontend-only `localStorage` app to a robus
 - **Tailwind CSS**
 - **React Icons**
 
-### Backend
-- **Laravel 12** (PHP 8.2+)
-- **MySQL**
-- **Laravel Sanctum** (API Authentication)
-- **Telegram Bot API** (Notifications)
+### Backend (BaaS)
+- **Supabase** (Authentication, Database, Real-time)
+- **PostgreSQL** (Managed by Supabase)
 
 ## Project Structure
 
 ```text
-/backend          # Laravel application
 /frontend         # Vite + React application
-setup.sql         # Database schema for manual setup
+/backend          # (Legacy) Laravel application
+supabase_setup.sql # Database schema and RLS policies for Supabase
 ```
 
 ## Setup & Installation
 
-### Backend Setup (Laravel)
+### Supabase Setup
 
-1.  Navigate to `backend/`.
-2.  Install dependencies:
-    ```bash
-    composer install
-    ```
-3.  Configure environment:
-    ```bash
-    cp .env.example .env
-    php artisan key:generate
-    ```
-4.  Configure your database in `.env` (DB_DATABASE, DB_USERNAME, etc.).
-5.  (Optional) Set your Telegram Bot credentials:
-    ```text
-    TELEGRAM_BOT_TOKEN=your_token
-    TELEGRAM_CHAT_ID=your_chat_id
-    ```
-6.  Run migrations:
-    ```bash
-    php artisan migrate
-    ```
-7.  Start the server:
-    ```bash
-    php artisan serve
-    ```
+1. Create a new project on [Supabase](https://supabase.com/).
+2. Run the SQL in `supabase_setup.sql` in your Supabase SQL Editor to set up tables and Row Level Security (RLS) policies.
+3. Obtain your `SUPABASE_URL` and `SUPABASE_ANON_KEY` from the project settings.
 
 ### Frontend Setup (Vite)
 
@@ -80,17 +62,21 @@ setup.sql         # Database schema for manual setup
     ```bash
     npm install
     ```
-3.  Start development server:
+3.  Configure environment:
+    Create a `.env` file in `frontend/` with:
+    ```text
+    VITE_SUPABASE_URL=your_supabase_url
+    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+    ```
+4.  Start development server:
     ```bash
     npm run dev
     ```
 
-The frontend is configured to proxy `/api` requests to `http://127.0.0.1:8000`.
-
 ## Admin Access
 
 1. Open the app and click `Sila` in the footer.
-2. Login with your admin credentials (default user is created via migrations/seeders).
+2. If it's your first time, you'll be prompted to set up an admin password.
 3. Workspace includes:
    - `Create`: Answer generator and persistent reply tool.
    - `Library`: Gallery of saved answers.
