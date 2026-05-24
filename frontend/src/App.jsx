@@ -51,11 +51,23 @@ function QuestionCard({ q, designs, likedQuestions, handleLike, handleView, time
   const hasViewed = useRef(false);
 
   useEffect(() => {
+    // Check if already viewed in this browser
+    const viewedQuestions = JSON.parse(localStorage.getItem('viewedQuestions') || '[]');
+    if (viewedQuestions.includes(q.id)) {
+      hasViewed.current = true;
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting && !hasViewed.current) {
           hasViewed.current = true;
           handleView(q.id);
+          
+          // Save to localStorage so it persists across refreshes
+          const currentViewed = JSON.parse(localStorage.getItem('viewedQuestions') || '[]');
+          if (!currentViewed.includes(q.id)) {
+            localStorage.setItem('viewedQuestions', JSON.stringify([...currentViewed, q.id]));
+          }
         }
       },
       { threshold: 0.5 }
