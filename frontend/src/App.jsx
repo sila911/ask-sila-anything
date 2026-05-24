@@ -282,12 +282,12 @@ export default function App() {
     <div className="min-h-screen flex flex-col text-[color:var(--app-text)]">
       <Header />
 
-      <main className="flex-1 flex items-center justify-center px-4 pb-6">
+      <main className="flex-1 flex items-center justify-center px-2 sm:px-4 pb-6">
         {viewMode === "user" && (
-          <div className="flex flex-col gap-8 w-[92%] max-w-2xl">
+          <div className="flex flex-col gap-8 w-full max-w-2xl">
             <div className="glass-shell glass-shell--3d w-full rounded-[2rem] overflow-hidden">
               <CoverBanner />
-              <div className="p-6 sm:p-8 pt-0 sm:pt-0">
+              <div className="p-4 sm:p-8 pt-0 sm:pt-0">
                 <Profile />
                 <QuestionForm
                   onSuccess={handleSuccess}
@@ -297,7 +297,7 @@ export default function App() {
             </div>
 
             {questions.length > 0 && (
-              <div className="w-full md:max-w-2xl mx-auto flex flex-col gap-4 p-3.5 sm:p-5 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md overflow-visible">
+              <div className="w-full md:max-w-2xl mx-auto flex flex-col gap-4 p-2 sm:p-5 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md overflow-visible">
                 <div className="relative z-50 w-full flex items-center justify-between px-1 mb-6">
                   <h2 className="text-xl font-bold flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
@@ -403,7 +403,7 @@ export default function App() {
                       return (
                         <div
                           key={q.id}
-                          className="relative w-full h-auto flex flex-col gap-3.5 p-4 sm:p-5 rounded-2xl bg-white/90 border border-slate-200 text-slate-900 dark:bg-white/5 dark:border-white/10 dark:text-white backdrop-blur-md"
+                          className="relative w-full h-auto flex flex-col gap-3.5 p-3 sm:p-5 rounded-2xl bg-white/90 border border-slate-200 text-slate-900 dark:bg-white/5 dark:border-white/10 dark:text-white backdrop-blur-md"
                         >
                           {/* Header Row: User Avatar + Info (left), Tag (right) */}
                           <div className="flex items-center justify-between mb-3">
@@ -424,7 +424,7 @@ export default function App() {
 
                           {/* Question Body Text */}
                           <div className="w-full block break-words whitespace-normal mb-1">
-                            <p className="text-slate-950 dark:text-white text-sm md:text-base font-semibold break-words mt-2">
+                            <p className="text-slate-950 dark:text-white text-base md:text-lg font-semibold break-words mt-2">
                               "{q.question}"
                             </p>
                           </div>
@@ -453,17 +453,17 @@ export default function App() {
                             <div className="flex items-center gap-4">
                               <button 
                                 onClick={() => handleLike(q.id)}
-                                className={`flex items-center gap-1.5 transition-colors duration-200 group/heart ${
+                                className={`flex items-center gap-2 transition-colors duration-200 group/heart ${
                                   isLiked 
                                     ? "text-red-500" 
                                     : "text-slate-600 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400"
                                 }`}
                               >
                                 <FiHeart 
-                                  size={14} 
+                                  size={20} 
                                   className={`transition-all ${isLiked ? "fill-red-500" : "group-hover/heart:fill-rose-400/20"}`} 
                                 />
-                                <span className={`text-xs md:text-sm font-medium ${isLiked ? "text-red-500" : "text-slate-700 dark:text-slate-300"}`}>
+                                <span className={`text-sm md:text-base font-semibold ${isLiked ? "text-red-500" : "text-slate-700 dark:text-slate-300"}`}>
                                   {q.likes_count || 0}
                                 </span>
                               </button>
