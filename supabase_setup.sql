@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS questions (
     question TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'pending',
     likes_count INTEGER DEFAULT 0,
+    views_count INTEGER DEFAULT 0,
     "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "answeredAt" TIMESTAMP WITH TIME ZONE
 );
