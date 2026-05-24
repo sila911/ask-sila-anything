@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { FiLink2, FiLogOut, FiUser, FiHeart, FiTag, FiMessageCircle } from "react-icons/fi";
 import { supabase } from "./lib/supabase";
 import Header from "./components/Header";
+import CoverBanner from "./components/CoverBanner";
 import Profile from "./components/Profile";
 import QuestionForm from "./components/QuestionForm";
 import NavTabs from "./components/NavTabs";
@@ -284,12 +285,15 @@ export default function App() {
       <main className="flex-1 flex items-center justify-center px-4 pb-6">
         {viewMode === "user" && (
           <div className="flex flex-col gap-8 w-[92%] max-w-2xl">
-            <div className="glass-shell glass-shell--3d w-full rounded-[2rem] p-6 sm:p-8">
-              <Profile />
-              <QuestionForm
-                onSuccess={handleSuccess}
-                onSubmitQuestion={submitUserQuestion}
-              />
+            <div className="glass-shell glass-shell--3d w-full rounded-[2rem] overflow-hidden">
+              <CoverBanner />
+              <div className="p-6 sm:p-8 pt-0 sm:pt-0">
+                <Profile />
+                <QuestionForm
+                  onSuccess={handleSuccess}
+                  onSubmitQuestion={submitUserQuestion}
+                />
+              </div>
             </div>
 
             {questions.length > 0 && (
