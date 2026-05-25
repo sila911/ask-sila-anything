@@ -30,6 +30,7 @@ import {
   saveDesigns,
   saveQuestions,
   toggleQuestionVisibility,
+  deleteDesign,
 } from "./lib/storage";
 import {
   createEncryptedAdminToken,
@@ -655,8 +656,7 @@ export default function App() {
 
   const removeDesign = async (id) => {
     try {
-      const next = designs.filter((design) => design.id !== id);
-      const persisted = await saveDesigns(next);
+      const persisted = await deleteDesign(id);
       setDesigns(persisted);
       trackEvent("design_deleted");
       showAdminToast("Deleted", "Answer card removed from library.", "info");

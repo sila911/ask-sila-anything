@@ -62,10 +62,12 @@ DROP POLICY IF EXISTS "Public Insert Access" ON events;
 CREATE POLICY "Public Read Access" ON questions FOR SELECT USING (true);
 CREATE POLICY "Public Insert Access" ON questions FOR INSERT WITH CHECK (true);
 CREATE POLICY "Public Update Access" ON questions FOR UPDATE USING (true);
+CREATE POLICY "Public Delete Access" ON questions FOR DELETE USING (true);
 
 CREATE POLICY "Public Read Access" ON designs FOR SELECT USING (true);
 CREATE POLICY "Public Insert Access" ON designs FOR INSERT WITH CHECK (true);
 CREATE POLICY "Public Update Access" ON designs FOR UPDATE USING (true);
+CREATE POLICY "Public Delete Access" ON designs FOR DELETE USING (true);
 
 CREATE POLICY "Public Read Access" ON events FOR SELECT USING (true);
 CREATE POLICY "Public Insert Access" ON events FOR INSERT WITH CHECK (true);
