@@ -144,6 +144,18 @@ export async function unlikeQuestion(id) {
   return data;
 }
 
+export async function toggleQuestionVisibility(id, isHidden) {
+  const { data, error } = await supabase
+    .from('questions')
+    .update({ is_hidden: isHidden })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 export async function saveQuestions(questions) {
   const { error } = await supabase
     .from('questions')

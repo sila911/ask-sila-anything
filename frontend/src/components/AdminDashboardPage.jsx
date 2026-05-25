@@ -1,4 +1,4 @@
-import { FiClock, FiCopy, FiDownload, FiHelpCircle, FiImage, FiLayout, FiShare2 } from 'react-icons/fi'
+import { FiClock, FiCopy, FiDownload, FiHelpCircle, FiImage, FiLayout, FiShare2, FiEye, FiEyeOff } from 'react-icons/fi'
 
 function groupEventsByDay(events) {
   const map = new Map()
@@ -24,7 +24,7 @@ function getTopFonts(designs) {
     .slice(0, 4)
 }
 
-export default function AdminDashboardPage({ designs, events, questions = [] }) {
+export default function AdminDashboardPage({ designs, events, questions = [], onToggleVisibility }) {
   const total = designs.length
   const rendered = designs.filter((d) => Boolean(d.imageDataUrl)).length
   const totalQuestions = questions.length
@@ -38,26 +38,106 @@ export default function AdminDashboardPage({ designs, events, questions = [] }) 
   const topFonts = getTopFonts(designs)
   const recentEvents = [...events].slice(-8).reverse()
 
-  return (
-    <section>
-      <h2 className="text-xl font-bold">Admin Dashboard</h2>
-      <p className="text-sm text-[color:var(--app-muted)] mt-1 mb-4">
-        Frontend analytics from saved local data and user actions.
-      </p>
+  const sortedQuestions = [...questions].sort((a, b) => 
+    new Date(b.createdAt) - new Date(a.createdAt)
+  )
 
-      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-5">
-        <Metric title="Questions" value={totalQuestions} />
-        <Metric title="Pending" value={pendingQuestions} />
-        <Metric title="Designs" value={total} />
-        <Metric title="Rendered" value={rendered} />
-        <Metric title="Copies" value={totalCopies} />
-        <Metric title="Downloads" value={totalDownloads} />
-        <Metric
-          title="Share Clicks"
-          value={totalShareClicks}
-          className="col-start-2 sm:col-start-2 sm:col-span-2 lg:col-start-auto lg:col-span-1"
-          centered
-        />
+  return (
+    <section className="space-y-6">
+      <div>
+        <h2 className="text-xl font-bold">Admin Dashboard</h2>
+        <p className="text-sm text-[color:var(--app-muted)] mt-1 mb-4">
+          Frontend analytics from saved local data and user actions.
+        </p>
+
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-5">
+          <Metric title="Questions" value={totalQuestions} />
+          <Metric title="Pending" value={pendingQuestions} />
+          <Metric title="Designs" value={total} />
+          <Metric title="Rendered" value={rendered} />
+          <Metric title="Copies" value={totalCopies} />
+          <Metric title="Downloads" value={totalDownloads} />
+          <Metric
+            title="Share Clicks"
+            value={totalShareClicks}
+            className="col-start-2 sm:col-start-2 sm:col-span-2 lg:col-start-auto lg:col-span-1"
+            centered
+          />
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-[color:var(--card-border)] p-3 sm:p-5 bg-white/45 dark:bg-slate-900/30">
+        <h3 className="font-semibold mb-4 flex items-center gap-2">
+          <FiHelpCircle className="text-cyan-500" />
+          Manage Questions Visibility
+        </h3>
+        
+        <div className="overflow-hidden rounded-xl border border-[color:var(--card-border)] bg-white/50 dark:bg-black/20">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-[color:var(--app-muted)] border-b border-[color:var(--card-border)] bg-slate-50/50 dark:bg-white/5">
+                  <th className="px-4 py-3 font-medium">Question</th>
+                  <th className="px-4 py-3 font-medium w-32">Status</th>
+                  <th className="px-4 py-3 font-medium w-40 text-center">Visibility</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[color:var(--card-border)]">
+                {sortedQuestions.length > 0 ? sortedQuestions.map((q) => (
+                  <tr key={q.id} className="hover:bg-slate-50/30 dark:hover:bg-white/5 transition-colors">
+                    <td className="px-4 py-3">
+                      <p className="line-clamp-2 text-slate-700 dark:text-slate-200" title={q.question}>
+                        {q.question}
+                      </p>
+                      <p className="text-[10px] text-[color:var(--app-muted)] mt-1">
+                        {new Date(q.createdAt).toLocaleString()}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wider ${
+                        q.status === 'answered' 
+                          ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400' 
+                          : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
+                      }`}>
+                        {q.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex justify-center">
+                        <button
+                          onClick={() => onToggleVisibility(q.id, !q.is_hidden)}
+                          className={`relative inline-flex h-7 w-14 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${
+                            !q.is_hidden ? 'bg-cyan-600' : 'bg-slate-300 dark:bg-slate-700'
+                          }`}
+                          title={q.is_hidden ? "Show Question" : "Hide Question"}
+                        >
+                          <span className="sr-only">Toggle Visibility</span>
+                          <span
+                            className={`pointer-events-none flex h-5 w-5 transform items-center justify-center rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                              !q.is_hidden ? 'translate-x-8' : 'translate-x-1'
+                            }`}
+                          >
+                            {!q.is_hidden ? (
+                              <FiEye size={12} className="text-cyan-700" />
+                            ) : (
+                              <FiEyeOff size={12} className="text-slate-400" />
+                            )}
+                          </span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td colSpan={3} className="px-4 py-10 text-center text-[color:var(--app-muted)]">
+                      No questions found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-3 sm:gap-4">

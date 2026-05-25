@@ -29,6 +29,7 @@ import {
   markQuestionAnswered,
   saveDesigns,
   saveQuestions,
+  toggleQuestionVisibility,
 } from "./lib/storage";
 import {
   createEncryptedAdminToken,
@@ -139,10 +140,24 @@ function QuestionCard({ q, designs, likedQuestions, handleLike, handleView, time
     e.preventDefault();
     e.stopPropagation();
     const url = `${window.location.origin}/q/${q.id}`;
-    navigator.clipboard.writeText(url).then(() => {
-      setShowCopySuccess(true);
-      setTimeout(() => setShowCopySuccess(false), 2000);
-    });
+    const shareData = {
+      title: 'Ask Sila',
+      text: `Check out this question: "${q.question}"`,
+      url: url,
+    };
+
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      navigator.share(shareData).catch((err) => {
+        if (err.name !== 'AbortError') {
+          console.error('Error sharing:', err);
+        }
+      });
+    } else {
+      navigator.clipboard.writeText(url).then(() => {
+        setShowCopySuccess(true);
+        setTimeout(() => setShowCopySuccess(false), 2000);
+      });
+    }
   };
 
   return (
@@ -540,6 +555,14 @@ export default function App() {
       const persisted = await addQuestion(questionText);
       setQuestions(persisted);
       trackEvent("question_submitted");
+      
+      // Send Telegram notification
+      fetch('/api/telegram-send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: questionText })
+      }).catch(err => console.error("Failed to send Telegram notification:", err));
+
     } catch (error) {
       console.error(error);
       throw error; // Re-throw to be handled by the form component's try-catch
@@ -592,6 +615,29 @@ export default function App() {
       );
     } catch (error) {
       console.error("Failed to increment view:", error);
+    }
+  };
+
+  const handleToggleVisibility = async (id, isHidden) => {
+    // Optimistic Update
+    setQuestions((prev) =>
+      prev.map((q) => (q.id === id ? { ...q, is_hidden: isHidden } : q))
+    );
+
+    try {
+      await toggleQuestionVisibility(id, isHidden);
+      showAdminToast(
+        isHidden ? "Question Hidden" : "Question Visible",
+        `Visibility updated successfully.`,
+        "info"
+      );
+    } catch (error) {
+      console.error("Failed to toggle visibility:", error);
+      // Revert optimistic update
+      setQuestions((prev) =>
+        prev.map((q) => (q.id === id ? { ...q, is_hidden: !isHidden } : q))
+      );
+      showAdminToast("Update failed", error.message, "error");
     }
   };
 
@@ -674,6 +720,10 @@ export default function App() {
     return { ok: true };
   };
 
+  const publicQuestions = useMemo(() => {
+    return questions.filter((q) => !q.is_hidden);
+  }, [questions]);
+
   return (
     <div className="min-h-screen flex flex-col text-[color:var(--app-text)]">
       <Header />
@@ -683,7 +733,7 @@ export default function App() {
           <Route path="/" element={
             viewMode === "user" ? (
               <HomePage 
-                questions={questions}
+                questions={publicQuestions}
                 designs={designs}
                 likedQuestions={likedQuestions}
                 handleLike={handleLike}
@@ -758,6 +808,7 @@ export default function App() {
                       designs={designs}
                       events={events}
                       questions={questions}
+                      onToggleVisibility={handleToggleVisibility}
                     />
                   )}
                 </div>
@@ -767,7 +818,7 @@ export default function App() {
           
           <Route path="/q/:id" element={
             <SingleQuestionPage 
-              questions={questions}
+              questions={publicQuestions}
               designs={designs}
               likedQuestions={likedQuestions}
               handleLike={handleLike}
