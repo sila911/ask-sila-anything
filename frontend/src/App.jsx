@@ -29,6 +29,7 @@ import {
   markQuestionAnswered,
   saveDesigns,
   saveQuestions,
+  toggleQuestionVisibility,
 } from "./lib/storage";
 import {
   createEncryptedAdminToken,
@@ -617,6 +618,29 @@ export default function App() {
     }
   };
 
+  const handleToggleVisibility = async (id, isHidden) => {
+    // Optimistic Update
+    setQuestions((prev) =>
+      prev.map((q) => (q.id === id ? { ...q, is_hidden: isHidden } : q))
+    );
+
+    try {
+      await toggleQuestionVisibility(id, isHidden);
+      showAdminToast(
+        isHidden ? "Question Hidden" : "Question Visible",
+        `Visibility updated successfully.`,
+        "info"
+      );
+    } catch (error) {
+      console.error("Failed to toggle visibility:", error);
+      // Revert optimistic update
+      setQuestions((prev) =>
+        prev.map((q) => (q.id === id ? { ...q, is_hidden: !isHidden } : q))
+      );
+      showAdminToast("Update failed", error.message, "error");
+    }
+  };
+
   const markAnswered = async (questionId) => {
     const next = markQuestionAnswered(questions, questionId);
     const persisted = await saveQuestions(next);
@@ -696,6 +720,10 @@ export default function App() {
     return { ok: true };
   };
 
+  const publicQuestions = useMemo(() => {
+    return questions.filter((q) => !q.is_hidden);
+  }, [questions]);
+
   return (
     <div className="min-h-screen flex flex-col text-[color:var(--app-text)]">
       <Header />
@@ -705,7 +733,7 @@ export default function App() {
           <Route path="/" element={
             viewMode === "user" ? (
               <HomePage 
-                questions={questions}
+                questions={publicQuestions}
                 designs={designs}
                 likedQuestions={likedQuestions}
                 handleLike={handleLike}
@@ -780,6 +808,7 @@ export default function App() {
                       designs={designs}
                       events={events}
                       questions={questions}
+                      onToggleVisibility={handleToggleVisibility}
                     />
                   )}
                 </div>
@@ -789,7 +818,7 @@ export default function App() {
           
           <Route path="/q/:id" element={
             <SingleQuestionPage 
-              questions={questions}
+              questions={publicQuestions}
               designs={designs}
               likedQuestions={likedQuestions}
               handleLike={handleLike}
