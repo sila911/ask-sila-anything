@@ -139,10 +139,24 @@ function QuestionCard({ q, designs, likedQuestions, handleLike, handleView, time
     e.preventDefault();
     e.stopPropagation();
     const url = `${window.location.origin}/q/${q.id}`;
-    navigator.clipboard.writeText(url).then(() => {
-      setShowCopySuccess(true);
-      setTimeout(() => setShowCopySuccess(false), 2000);
-    });
+    const shareData = {
+      title: 'Ask Sila',
+      text: `Check out this question: "${q.question}"`,
+      url: url,
+    };
+
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      navigator.share(shareData).catch((err) => {
+        if (err.name !== 'AbortError') {
+          console.error('Error sharing:', err);
+        }
+      });
+    } else {
+      navigator.clipboard.writeText(url).then(() => {
+        setShowCopySuccess(true);
+        setTimeout(() => setShowCopySuccess(false), 2000);
+      });
+    }
   };
 
   return (
@@ -540,6 +554,14 @@ export default function App() {
       const persisted = await addQuestion(questionText);
       setQuestions(persisted);
       trackEvent("question_submitted");
+      
+      // Send Telegram notification
+      fetch('/api/telegram-send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: questionText })
+      }).catch(err => console.error("Failed to send Telegram notification:", err));
+
     } catch (error) {
       console.error(error);
       throw error; // Re-throw to be handled by the form component's try-catch
