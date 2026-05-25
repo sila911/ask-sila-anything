@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useAutoAnimate } from '@formkit/auto-animate/react';
-import { FiLink2, FiLogOut, FiUser, FiHeart, FiTag, FiMessageCircle, FiEye } from "react-icons/fi";
+import { FiLink2, FiLogOut, FiUser, FiHeart, FiTag, FiMessageCircle, FiEye, FiShare2, FiCheck, FiArrowLeft, FiArrowRight } from "react-icons/fi";
+import { Routes, Route, useParams, useNavigate, Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "./lib/supabase";
 import Header from "./components/Header";
 import CoverBanner from "./components/CoverBanner";
@@ -47,9 +49,52 @@ function timeAgo(dateString) {
   return `${Math.floor(diffInSeconds / 86400)} days ago`;
 }
 
-function QuestionCard({ q, designs, likedQuestions, handleLike, handleView, timeAgo }) {
+function QuestionSEO({ question, answer }) {
+  const title = question ? `"${question}" - Ask Sila` : "Ask Sila Story Studio";
+  const description = answer 
+    ? `Sila's answer: ${answer.substring(0, 150)}...` 
+    : question 
+      ? `Check out this question: "${question.substring(0, 150)}..."`
+      : "Ask Sila anything and get styled answers for social media stories.";
+  
+  const structuredData = question ? {
+    "@context": "https://schema.org",
+    "@type": "QAPage",
+    "mainEntity": {
+      "@type": "Question",
+      "name": question,
+      "text": question,
+      "answerCount": answer ? 1 : 0,
+      "acceptedAnswer": answer ? {
+        "@type": "Answer",
+        "text": answer,
+        "upvoteCount": 1,
+        "url": window.location.href
+      } : undefined
+    }
+  } : null;
+
+  return (
+    <Helmet>
+      <title>{title}</title>
+      <meta name="description" content={description} />
+      <meta property="og:title" content={title} />
+      <meta property="og:description" content={description} />
+      <meta property="og:type" content="article" />
+      <meta property="twitter:card" content="summary_large_image" />
+      {structuredData && (
+        <script type="application/ld+json">
+          {JSON.stringify(structuredData)}
+        </script>
+      )}
+    </Helmet>
+  );
+}
+
+function QuestionCard({ q, designs, likedQuestions, handleLike, handleView, timeAgo, isSingleView = false }) {
   const cardRef = useRef(null);
   const hasViewed = useRef(false);
+  const [showCopySuccess, setShowCopySuccess] = useState(false);
 
   useEffect(() => {
     // Check if already viewed in this browser
@@ -90,12 +135,24 @@ function QuestionCard({ q, designs, likedQuestions, handleLike, handleView, time
   const tags = ["General", "Personal", "Ask Sila", "Curiosity"];
   const isLiked = likedQuestions.includes(q.id);
 
+  const handleShare = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const url = `${window.location.origin}/q/${q.id}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setShowCopySuccess(true);
+      setTimeout(() => setShowCopySuccess(false), 2000);
+    });
+  };
+
   return (
     <div
       ref={cardRef}
       key={q.id}
-      className="relative w-full h-auto flex flex-col gap-3.5 p-3 sm:p-5 rounded-2xl bg-white/90 border border-slate-200 text-slate-900 dark:bg-white/5 dark:border-white/10 dark:text-white backdrop-blur-md"
+      className={`relative w-full h-auto flex flex-col gap-3.5 p-3 sm:p-5 rounded-2xl bg-white/90 border border-slate-200 text-slate-900 dark:bg-white/5 dark:border-white/10 dark:text-white backdrop-blur-md ${isSingleView ? 'shadow-2xl' : ''}`}
     >
+      {isSingleView && <QuestionSEO question={q.question} answer={designWithAnswer?.answerText || designWithAnswer?.text} />}
+      
       {/* Header Row: User Avatar + Info (left), Tag (right) */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
@@ -107,9 +164,20 @@ function QuestionCard({ q, designs, likedQuestions, handleLike, handleView, time
             <p className="text-slate-500 dark:text-slate-400 text-xs">{timeAgo(q.createdAt)}</p>
           </div>
         </div>
-        <div className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-cyan-400 whitespace-nowrap font-bold">
-          <span>{tags[tagIndex]}</span>
-          <FiTag size={12} className="stroke-[2.5]" />
+        <div className="flex items-center gap-2">
+          {!isSingleView && (
+            <Link 
+              to={`/q/${q.id}`}
+              className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 transition-colors text-slate-500 dark:text-slate-400"
+              title="View individual page"
+            >
+              <FiArrowRight size={16} />
+            </Link>
+          )}
+          <div className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-cyan-400 whitespace-nowrap font-bold">
+            <span>{tags[tagIndex]}</span>
+            <FiTag size={12} className="stroke-[2.5]" />
+          </div>
         </div>
       </div>
 
@@ -158,6 +226,16 @@ function QuestionCard({ q, designs, likedQuestions, handleLike, handleView, time
               {q.likes_count || 0}
             </span>
           </button>
+          
+          <button 
+            onClick={handleShare}
+            className="flex items-center gap-2 text-slate-600 hover:text-cyan-500 dark:text-slate-400 dark:hover:text-cyan-400 transition-colors group/share"
+          >
+            {showCopySuccess ? <FiCheck size={18} className="text-green-500" /> : <FiShare2 size={18} />}
+            <span className="text-sm md:text-base font-semibold">
+              {showCopySuccess ? "Copied!" : "Share"}
+            </span>
+          </button>
         </div>
 
         <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
@@ -165,6 +243,190 @@ function QuestionCard({ q, designs, likedQuestions, handleLike, handleView, time
           <span className="text-sm font-semibold">{q.views_count || 0}</span>
         </div>
       </div>
+    </div>
+  );
+}
+
+function SingleQuestionPage({ questions, designs, likedQuestions, handleLike, handleView, timeAgo }) {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const question = questions.find(q => q.id.toString() === id);
+
+  if (!question && questions.length > 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-4">
+        <h2 className="text-2xl font-bold">Question not found</h2>
+        <button 
+          onClick={() => navigate('/')}
+          className="px-6 py-2 bg-cyan-500 text-white rounded-xl font-bold"
+        >
+          Go Back Home
+        </button>
+      </div>
+    );
+  }
+
+  if (!question) return <div className="py-20 text-center">Loading...</div>;
+
+  return (
+    <div className="flex flex-col gap-6 w-full max-w-2xl mx-auto py-8">
+      <button 
+        onClick={() => navigate('/')}
+        className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-cyan-500 transition-colors font-medium self-start px-2"
+      >
+        <FiArrowLeft /> Back to Feed
+      </button>
+      
+      <QuestionCard 
+        q={question}
+        designs={designs}
+        likedQuestions={likedQuestions}
+        handleLike={handleLike}
+        handleView={handleView}
+        timeAgo={timeAgo}
+        isSingleView={true}
+      />
+
+      <div className="mt-8 p-6 rounded-[2rem] bg-cyan-500/10 border border-cyan-500/20 backdrop-blur-md">
+        <h3 className="text-xl font-bold text-cyan-400 mb-2">Want to ask something too?</h3>
+        <p className="text-slate-600 dark:text-slate-300 mb-4">You can ask Sila anything anonymously and get a styled answer for your stories!</p>
+        <button 
+          onClick={() => navigate('/')}
+          className="px-6 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-xl font-bold transition-all"
+        >
+          Ask a Question
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function HomePage({ 
+  questions, designs, likedQuestions, handleLike, handleView, timeAgo, 
+  handleSuccess, submitUserQuestion, filterMode, setFilterMode, isFilterOpen, setIsFilterOpen, listRef 
+}) {
+  return (
+    <div className="flex flex-col gap-8 w-full max-w-2xl">
+      <QuestionSEO />
+      <div className="glass-shell glass-shell--3d w-full rounded-[2rem] overflow-hidden">
+        <CoverBanner />
+        <div className="p-4 sm:p-8 pt-0 sm:pt-0">
+          <Profile />
+          <QuestionForm
+            onSuccess={handleSuccess}
+            onSubmitQuestion={submitUserQuestion}
+          />
+        </div>
+      </div>
+
+      {questions.length > 0 && (
+        <div className="w-full md:max-w-2xl mx-auto flex flex-col gap-4 p-2 sm:p-5 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md overflow-visible">
+          <div className="relative z-50 w-full flex items-center justify-between px-1 mb-6">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
+              Recently Asked
+            </h2>
+            
+            <div className="relative inline-block text-left">
+              <button
+                type="button"
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className="inline-flex items-center justify-between gap-2 bg-slate-100 text-slate-800 dark:bg-white/5 dark:text-slate-200 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs font-medium backdrop-blur-md transition-all duration-200"
+              >
+                <span>
+                  {filterMode === "all" && "All"}
+                  {filterMode === "top" && "Top React"}
+                  {filterMode === "oldest" && "Oldest"}
+                </span>
+                <svg
+                  className={`w-3 h-3 transition-transform duration-200 ${isFilterOpen ? "rotate-180" : ""}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {isFilterOpen && (
+                <>
+                  {/* Invisible Backdrop to close menu */}
+                  <div 
+                    className="fixed inset-0 z-[90]" 
+                    onClick={() => setIsFilterOpen(false)}
+                  ></div>
+                  
+                  <div className="absolute right-0 top-full mt-1.5 w-36 rounded-xl bg-[#1e293b]/95 dark:bg-black/90 border border-white/10 shadow-2xl p-1 flex flex-col gap-0.5 z-[100] animate-in fade-in slide-in-from-top-2 duration-150">
+                    <button
+                      onClick={() => {
+                        setFilterMode("all");
+                        setIsFilterOpen(false);
+                      }}
+                      className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-all font-medium ${
+                        filterMode === "all" 
+                          ? "bg-slate-200 text-slate-900 dark:bg-white/10 dark:text-white" 
+                          : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
+                      }`}
+                    >
+                      All
+                    </button>
+                    <button
+                      onClick={() => {
+                        setFilterMode("top");
+                        setIsFilterOpen(false);
+                      }}
+                      className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-all font-medium ${
+                        filterMode === "top" 
+                          ? "bg-slate-200 text-slate-900 dark:bg-white/10 dark:text-white" 
+                          : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
+                      }`}
+                    >
+                      Top React
+                    </button>
+                    <button
+                      onClick={() => {
+                        setFilterMode("oldest");
+                        setIsFilterOpen(false);
+                      }}
+                      className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-all font-medium ${
+                        filterMode === "oldest" 
+                          ? "bg-slate-200 text-slate-900 dark:bg-white/10 dark:text-white" 
+                          : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
+                      }`}
+                    >
+                      Oldest
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div ref={listRef} className="relative z-10 w-full flex flex-col gap-4 p-2 sm:p-4 md:p-6 overflow-visible">
+            {[...questions]
+              .sort((a, b) => {
+                if (filterMode === "top") {
+                  return (b.likes_count || 0) - (a.likes_count || 0);
+                }
+                if (filterMode === "oldest") {
+                  return new Date(a.createdAt) - new Date(b.createdAt);
+                }
+                return new Date(b.createdAt) - new Date(a.createdAt);
+              })
+              .map((q) => (
+                <QuestionCard
+                  key={q.id}
+                  q={q}
+                  designs={designs}
+                  likedQuestions={likedQuestions}
+                  handleLike={handleLike}
+                  handleView={handleView}
+                  timeAgo={timeAgo}
+                />
+              ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -195,6 +457,7 @@ export default function App() {
   });
 
   const [listRef] = useAutoAnimate();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadData = async () => {
@@ -221,6 +484,7 @@ export default function App() {
       } else if (event === 'SIGNED_OUT') {
         setIsAdminUnlocked(false);
         setViewMode("user");
+        navigate('/');
       }
     });
 
@@ -400,6 +664,7 @@ export default function App() {
     setActiveTab("admin");
     setNeedsTokenValidation(false);
     setAdminToken("");
+    navigate('/'); // Refresh to clear search params if any
     trackEvent("admin_login", { fromToken: needsTokenValidation });
     showAdminToast(
       "Admin unlocked",
@@ -409,204 +674,108 @@ export default function App() {
     return { ok: true };
   };
 
-  const createEncryptedAdminLink = async () => {
-    // This feature is now deprecated as we use session tokens, 
-    // but I'll keep the button for now or it can be removed later.
-    showAdminToast("Feature disabled", "Session tokens are handled by the server.", "info");
-  };
-
   return (
     <div className="min-h-screen flex flex-col text-[color:var(--app-text)]">
       <Header />
 
       <main className="flex-1 flex items-center justify-center px-2 sm:px-4 pb-6">
-        {viewMode === "user" && (
-          <div className="flex flex-col gap-8 w-full max-w-2xl">
-            <div className="glass-shell glass-shell--3d w-full rounded-[2rem] overflow-hidden">
-              <CoverBanner />
-              <div className="p-4 sm:p-8 pt-0 sm:pt-0">
-                <Profile />
-                <QuestionForm
-                  onSuccess={handleSuccess}
-                  onSubmitQuestion={submitUserQuestion}
-                />
-              </div>
-            </div>
-
-            {questions.length > 0 && (
-              <div className="w-full md:max-w-2xl mx-auto flex flex-col gap-4 p-2 sm:p-5 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md overflow-visible">
-                <div className="relative z-50 w-full flex items-center justify-between px-1 mb-6">
-                  <h2 className="text-xl font-bold flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
-                    Recently Asked
-                  </h2>
-                  
-                  <div className="relative inline-block text-left">
-                    <button
-                      type="button"
-                      onClick={() => setIsFilterOpen(!isFilterOpen)}
-                      className="inline-flex items-center justify-between gap-2 bg-slate-100 text-slate-800 dark:bg-white/5 dark:text-slate-200 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs font-medium backdrop-blur-md transition-all duration-200"
-                    >
-                      <span>
-                        {filterMode === "all" && "All"}
-                        {filterMode === "top" && "Top React"}
-                        {filterMode === "oldest" && "Oldest"}
-                      </span>
-                      <svg
-                        className={`w-3 h-3 transition-transform duration-200 ${isFilterOpen ? "rotate-180" : ""}`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-
-                    {isFilterOpen && (
-                      <>
-                        {/* Invisible Backdrop to close menu */}
-                        <div 
-                          className="fixed inset-0 z-[90]" 
-                          onClick={() => setIsFilterOpen(false)}
-                        ></div>
-                        
-                        <div className="absolute right-0 top-full mt-1.5 w-36 rounded-xl bg-[#1e293b]/95 dark:bg-black/90 border border-white/10 shadow-2xl p-1 flex flex-col gap-0.5 z-[100] animate-in fade-in slide-in-from-top-2 duration-150">
-                          <button
-                            onClick={() => {
-                              setFilterMode("all");
-                              setIsFilterOpen(false);
-                            }}
-                            className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-all font-medium ${
-                              filterMode === "all" 
-                                ? "bg-slate-200 text-slate-900 dark:bg-white/10 dark:text-white" 
-                                : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
-                            }`}
-                          >
-                            All
-                          </button>
-                          <button
-                            onClick={() => {
-                              setFilterMode("top");
-                              setIsFilterOpen(false);
-                            }}
-                            className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-all font-medium ${
-                              filterMode === "top" 
-                                ? "bg-slate-200 text-slate-900 dark:bg-white/10 dark:text-white" 
-                                : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
-                            }`}
-                          >
-                            Top React
-                          </button>
-                          <button
-                            onClick={() => {
-                              setFilterMode("oldest");
-                              setIsFilterOpen(false);
-                            }}
-                            className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-all font-medium ${
-                              filterMode === "oldest" 
-                                ? "bg-slate-200 text-slate-900 dark:bg-white/10 dark:text-white" 
-                                : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
-                            }`}
-                          >
-                            Oldest
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                <div ref={listRef} className="relative z-10 w-full flex flex-col gap-4 p-2 sm:p-4 md:p-6 overflow-visible">
-                  {[...questions]
-                    .sort((a, b) => {
-                      if (filterMode === "top") {
-                        return (b.likes_count || 0) - (a.likes_count || 0);
-                      }
-                      if (filterMode === "oldest") {
-                        return new Date(a.createdAt) - new Date(b.createdAt);
-                      }
-                      return new Date(b.createdAt) - new Date(a.createdAt);
-                    })
-                    .map((q) => (
-                      <QuestionCard
-                        key={q.id}
-                        q={q}
-                        designs={designs}
-                        likedQuestions={likedQuestions}
-                        handleLike={handleLike}
-                        handleView={handleView}
-                        timeAgo={timeAgo}
-                      />
-                    ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {viewMode === "admin" && isAdminUnlocked && (
-          <div className="glass-shell glass-shell--3d w-[95%] max-w-6xl rounded-[2rem] p-5 sm:p-8">
-            <div className="mb-4 flex items-center gap-2 flex-nowrap">
-              <NavTabs
-                activeTab={activeTab}
-                onChange={setActiveTab}
-                showAdminTab={true}
-                className="flex-1 min-w-0"
-              />
-
-              <div className="inline-flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await logoutAdmin();
-                    setIsAdminUnlocked(false);
-                    setSessionPassword("");
-                    setViewMode("user");
-                    setActiveTab("create");
-                  }}
-                  className="inline-flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl border border-rose-300 text-rose-700 dark:text-rose-300"
-                  title="Logout admin"
-                  aria-label="Logout admin"
-                >
-                  <FiLogOut size={16} />
-                </button>
-              </div>
-            </div>
-
-            {linkMessage && (
-              <p className="mb-3 text-sm text-[color:var(--app-muted)]">
-                {linkMessage}
-              </p>
-            )}
-
-            {activeTab === "create" && (
-              <CreateDesignPage
-                seedDesign={seedDesign}
-                onSave={addDesign}
-                onEvent={trackEvent}
-                onNotify={showAdminToast}
+        <Routes>
+          <Route path="/" element={
+            viewMode === "user" ? (
+              <HomePage 
                 questions={questions}
-                onQuestionAnswered={markAnswered}
-              />
-            )}
-
-            {activeTab === "library" && (
-              <LibraryPage
-                designs={orderedDesigns}
-                onReuse={reuseDesign}
-                onDelete={removeDesign}
-              />
-            )}
-
-            {activeTab === "admin" && (
-              <AdminDashboardPage
                 designs={designs}
-                events={events}
-                questions={questions}
+                likedQuestions={likedQuestions}
+                handleLike={handleLike}
+                handleView={handleView}
+                timeAgo={timeAgo}
+                handleSuccess={handleSuccess}
+                submitUserQuestion={submitUserQuestion}
+                filterMode={filterMode}
+                setFilterMode={setFilterMode}
+                isFilterOpen={isFilterOpen}
+                setIsFilterOpen={setIsFilterOpen}
+                listRef={listRef}
               />
-            )}
-          </div>
-        )}
+            ) : (
+              isAdminUnlocked && (
+                <div className="glass-shell glass-shell--3d w-[95%] max-w-6xl rounded-[2rem] p-5 sm:p-8">
+                  <div className="mb-4 flex items-center gap-2 flex-nowrap">
+                    <NavTabs
+                      activeTab={activeTab}
+                      onChange={setActiveTab}
+                      showAdminTab={true}
+                      className="flex-1 min-w-0"
+                    />
+
+                    <div className="inline-flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await logoutAdmin();
+                          setIsAdminUnlocked(false);
+                          setSessionPassword("");
+                          setViewMode("user");
+                          setActiveTab("create");
+                          navigate('/');
+                        }}
+                        className="inline-flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl border border-rose-300 text-rose-700 dark:text-rose-300"
+                        title="Logout admin"
+                        aria-label="Logout admin"
+                      >
+                        <FiLogOut size={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {linkMessage && (
+                    <p className="mb-3 text-sm text-[color:var(--app-muted)]">
+                      {linkMessage}
+                    </p>
+                  )}
+
+                  {activeTab === "create" && (
+                    <CreateDesignPage
+                      seedDesign={seedDesign}
+                      onSave={addDesign}
+                      onEvent={trackEvent}
+                      onNotify={showAdminToast}
+                      questions={questions}
+                      onQuestionAnswered={markAnswered}
+                    />
+                  )}
+
+                  {activeTab === "library" && (
+                    <LibraryPage
+                      designs={orderedDesigns}
+                      onReuse={reuseDesign}
+                      onDelete={removeDesign}
+                    />
+                  )}
+
+                  {activeTab === "admin" && (
+                    <AdminDashboardPage
+                      designs={designs}
+                      events={events}
+                      questions={questions}
+                    />
+                  )}
+                </div>
+              )
+            )
+          } />
+          
+          <Route path="/q/:id" element={
+            <SingleQuestionPage 
+              questions={questions}
+              designs={designs}
+              likedQuestions={likedQuestions}
+              handleLike={handleLike}
+              handleView={handleView}
+              timeAgo={timeAgo}
+            />
+          } />
+        </Routes>
       </main>
 
       <Footer onSilaClick={openAdminModal} />
