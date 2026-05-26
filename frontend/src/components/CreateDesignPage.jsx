@@ -146,16 +146,16 @@ export default function CreateDesignPage({
 
       // Also save to our local library database
       const designData = {
-        id: crypto.randomUUID(),
+        id: seedDesign?.id || crypto.randomUUID(),
         questionId: selectedQuestion.id,
         questionText: selectedQuestion.question,
         answerText: answer,
         text: `Q: ${selectedQuestion.question}\nA: ${answer}`,
         style,
         imageDataUrl: imageDataUrl || "",
-        createdAt: new Date().toISOString(),
+        createdAt: seedDesign?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        stats: { copies: 0, downloads: 0, shares: 0 },
+        stats: seedDesign?.stats || { copies: 0, downloads: 0, shares: 0 },
       };
       await onSave(designData);
 

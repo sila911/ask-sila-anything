@@ -19,6 +19,16 @@ export async function getDesigns() {
   );
 }
 
+export async function deleteDesign(id) {
+  const { error } = await supabase
+    .from('designs')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw new Error(error.message);
+  return getDesigns();
+}
+
 export async function saveDesigns(designs) {
   // Use upsert to replace or update designs
   // Note: This logic assumes 'id' is the primary key and will update existing or insert new.
@@ -212,3 +222,30 @@ export async function addEvent(type, meta = {}) {
   if (error) throw new Error(error.message);
   return getEvents();
 }
+
+export async function getComments() {
+  return handleSupabase(
+    supabase
+      .from('comments')
+      .select('*')
+      .order('createdAt', { ascending: true })
+  );
+}
+
+export async function addComment(questionId, text) {
+  const newComment = {
+    id: crypto.randomUUID(),
+    questionId,
+    text,
+    author: 'Anonymous',
+    createdAt: new Date().toISOString(),
+  };
+
+  const { error } = await supabase
+    .from('comments')
+    .insert([newComment]);
+
+  if (error) throw new Error(error.message);
+  return newComment;
+}
+

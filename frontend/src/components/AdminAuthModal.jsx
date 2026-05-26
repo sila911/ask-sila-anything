@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FiEye, FiEyeOff } from 'react-icons/fi'
+import { FiEye, FiEyeOff, FiX } from 'react-icons/fi'
 import { requestPasswordReset, submitPasswordReset } from '../lib/adminAccess'
 
 export default function AdminAuthModal({
@@ -9,8 +9,9 @@ export default function AdminAuthModal({
 }) {
   const [view, setView] = useState('login') // 'login', 'forgot', 'reset'
   const [password, setPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [showNewPassword, setShowNewPassword] = useState(false)
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
@@ -19,8 +20,9 @@ export default function AdminAuthModal({
   useEffect(() => {
     if (!isOpen) {
       setPassword('')
-      setNewPassword('')
       setShowPassword(false)
+      setNewPassword('')
+      setShowNewPassword(false)
       setCode('')
       setError('')
       setMessage('')
@@ -76,9 +78,17 @@ export default function AdminAuthModal({
   return (
     <div className="fixed inset-0 z-50 bg-black/45 backdrop-blur-[2px] flex items-center justify-center px-4" onClick={onClose}>
       <div
-        className="w-full max-w-md rounded-3xl border border-[color:var(--card-border)] bg-[color:var(--card-bg)] p-6"
+        className="w-full max-w-md rounded-3xl border border-[color:var(--card-border)] bg-[color:var(--card-bg)] p-6 relative"
         onClick={(e) => e.stopPropagation()}
       >
+        <button 
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 text-[color:var(--app-muted)] transition-colors"
+          aria-label="Close modal"
+        >
+          <FiX size={20} />
+        </button>
+
         {view === 'login' && (
           <>
             <h3 className="text-xl font-bold">Admin Login</h3>
@@ -88,7 +98,7 @@ export default function AdminAuthModal({
                 <span className="text-[color:var(--app-muted)] font-medium">Password</span>
                 <div className="relative mt-1">
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     autoFocus
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -98,7 +108,7 @@ export default function AdminAuthModal({
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[color:var(--app-muted)] hover:text-cyan-500"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
                   >
                     {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                   </button>
@@ -118,12 +128,9 @@ export default function AdminAuthModal({
                 <button
                   type="button"
                   onClick={() => setView('forgot')}
-                  className="text-sm text-cyan-600 dark:text-cyan-400 hover:underline"
+                  className="text-sm text-cyan-600 dark:text-cyan-400 hover:underline text-center"
                 >
                   Forgot Password?
-                </button>
-                <button type="button" onClick={onClose} className="text-sm text-[color:var(--app-muted)]">
-                  Cancel
                 </button>
               </div>
             </form>
@@ -172,7 +179,7 @@ export default function AdminAuthModal({
                 <span className="text-[color:var(--app-muted)] font-medium">New Password</span>
                 <div className="relative mt-1">
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    type={showNewPassword ? "text" : "password"}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     className="h-11 w-full rounded-xl pl-3 pr-10 bg-[color:var(--input-bg)] border border-[color:var(--input-border)] focus:outline-none focus:ring-2 focus:ring-cyan-500/30"
@@ -180,10 +187,10 @@ export default function AdminAuthModal({
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[color:var(--app-muted)] hover:text-cyan-500"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
                   >
-                    {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                    {showNewPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                   </button>
                 </div>
               </label>
@@ -199,7 +206,7 @@ export default function AdminAuthModal({
                 {isSubmitting ? 'Resetting...' : 'Update Password'}
               </button>
               <button type="button" onClick={() => setView('login')} className="w-full text-sm text-[color:var(--app-muted)]">
-                Cancel
+                Back to Login
               </button>
             </form>
           </>

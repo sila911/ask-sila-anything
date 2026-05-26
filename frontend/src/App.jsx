@@ -30,6 +30,9 @@ import {
   saveDesigns,
   saveQuestions,
   toggleQuestionVisibility,
+  deleteDesign,
+  getComments,
+  addComment,
 } from "./lib/storage";
 import {
   createEncryptedAdminToken,
@@ -92,10 +95,28 @@ function QuestionSEO({ question, answer }) {
   );
 }
 
-function QuestionCard({ q, designs, likedQuestions, handleLike, handleView, timeAgo, isSingleView = false }) {
+function QuestionCard({ q, designs, comments, onAddComment, likedQuestions, handleLike, handleView, timeAgo, isSingleView = false }) {
   const cardRef = useRef(null);
   const hasViewed = useRef(false);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
+  const [commentText, setCommentText] = useState("");
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (cardRef.current && !cardRef.current.contains(event.target)) {
+        setShowComments(false);
+      }
+    };
+
+    if (showComments) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showComments]);
 
   useEffect(() => {
     // Check if already viewed in this browser
@@ -160,6 +181,19 @@ function QuestionCard({ q, designs, likedQuestions, handleLike, handleView, time
     }
   };
 
+  const questionComments = useMemo(() => {
+    return (comments || []).filter((c) => c.questionId === q.id);
+  }, [comments, q.id]);
+
+  const submitComment = async (e) => {
+    e.preventDefault();
+    if (!commentText.trim()) return;
+    setIsSubmittingComment(true);
+    await onAddComment(q.id, commentText.trim());
+    setCommentText("");
+    setIsSubmittingComment(false);
+  };
+
   return (
     <div
       ref={cardRef}
@@ -212,13 +246,63 @@ function QuestionCard({ q, designs, likedQuestions, handleLike, handleView, time
               className="w-6 h-6 rounded-full object-cover border border-cyan-500/30" 
               alt="Sila" 
             />
-            <p className="font-semibold text-xs text-cyan-400">
-              Sila replied:
-            </p>
+            <div>
+              <p className="font-semibold text-xs text-cyan-400 leading-tight">
+                Sila replied:
+              </p>
+              <p className="text-[9px] text-slate-500 dark:text-slate-400 leading-none mt-0.5">
+                {timeAgo(designWithAnswer.updatedAt || designWithAnswer.createdAt)}
+              </p>
+            </div>
           </div>
           <p className="text-slate-800 dark:text-zinc-200 text-xs sm:text-sm pl-2 sm:pl-7 break-words whitespace-normal">
             {designWithAnswer.answerText || (designWithAnswer.text && designWithAnswer.text.includes('\nA: ') ? designWithAnswer.text.split('\nA: ')[1] : designWithAnswer.text)}
           </p>
+        </div>
+      )}
+
+      {/* User Comments (Collapsible) */}
+      {showComments && (
+        <div className="flex flex-col gap-2 mt-1 animate-in fade-in slide-in-from-top-2 duration-200">
+          {questionComments.length > 0 && questionComments.map((c) => (
+            <div key={c.id} className="w-full p-3 sm:p-4 rounded-xl bg-slate-50 border-l-2 border-slate-300 flex flex-col gap-1.5 dark:bg-black/20 dark:border-white/10">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center shrink-0 overflow-hidden text-slate-500 dark:text-slate-300 text-[10px] font-bold border border-slate-300 dark:border-slate-600">
+                  👻
+                </div>
+                <div>
+                  <p className="font-semibold text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
+                    Anonymous replied:
+                  </p>
+                  <p className="text-[9px] text-slate-400 dark:text-slate-500 leading-none mt-0.5">
+                    {timeAgo(c.createdAt)}
+                  </p>
+                </div>
+              </div>
+              <p className="text-slate-800 dark:text-zinc-200 text-xs sm:text-sm pl-2 sm:pl-8 break-words whitespace-normal">
+                {c.text}
+              </p>
+            </div>
+          ))}
+
+          {/* Comment Input */}
+          <form onSubmit={submitComment} className="mt-1 flex items-center gap-2">
+            <input
+              type="text"
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              placeholder="Write a comment..."
+              disabled={isSubmittingComment}
+              className="flex-1 h-9 rounded-xl px-3 text-sm bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-cyan-500/30"
+            />
+            <button 
+              type="submit" 
+              disabled={isSubmittingComment || !commentText.trim()}
+              className="h-9 px-4 rounded-xl bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900 text-xs font-bold disabled:opacity-50 transition-colors"
+            >
+              Post
+            </button>
+          </form>
         </div>
       )}
 
@@ -251,6 +335,21 @@ function QuestionCard({ q, designs, likedQuestions, handleLike, handleView, time
               {showCopySuccess ? "Copied!" : "Share"}
             </span>
           </button>
+
+          <button 
+            onClick={() => setShowComments(!showComments)}
+            className={`flex items-center gap-2 transition-colors duration-200 group/comment ${
+              showComments
+                ? "text-cyan-500" 
+                : "text-slate-600 hover:text-cyan-500 dark:text-slate-400 dark:hover:text-cyan-400"
+            }`}
+            title="View comments"
+          >
+            <FiMessageCircle size={18} className={showComments ? "fill-cyan-500/20" : ""} />
+            <span className={`text-sm md:text-base font-semibold ${showComments ? "text-cyan-500" : "text-slate-700 dark:text-slate-300"}`}>
+              {questionComments.length || 0}
+            </span>
+          </button>
         </div>
 
         <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
@@ -262,7 +361,7 @@ function QuestionCard({ q, designs, likedQuestions, handleLike, handleView, time
   );
 }
 
-function SingleQuestionPage({ questions, designs, likedQuestions, handleLike, handleView, timeAgo }) {
+function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQuestions, handleLike, handleView, timeAgo }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const question = questions.find(q => q.id.toString() === id);
@@ -295,6 +394,8 @@ function SingleQuestionPage({ questions, designs, likedQuestions, handleLike, ha
       <QuestionCard 
         q={question}
         designs={designs}
+        comments={comments}
+        onAddComment={onAddComment}
         likedQuestions={likedQuestions}
         handleLike={handleLike}
         handleView={handleView}
@@ -317,7 +418,7 @@ function SingleQuestionPage({ questions, designs, likedQuestions, handleLike, ha
 }
 
 function HomePage({ 
-  questions, designs, likedQuestions, handleLike, handleView, timeAgo, 
+  questions, designs, comments, onAddComment, likedQuestions, handleLike, handleView, timeAgo, 
   handleSuccess, submitUserQuestion, filterMode, setFilterMode, isFilterOpen, setIsFilterOpen, listRef 
 }) {
   return (
@@ -433,6 +534,8 @@ function HomePage({
                   key={q.id}
                   q={q}
                   designs={designs}
+                  comments={comments}
+                  onAddComment={onAddComment}
                   likedQuestions={likedQuestions}
                   handleLike={handleLike}
                   handleView={handleView}
@@ -452,6 +555,7 @@ export default function App() {
   const [designs, setDesigns] = useState([]);
   const [events, setEvents] = useState([]);
   const [questions, setQuestions] = useState([]);
+  const [comments, setComments] = useState([]);
   const [seedDesign, setSeedDesign] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
@@ -463,6 +567,8 @@ export default function App() {
   const [adminToast, setAdminToast] = useState(null);
   const [filterMode, setFilterMode] = useState("all");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
   const [likedQuestions, setLikedQuestions] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("likedQuestions") || "[]");
@@ -476,17 +582,24 @@ export default function App() {
 
   useEffect(() => {
     const loadData = async () => {
+      setIsLoading(true);
+      setFetchError(null);
       try {
-        const [nextDesigns, nextEvents, nextQuestions] = await Promise.all([
+        const [nextDesigns, nextEvents, nextQuestions, nextComments] = await Promise.all([
           getDesigns(),
           getEvents(),
           getQuestions(),
+          getComments(),
         ]);
         setDesigns(nextDesigns);
         setEvents(nextEvents);
         setQuestions(nextQuestions);
+        setComments(nextComments);
       } catch (error) {
         console.error(error);
+        setFetchError("Failed to connect to database. Please check your internet.");
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -566,6 +679,16 @@ export default function App() {
     } catch (error) {
       console.error(error);
       throw error; // Re-throw to be handled by the form component's try-catch
+    }
+  };
+
+  const handleAddComment = async (questionId, text) => {
+    try {
+      const newComment = await addComment(questionId, text);
+      setComments((prev) => [...prev, newComment]);
+      trackEvent("comment_added", { questionId });
+    } catch (error) {
+      console.error("Failed to add comment:", error);
     }
   };
 
@@ -655,8 +778,7 @@ export default function App() {
 
   const removeDesign = async (id) => {
     try {
-      const next = designs.filter((design) => design.id !== id);
-      const persisted = await saveDesigns(next);
+      const persisted = await deleteDesign(id);
       setDesigns(persisted);
       trackEvent("design_deleted");
       showAdminToast("Deleted", "Answer card removed from library.", "info");
@@ -732,21 +854,45 @@ export default function App() {
         <Routes>
           <Route path="/" element={
             viewMode === "user" ? (
-              <HomePage 
-                questions={publicQuestions}
-                designs={designs}
-                likedQuestions={likedQuestions}
-                handleLike={handleLike}
-                handleView={handleView}
-                timeAgo={timeAgo}
-                handleSuccess={handleSuccess}
-                submitUserQuestion={submitUserQuestion}
-                filterMode={filterMode}
-                setFilterMode={setFilterMode}
-                isFilterOpen={isFilterOpen}
-                setIsFilterOpen={setIsFilterOpen}
-                listRef={listRef}
-              />
+              <div className="flex flex-col gap-8 w-full max-w-2xl">
+                <HomePage 
+                  questions={publicQuestions}
+                  designs={designs}
+                  comments={comments}
+                  onAddComment={handleAddComment}
+                  likedQuestions={likedQuestions}
+                  handleLike={handleLike}
+                  handleView={handleView}
+                  timeAgo={timeAgo}
+                  handleSuccess={handleSuccess}
+                  submitUserQuestion={submitUserQuestion}
+                  filterMode={filterMode}
+                  setFilterMode={setFilterMode}
+                  isFilterOpen={isFilterOpen}
+                  setIsFilterOpen={setIsFilterOpen}
+                  listRef={listRef}
+                />
+                
+                {isLoading && (
+                  <div className="flex flex-col items-center justify-center py-10 gap-3">
+                    <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-slate-500 text-sm font-medium">Loading feed...</p>
+                  </div>
+                )}
+
+                {fetchError && !isLoading && (
+                  <div className="p-6 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-center animate-in fade-in zoom-in duration-300">
+                    <p className="text-rose-500 font-bold mb-1">Connection Error</p>
+                    <p className="text-rose-400 text-sm mb-4">{fetchError}</p>
+                    <button 
+                      onClick={() => window.location.reload()}
+                      className="px-6 py-2 bg-rose-500 text-white rounded-xl font-bold hover:bg-rose-600 transition-colors shadow-lg shadow-rose-500/20"
+                    >
+                      Retry Connection
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
               isAdminUnlocked && (
                 <div className="glass-shell glass-shell--3d w-[95%] max-w-6xl rounded-[2rem] p-5 sm:p-8">
@@ -820,6 +966,8 @@ export default function App() {
             <SingleQuestionPage 
               questions={publicQuestions}
               designs={designs}
+              comments={comments}
+              onAddComment={handleAddComment}
               likedQuestions={likedQuestions}
               handleLike={handleLike}
               handleView={handleView}
