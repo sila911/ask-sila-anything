@@ -37,26 +37,41 @@ CREATE TABLE IF NOT EXISTS events (
     meta JSONB NOT NULL,
     "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
-
-CREATE INDEX IF NOT EXISTS events_type_idx ON events (type);
 CREATE INDEX IF NOT EXISTS events_createdAt_idx ON events ("createdAt");
+
+-- Create Comments Table
+CREATE TABLE IF NOT EXISTS comments (
+    id TEXT PRIMARY KEY,
+    "questionId" TEXT NOT NULL,
+    text TEXT NOT NULL,
+    author TEXT DEFAULT 'Anonymous',
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS comments_questionId_idx ON comments ("questionId");
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE designs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
 
 -- Drop existing policies if they exist to prevent "already exists" errors
 DROP POLICY IF EXISTS "Public Read Access" ON questions;
 DROP POLICY IF EXISTS "Public Insert Access" ON questions;
 DROP POLICY IF EXISTS "Public Update Access" ON questions;
+DROP POLICY IF EXISTS "Public Delete Access" ON questions;
 
 DROP POLICY IF EXISTS "Public Read Access" ON designs;
 DROP POLICY IF EXISTS "Public Insert Access" ON designs;
 DROP POLICY IF EXISTS "Public Update Access" ON designs;
+DROP POLICY IF EXISTS "Public Delete Access" ON designs;
 
 DROP POLICY IF EXISTS "Public Read Access" ON events;
 DROP POLICY IF EXISTS "Public Insert Access" ON events;
+
+DROP POLICY IF EXISTS "Public Read Access" ON comments;
+DROP POLICY IF EXISTS "Public Insert Access" ON comments;
 
 -- Create Policies
 CREATE POLICY "Public Read Access" ON questions FOR SELECT USING (true);
@@ -71,3 +86,7 @@ CREATE POLICY "Public Delete Access" ON designs FOR DELETE USING (true);
 
 CREATE POLICY "Public Read Access" ON events FOR SELECT USING (true);
 CREATE POLICY "Public Insert Access" ON events FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Public Read Access" ON comments FOR SELECT USING (true);
+CREATE POLICY "Public Insert Access" ON comments FOR INSERT WITH CHECK (true);
+

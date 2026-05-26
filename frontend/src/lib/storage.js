@@ -222,3 +222,30 @@ export async function addEvent(type, meta = {}) {
   if (error) throw new Error(error.message);
   return getEvents();
 }
+
+export async function getComments() {
+  return handleSupabase(
+    supabase
+      .from('comments')
+      .select('*')
+      .order('createdAt', { ascending: true })
+  );
+}
+
+export async function addComment(questionId, text) {
+  const newComment = {
+    id: crypto.randomUUID(),
+    questionId,
+    text,
+    author: 'Anonymous',
+    createdAt: new Date().toISOString(),
+  };
+
+  const { error } = await supabase
+    .from('comments')
+    .insert([newComment]);
+
+  if (error) throw new Error(error.message);
+  return newComment;
+}
+
