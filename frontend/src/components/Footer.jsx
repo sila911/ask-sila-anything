@@ -55,6 +55,20 @@ export default function Footer({ onSilaClick }) {
         >
           <FaFacebookF size={15} />
         </a>
+
+        <a
+          href="https://acledabank.com.kh/acleda?payment_data=qWY5B2SAUfIhLblxzOtfu45tm4QZydtR8ste17vNItjT3Chxy1uq2e1VifDvybGWoX8Md+nprYtJNaV2/goNF2hYO52Bv9AprFiSGN6OqxO2yg4RP2jReNqNssWZ+QE7O65BbuNH2o6b8t3mBcqXBjIaqihYWpVThtY8hw/mDS1tNqRWNqDUhPee+iISOuavOO6/wAZ16a/Gdnh+ovIdCw==&key=khqr"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-9 h-9 rounded-full flex items-center justify-center bg-[color:var(--icon-chip)] hover:bg-[color:var(--icon-chip-hover)] transition overflow-hidden p-0.5"
+          aria-label="Pay with Acleda"
+        >
+          <img 
+            src="https://www.acledabank.com.kh/kh/assets/image/logo_acleda.png" 
+            alt="Acleda" 
+            className="w-full h-full object-contain rounded-full bg-white" 
+          />
+        </a>
       </span>
     </footer>
   )
