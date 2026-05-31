@@ -419,7 +419,8 @@ function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQ
 
 function HomePage({ 
   questions, designs, comments, onAddComment, likedQuestions, handleLike, handleView, timeAgo, 
-  handleSuccess, submitUserQuestion, filterMode, setFilterMode, isFilterOpen, setIsFilterOpen, listRef 
+  handleSuccess, submitUserQuestion, filterMode, setFilterMode, isFilterOpen, setIsFilterOpen, listRef,
+  hasAskedQuestion 
 }) {
   return (
     <div className="flex flex-col gap-8 w-full max-w-2xl">
@@ -435,7 +436,7 @@ function HomePage({
         </div>
       </div>
 
-      {questions.length > 0 && (
+      {hasAskedQuestion && questions.length > 0 && (
         <div className="w-full md:max-w-2xl mx-auto flex flex-col gap-4 p-2 sm:p-5 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md overflow-visible">
           <div className="relative z-50 w-full flex items-center justify-between px-1 mb-6">
             <h2 className="text-xl font-bold flex items-center gap-2">
@@ -567,6 +568,13 @@ export default function App() {
   const [adminToast, setAdminToast] = useState(null);
   const [filterMode, setFilterMode] = useState("all");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [hasAskedQuestion, setHasAskedQuestion] = useState(() => {
+    try {
+      return localStorage.getItem("hasAskedQuestion") === "true";
+    } catch {
+      return false;
+    }
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
   const [likedQuestions, setLikedQuestions] = useState(() => {
@@ -669,6 +677,10 @@ export default function App() {
       setQuestions(persisted);
       trackEvent("question_submitted");
       
+      // Mark as asked so the "Recently Asked" list can be shown
+      setHasAskedQuestion(true);
+      localStorage.setItem("hasAskedQuestion", "true");
+
       // Send Telegram notification
       fetch('/api/telegram-send', {
         method: 'POST',
@@ -855,7 +867,7 @@ export default function App() {
           <Route path="/" element={
             viewMode === "user" ? (
               <div className="flex flex-col gap-8 w-full max-w-2xl">
-                <HomePage 
+                <HomePage
                   questions={publicQuestions}
                   designs={designs}
                   comments={comments}
@@ -871,6 +883,7 @@ export default function App() {
                   isFilterOpen={isFilterOpen}
                   setIsFilterOpen={setIsFilterOpen}
                   listRef={listRef}
+                  hasAskedQuestion={hasAskedQuestion}
                 />
                 
                 {isLoading && (
