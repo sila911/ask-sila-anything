@@ -1,4 +1,4 @@
-import { FaFacebookF, FaGithub, FaInstagram, FaLinkedinIn } from 'react-icons/fa'
+import { FaFacebookF, FaGithub, FaInstagram } from 'react-icons/fa'
 
 export default function Footer({ onSilaClick }) {
   return (
@@ -24,16 +24,6 @@ export default function Footer({ onSilaClick }) {
           aria-label="GitHub"
         >
           <FaGithub size={16} />
-        </a>
-
-        <a
-          href="https://www.linkedin.com/in/sila-sem-78b3872b8/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-9 h-9 rounded-full flex items-center justify-center bg-[color:var(--icon-chip)] text-[color:var(--app-text)] hover:text-blue-500 hover:bg-[color:var(--icon-chip-hover)] transition"
-          aria-label="LinkedIn"
-        >
-          <FaLinkedinIn size={16} />
         </a>
 
         <a
@@ -64,7 +54,7 @@ export default function Footer({ onSilaClick }) {
           aria-label="Pay with Acleda"
         >
           <img 
-            src="https://www.acledabank.com.kh/kh/assets/image/logo_acleda.png" 
+            src="https://media.licdn.com/dms/image/v2/C4D0BAQH7bmlZMehO5A/company-logo_200_200/company-logo_200_200/0/1630538944834?e=2147483647&v=beta&t=xzsfCpnaCQJbXgJ5saybtKkEqQzY-j5kB0gqSdcaAj0" 
             alt="Acleda" 
             className="w-full h-full object-contain rounded-full bg-white" 
           />
