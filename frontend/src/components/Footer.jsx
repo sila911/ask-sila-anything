@@ -1,4 +1,4 @@
-import { FaFacebookF, FaGithub, FaInstagram, FaLinkedinIn } from 'react-icons/fa'
+import { FaFacebookF, FaGithub, FaInstagram } from 'react-icons/fa'
 
 export default function Footer({ onSilaClick }) {
   return (
@@ -24,18 +24,22 @@ export default function Footer({ onSilaClick }) {
           aria-label="GitHub"
         >
           <FaGithub size={16} />
+
         </a>
 
         <a
-          href="https://www.linkedin.com/in/sila-sem-78b3872b8/"
+          href="https://acledabank.com.kh/acleda?payment_data=qWY5B2SAUfIhLblxzOtfu45tm4QZydtR8ste17vNItjT3Chxy1uq2e1VifDvybGWoX8Md+nprYtJNaV2/goNF2hYO52Bv9AprFiSGN6OqxO2yg4RP2jReNqNssWZ+QE7O65BbuNH2o6b8t3mBcqXBjIaqihYWpVThtY8hw/mDS1tNqRWNqDUhPee+iISOuavOO6/wAZ16a/Gdnh+ovIdCw==&key=khqr"
           target="_blank"
           rel="noopener noreferrer"
-          className="w-9 h-9 rounded-full flex items-center justify-center bg-[color:var(--icon-chip)] text-[color:var(--app-text)] hover:text-blue-500 hover:bg-[color:var(--icon-chip-hover)] transition"
-          aria-label="LinkedIn"
+          className="w-9 h-9 rounded-full flex items-center justify-center bg-[color:var(--icon-chip)] hover:bg-[color:var(--icon-chip-hover)] transition overflow-hidden p-0.5"
+          aria-label="Pay with Acleda"
         >
-          <FaLinkedinIn size={16} />
+          <img 
+            src="https://media.licdn.com/dms/image/v2/C4D0BAQH7bmlZMehO5A/company-logo_200_200/company-logo_200_200/0/1630538944834?e=2147483647&v=beta&t=xzsfCpnaCQJbXgJ5saybtKkEqQzY-j5kB0gqSdcaAj0" 
+            alt="Acleda" 
+            className="w-full h-full object-contain rounded-full bg-white" 
+          />
         </a>
-
         <a
           href="https://www.instagram.com/siladc/"
           target="_blank"
@@ -55,6 +59,7 @@ export default function Footer({ onSilaClick }) {
         >
           <FaFacebookF size={15} />
         </a>
+        
       </span>
     </footer>
   )
