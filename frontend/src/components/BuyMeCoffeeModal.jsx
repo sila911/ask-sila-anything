@@ -1,4 +1,5 @@
 import React from 'react';
+import qrCode from '../assets/qr-code.jpg';
 
 export default function BuyMeCoffeeModal({ isOpen, onClose }) {
   if (!isOpen) return null;
@@ -24,7 +25,7 @@ export default function BuyMeCoffeeModal({ isOpen, onClose }) {
         <div className="mb-8 flex justify-center">
           <div className="relative p-3 bg-white/50 dark:bg-slate-800/50 rounded-2xl shadow-inner border border-white/20 dark:border-slate-700/30 backdrop-blur-sm">
             <img 
-              src="/qr-code.jpg" 
+              src={qrCode} 
               alt="QR Code" 
               className="w-42 h-48 object-cover rounded-xl shadow-sm"
               onError={(e) => {
