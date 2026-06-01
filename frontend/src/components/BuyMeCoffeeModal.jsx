@@ -12,7 +12,7 @@ export default function BuyMeCoffeeModal({ isOpen, onClose }) {
       >
         <button
           onClick={onClose}
-          className="absolute right-5 top-5 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-white/20 dark:hover:bg-slate-800/50 transition-colors"
+          className="absolute right-5 top-5 p-2 rounded-full text-slate-400 hover:text-red-600 dark:hover:text-red-600 hover:bg-white/20 dark:hover:bg-slate-700/50 transition-colors"
           aria-label="Close modal"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -20,14 +20,14 @@ export default function BuyMeCoffeeModal({ isOpen, onClose }) {
           </svg>
         </button>
         
-        <h1 className="text-2xl font-bold mb-6 text-slate-900 dark:text-white">Buy me a coffee</h1>
+        <h1 className="text-2xl font-bold mb-6 text-green-600 dark:text-green-400">Buy me a coffee</h1>
         
-        <div className="mb-8 flex justify-center">
-          <div className="relative p-3 bg-white/50 dark:bg-slate-800/50 rounded-2xl shadow-inner border border-white/20 dark:border-slate-700/30 backdrop-blur-sm">
+        <div className="mb-8 flex p-1 justify-center">
+          <div className="relative  bg-white/50 dark:bg-slate-800/50 rounded-2xl shadow-inner border border-white/20 dark:border-slate-700/30 backdrop-blur-sm">
             <img 
               src={qrCode} 
               alt="QR Code" 
-              className="w-42 h-48 object-cover rounded-xl shadow-sm"
+              className="w-42 h-48 p-1 object-cover rounded-xl shadow-sm"
               onError={(e) => {
                 e.target.src = 'https://via.placeholder.com/200?text=QR+Code';
                 e.target.onerror = null;
@@ -57,9 +57,8 @@ export default function BuyMeCoffeeModal({ isOpen, onClose }) {
           </a>
         </div>
         
-        <p className="mt-6 text-sm text-slate-500 dark:text-slate-400">
-          Thank you for your support! ❤️
-        </p>
+        <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+          Your support means the world to me! 💫</p>
       </div>
       
       {/* Click outside to close */}
