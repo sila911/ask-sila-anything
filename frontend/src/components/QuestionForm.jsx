@@ -2,16 +2,30 @@ import { useState } from 'react'
 import { FiLoader, FiSend, FiShuffle } from 'react-icons/fi'
 
 const QUESTIONS = [
+  // --- Original & Core Prompts ---
   "What motivates you every day?",
   "Be honest, did you think I was cute the first time you saw me?",
   "What is a 'red flag' in a partner that you secretly like? 🚩",
   "If we got married, who would win the arguments?",
   "What's your favorite way to spend a weekend?",
-  "If you could travel anywhere in the world, where would you go?",
   "What advice would you give your younger self?",
-  "Who is your crush right now?",
-  "What is something people don't know about you?"
-]
+  "What is something people don't know about you?",
+
+  // --- Tailored for Your Crush to Ask You ---
+  "If you could take me anywhere in Phnom Penh for a perfect evening, where are we going? 🗺️",
+  "What’s your absolute biggest dealbreaker in a relationship?",
+  "Be honest: do I ever cross your mind when you're listening to music? 🎧",
+  "If I challenged you to a chess match, would you let me win or show no mercy? ♟️",
+  "What is one thing about my personality that caught your attention first?",
+  "If you had to describe our vibe in three words, what would they be?",
+  "Do you think you could keep up with me on a morning run, or would I have to slow down for you? 🏃‍♂️",
+  "What’s a secret talent or hobby you have that you haven't shown me yet?",
+  "If we were trapped in a room together with no internet, how would we pass the time? 🚫",
+  "What is your favorite memory of us or something I said that stuck with you?",
+  "Are you the type to fall fast and hard, or do you calculate every move like a game? 🧠",
+  "If I asked you to build or customize something just for me, what would you make? 🛠️",
+  "What's one question you've been wanting to ask me but were too shy to say out loud? 👀"
+];
 
 export default function QuestionForm({ onSuccess, onSubmitQuestion }) {
   const [question, setQuestion] = useState('')
