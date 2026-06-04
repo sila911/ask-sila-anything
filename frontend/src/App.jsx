@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useAutoAnimate } from '@formkit/auto-animate/react';
-import { FiLink2, FiLogOut, FiUser, FiHeart, FiTag, FiMessageCircle, FiEye, FiShare2, FiCheck, FiArrowLeft, FiArrowRight } from "react-icons/fi";
+import { FiLink2, FiLogOut, FiUser, FiHeart, FiTag, FiMessageCircle, FiEye, FiShare2, FiCheck, FiArrowLeft, FiArrowRight, FiLock } from "react-icons/fi";
 import { Routes, Route, useParams, useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "./lib/supabase";
@@ -95,7 +95,7 @@ function QuestionSEO({ question, answer }) {
   );
 }
 
-function QuestionCard({ q, designs, comments, onAddComment, likedQuestions, handleLike, handleView, timeAgo, isSingleView = false }) {
+function QuestionCard({ q, designs, comments, onAddComment, likedQuestions, handleLike, handleView, timeAgo, isSingleView = false, isLocked = false }) {
   const cardRef = useRef(null);
   const hasViewed = useRef(false);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
@@ -119,6 +119,7 @@ function QuestionCard({ q, designs, comments, onAddComment, likedQuestions, hand
   }, [showComments]);
 
   useEffect(() => {
+    if (isLocked) return;
     // Check if already viewed in this browser
     const viewedQuestions = JSON.parse(localStorage.getItem('viewedQuestions') || '[]');
     if (viewedQuestions.includes(q.id)) {
@@ -146,7 +147,7 @@ function QuestionCard({ q, designs, comments, onAddComment, likedQuestions, hand
     }
 
     return () => observer.disconnect();
-  }, [q.id, handleView]);
+  }, [q.id, handleView, isLocked]);
 
   const designWithAnswer = designs.find((d) => 
     d.questionId && d.questionId.toString().toLowerCase() === q.id.toString().toLowerCase()
@@ -158,6 +159,7 @@ function QuestionCard({ q, designs, comments, onAddComment, likedQuestions, hand
   const isLiked = likedQuestions.includes(q.id);
 
   const handleShare = (e) => {
+    if (isLocked) return;
     e.preventDefault();
     e.stopPropagation();
     const url = `${window.location.origin}/q/${q.id}`;
@@ -186,6 +188,7 @@ function QuestionCard({ q, designs, comments, onAddComment, likedQuestions, hand
   }, [comments, q.id]);
 
   const submitComment = async (e) => {
+    if (isLocked) return;
     e.preventDefault();
     if (!commentText.trim()) return;
     setIsSubmittingComment(true);
@@ -198,170 +201,186 @@ function QuestionCard({ q, designs, comments, onAddComment, likedQuestions, hand
     <div
       ref={cardRef}
       key={q.id}
-      className={`relative w-full h-auto flex flex-col gap-3.5 p-3 sm:p-5 rounded-2xl bg-white/90 border border-slate-200 text-slate-900 dark:bg-white/5 dark:border-white/10 dark:text-white backdrop-blur-md ${isSingleView ? 'shadow-2xl' : ''}`}
+      className={`relative w-full h-auto flex flex-col gap-3.5 p-3 sm:p-5 rounded-2xl bg-white/90 border border-slate-200 text-slate-900 dark:bg-white/5 dark:border-white/10 dark:text-white backdrop-blur-md overflow-hidden ${isSingleView ? 'shadow-2xl' : ''}`}
     >
-      {isSingleView && <QuestionSEO question={q.question} answer={designWithAnswer?.answerText || designWithAnswer?.text} />}
-      
-      {/* Header Row: User Avatar + Info (left), Tag (right) */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center shrink-0 overflow-hidden text-white shadow-lg border border-white/10">
-            <span className="text-lg">👻</span>
-          </div>
-          <div>
-            <p className="text-slate-800 dark:text-slate-100 font-medium">Anonymous</p>
-            <p className="text-slate-500 dark:text-slate-400 text-xs">{timeAgo(q.createdAt)}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {!isSingleView && (
-            <Link 
-              to={`/q/${q.id}`}
-              className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 transition-colors text-slate-500 dark:text-slate-400"
-              title="View individual page"
-            >
-              <FiArrowRight size={16} />
-            </Link>
-          )}
-          <div className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-cyan-400 whitespace-nowrap font-bold">
-            <span>{tags[tagIndex]}</span>
-            <FiTag size={12} className="stroke-[2.5]" />
-          </div>
-        </div>
-      </div>
-
-      {/* Question Body Text */}
-      <div className="w-full block break-words whitespace-normal mb-1">
-        <p className="text-slate-950 dark:text-white text-base md:text-lg font-semibold break-words mt-2">
-          "{q.question}"
-        </p>
-      </div>
-
-      {/* Nested Reply Block (Facebook Comment Style) */}
-      {designWithAnswer && (designWithAnswer.answerText || designWithAnswer.text) && (
-        <div className="w-full p-3 sm:p-4 rounded-xl bg-slate-100 border-l-2 border-cyan-500 flex flex-col gap-1.5 mt-1 dark:bg-black/20">
-          <div className="flex items-center gap-2">
-            <img 
-              src="/sila2.jpg" 
-              className="w-6 h-6 rounded-full object-cover border border-cyan-500/30" 
-              alt="Sila" 
-            />
-            <div>
-              <p className="font-semibold text-xs text-cyan-400 leading-tight">
-                Sila replied:
-              </p>
-              <p className="text-[9px] text-slate-500 dark:text-slate-400 leading-none mt-0.5">
-                {timeAgo(designWithAnswer.updatedAt || designWithAnswer.createdAt)}
-              </p>
+      {isLocked && (
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/40 dark:bg-black/40 backdrop-blur-xl">
+          <div className="flex flex-col items-center gap-3 animate-in zoom-in duration-300">
+            <div className="w-16 h-16 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30">
+              <FiLock size={32} className="text-cyan-500" />
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-bold text-slate-900 dark:text-white leading-tight">Question Locked</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Ask Sila a question to reveal what others asked!</p>
             </div>
           </div>
-          <p className="text-slate-800 dark:text-zinc-200 text-xs sm:text-sm pl-2 sm:pl-7 break-words whitespace-normal">
-            {designWithAnswer.answerText || (designWithAnswer.text && designWithAnswer.text.includes('\nA: ') ? designWithAnswer.text.split('\nA: ')[1] : designWithAnswer.text)}
+        </div>
+      )}
+
+      <div className={isLocked ? "blur-md pointer-events-none select-none" : ""}>
+        {isSingleView && <QuestionSEO question={q.question} answer={designWithAnswer?.answerText || designWithAnswer?.text} />}
+        
+        {/* Header Row: User Avatar + Info (left), Tag (right) */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center shrink-0 overflow-hidden text-white shadow-lg border border-white/10">
+              <span className="text-lg">👻</span>
+            </div>
+            <div>
+              <p className="text-slate-800 dark:text-slate-100 font-medium">Anonymous</p>
+              <p className="text-slate-500 dark:text-slate-400 text-xs">{timeAgo(q.createdAt)}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {!isSingleView && (
+              <Link 
+                to={isLocked ? "#" : `/q/${q.id}`}
+                className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 transition-colors text-slate-500 dark:text-slate-400"
+                title="View individual page"
+              >
+                <FiArrowRight size={16} />
+              </Link>
+            )}
+            <div className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-cyan-400 whitespace-nowrap font-bold">
+              <span>{tags[tagIndex]}</span>
+              <FiTag size={12} className="stroke-[2.5]" />
+            </div>
+          </div>
+        </div>
+
+        {/* Question Body Text */}
+        <div className="w-full block break-words whitespace-normal mb-1">
+          <p className="text-slate-950 dark:text-white text-base md:text-lg font-semibold break-words mt-2">
+            "{q.question}"
           </p>
         </div>
-      )}
 
-      {/* User Comments (Collapsible) */}
-      {showComments && (
-        <div className="flex flex-col gap-2 mt-1 animate-in fade-in slide-in-from-top-2 duration-200">
-          {questionComments.length > 0 && questionComments.map((c) => (
-            <div key={c.id} className="w-full p-3 sm:p-4 rounded-xl bg-slate-50 border-l-2 border-slate-300 flex flex-col gap-1.5 dark:bg-black/20 dark:border-white/10">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center shrink-0 overflow-hidden text-slate-500 dark:text-slate-300 text-[10px] font-bold border border-slate-300 dark:border-slate-600">
-                  👻
-                </div>
-                <div>
-                  <p className="font-semibold text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
-                    Anonymous replied:
-                  </p>
-                  <p className="text-[9px] text-slate-400 dark:text-slate-500 leading-none mt-0.5">
-                    {timeAgo(c.createdAt)}
-                  </p>
-                </div>
+        {/* Nested Reply Block (Facebook Comment Style) */}
+        {designWithAnswer && (designWithAnswer.answerText || designWithAnswer.text) && (
+          <div className="w-full p-3 sm:p-4 rounded-xl bg-slate-100 border-l-2 border-cyan-500 flex flex-col gap-1.5 mt-1 dark:bg-black/20">
+            <div className="flex items-center gap-2">
+              <img 
+                src="/sila2.jpg" 
+                className="w-6 h-6 rounded-full object-cover border border-cyan-500/30" 
+                alt="Sila" 
+              />
+              <div>
+                <p className="font-semibold text-xs text-cyan-400 leading-tight">
+                  Sila replied:
+                </p>
+                <p className="text-[9px] text-slate-500 dark:text-slate-400 leading-none mt-0.5">
+                  {timeAgo(designWithAnswer.updatedAt || designWithAnswer.createdAt)}
+                </p>
               </div>
-              <p className="text-slate-800 dark:text-zinc-200 text-xs sm:text-sm pl-2 sm:pl-8 break-words whitespace-normal">
-                {c.text}
-              </p>
             </div>
-          ))}
+            <p className="text-slate-800 dark:text-zinc-200 text-xs sm:text-sm pl-2 sm:pl-7 break-words whitespace-normal">
+              {designWithAnswer.answerText || (designWithAnswer.text && designWithAnswer.text.includes('\nA: ') ? designWithAnswer.text.split('\nA: ')[1] : designWithAnswer.text)}
+            </p>
+          </div>
+        )}
 
-          {/* Comment Input */}
-          <form onSubmit={submitComment} className="mt-1 flex items-center gap-2">
-            <input
-              type="text"
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              placeholder="Write a comment..."
-              disabled={isSubmittingComment}
-              className="flex-1 h-9 rounded-xl px-3 text-sm bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-cyan-500/30"
-            />
+        {/* User Comments (Collapsible) */}
+        {showComments && (
+          <div className="flex flex-col gap-2 mt-1 animate-in fade-in slide-in-from-top-2 duration-200">
+            {questionComments.length > 0 && questionComments.map((c) => (
+              <div key={c.id} className="w-full p-3 sm:p-4 rounded-xl bg-slate-50 border-l-2 border-slate-300 flex flex-col gap-1.5 dark:bg-black/20 dark:border-white/10">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center shrink-0 overflow-hidden text-slate-500 dark:text-slate-300 text-[10px] font-bold border border-slate-300 dark:border-slate-600">
+                    👻
+                  </div>
+                  <div>
+                    <p className="font-semibold text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
+                      Anonymous replied:
+                    </p>
+                    <p className="text-[9px] text-slate-400 dark:text-slate-500 leading-none mt-0.5">
+                      {timeAgo(c.createdAt)}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-slate-800 dark:text-zinc-200 text-xs sm:text-sm pl-2 sm:pl-8 break-words whitespace-normal">
+                  {c.text}
+                </p>
+              </div>
+            ))}
+
+            {/* Comment Input */}
+            <form onSubmit={submitComment} className="mt-1 flex items-center gap-2">
+              <input
+                type="text"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder="Write a comment..."
+                disabled={isSubmittingComment}
+                className="flex-1 h-9 rounded-xl px-3 text-sm bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-cyan-500/30"
+              />
+              <button 
+                type="submit" 
+                disabled={isSubmittingComment || !commentText.trim()}
+                className="h-9 px-4 rounded-xl bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900 text-xs font-bold disabled:opacity-50 transition-colors"
+              >
+                Post
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Card Footer Row: Interactions */}
+        <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
+          <div className="flex items-center gap-4">
             <button 
-              type="submit" 
-              disabled={isSubmittingComment || !commentText.trim()}
-              className="h-9 px-4 rounded-xl bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900 text-xs font-bold disabled:opacity-50 transition-colors"
+              onClick={() => !isLocked && handleLike(q.id)}
+              className={`flex items-center gap-2 transition-colors duration-200 group/heart ${
+                isLiked 
+                  ? "text-red-500" 
+                  : "text-slate-600 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400"
+              }`}
             >
-              Post
+              <FiHeart 
+                size={18} 
+                className={`transition-all ${isLiked ? "fill-red-500" : "group-heart:fill-rose-400/20"}`} 
+              />
+              <span className={`text-sm md:text-base font-semibold ${isLiked ? "text-red-500" : "text-slate-700 dark:text-slate-300"}`}>
+                {q.likes_count || 0}
+              </span>
             </button>
-          </form>
-        </div>
-      )}
+            
+            <button 
+              onClick={handleShare}
+              className="flex items-center gap-2 text-slate-600 hover:text-cyan-500 dark:text-slate-400 dark:hover:text-cyan-400 transition-colors group/share"
+            >
+              {showCopySuccess ? <FiCheck size={18} className="text-green-500" /> : <FiShare2 size={18} />}
+              <span className="text-sm md:text-base font-semibold">
+                {showCopySuccess ? "Copied!" : "Share"}
+              </span>
+            </button>
 
-      {/* Card Footer Row: Interactions */}
-      <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={() => handleLike(q.id)}
-            className={`flex items-center gap-2 transition-colors duration-200 group/heart ${
-              isLiked 
-                ? "text-red-500" 
-                : "text-slate-600 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400"
-            }`}
-          >
-            <FiHeart 
-              size={18} 
-              className={`transition-all ${isLiked ? "fill-red-500" : "group-hover/heart:fill-rose-400/20"}`} 
-            />
-            <span className={`text-sm md:text-base font-semibold ${isLiked ? "text-red-500" : "text-slate-700 dark:text-slate-300"}`}>
-              {q.likes_count || 0}
-            </span>
-          </button>
-          
-          <button 
-            onClick={handleShare}
-            className="flex items-center gap-2 text-slate-600 hover:text-cyan-500 dark:text-slate-400 dark:hover:text-cyan-400 transition-colors group/share"
-          >
-            {showCopySuccess ? <FiCheck size={18} className="text-green-500" /> : <FiShare2 size={18} />}
-            <span className="text-sm md:text-base font-semibold">
-              {showCopySuccess ? "Copied!" : "Share"}
-            </span>
-          </button>
+            <button 
+              onClick={() => !isLocked && setShowComments(!showComments)}
+              className={`flex items-center gap-2 transition-colors duration-200 group/comment ${
+                showComments
+                  ? "text-cyan-500" 
+                  : "text-slate-600 hover:text-cyan-500 dark:text-slate-400 dark:hover:text-cyan-400"
+              }`}
+              title="View comments"
+            >
+              <FiMessageCircle size={18} className={showComments ? "fill-cyan-500/20" : ""} />
+              <span className={`text-sm md:text-base font-semibold ${showComments ? "text-cyan-500" : "text-slate-700 dark:text-slate-300"}`}>
+                {questionComments.length || 0}
+              </span>
+            </button>
+          </div>
 
-          <button 
-            onClick={() => setShowComments(!showComments)}
-            className={`flex items-center gap-2 transition-colors duration-200 group/comment ${
-              showComments
-                ? "text-cyan-500" 
-                : "text-slate-600 hover:text-cyan-500 dark:text-slate-400 dark:hover:text-cyan-400"
-            }`}
-            title="View comments"
-          >
-            <FiMessageCircle size={18} className={showComments ? "fill-cyan-500/20" : ""} />
-            <span className={`text-sm md:text-base font-semibold ${showComments ? "text-cyan-500" : "text-slate-700 dark:text-slate-300"}`}>
-              {questionComments.length || 0}
-            </span>
-          </button>
-        </div>
-
-        <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
-          <FiEye size={18} />
-          <span className="text-sm font-semibold">{q.views_count || 0}</span>
+          <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+            <FiEye size={18} />
+            <span className="text-sm font-semibold">{q.views_count || 0}</span>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQuestions, handleLike, handleView, timeAgo }) {
+function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQuestions, handleLike, handleView, timeAgo, hasAskedQuestion }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const question = questions.find(q => q.id.toString() === id);
@@ -401,6 +420,7 @@ function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQ
         handleView={handleView}
         timeAgo={timeAgo}
         isSingleView={true}
+        isLocked={!hasAskedQuestion}
       />
 
       <div className="mt-8 p-6 rounded-[2rem] bg-cyan-500/10 border border-cyan-500/20 backdrop-blur-md">
@@ -436,7 +456,7 @@ function HomePage({
         </div>
       </div>
 
-      {hasAskedQuestion && questions.length > 0 && (
+      {questions.length > 0 && (
         <div className="w-full md:max-w-2xl mx-auto flex flex-col gap-4 p-2 sm:p-5 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md overflow-visible">
           <div className="relative z-50 w-full flex items-center justify-between px-1 mb-6">
             <h2 className="text-xl font-bold flex items-center gap-2">
@@ -541,6 +561,7 @@ function HomePage({
                   handleLike={handleLike}
                   handleView={handleView}
                   timeAgo={timeAgo}
+                  isLocked={!hasAskedQuestion}
                 />
               ))}
           </div>
@@ -976,16 +997,17 @@ export default function App() {
           } />
           
           <Route path="/q/:id" element={
-            <SingleQuestionPage 
-              questions={publicQuestions}
-              designs={designs}
-              comments={comments}
-              onAddComment={handleAddComment}
-              likedQuestions={likedQuestions}
-              handleLike={handleLike}
-              handleView={handleView}
-              timeAgo={timeAgo}
-            />
+           <SingleQuestionPage
+             questions={publicQuestions}
+             designs={designs}
+             comments={comments}
+             onAddComment={handleAddComment}
+             likedQuestions={likedQuestions}
+             handleLike={handleLike}
+             handleView={handleView}
+             timeAgo={timeAgo}
+             hasAskedQuestion={hasAskedQuestion}
+           />
           } />
         </Routes>
       </main>
