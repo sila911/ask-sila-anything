@@ -8,10 +8,10 @@ The project is built with a **React frontend** and uses **Supabase** for a robus
 
 ### User Flow
 - **Submit Questions**: Users can ask anything through a simple, sleek interface.
-- **Recently Asked**: A public list of recent questions with real-time updates. 
+- **Curiosity Lock**: The public list of recent questions is blurred and locked until the user asks their own question.
+- **Recently Asked**: A public list of recent questions with real-time updates and sorting/filtering options. 
 - **Auto-Answers**: Once an admin replies, the answer is displayed directly under the question in the public list.
-- **Relative Timing**: Question timestamps show as "just now", "5 mins ago", etc.
-- **Engagement**: Users can like questions they find interesting.
+- **Engagement**: Users can like, comment, and share questions they find interesting.
 
 ### Admin Flow
 - **Secured Access**: Admin login is hidden behind the `Sila` footer trigger and secured by **Supabase Auth**.
@@ -19,6 +19,7 @@ The project is built with a **React frontend** and uses **Supabase** for a robus
 - **Persistent Storage**: All questions, events, and designs are stored in **Supabase Database**.
 
 ### UI & UX
+- **Default Dark Mode**: The application defaults to a sleek dark mode theme optimized for readability, with a glassmorphism light mode alternative.
 - **Modern Profile Card**: Features a beautiful cover banner and an overlapping profile avatar for a professional look.
 - **Optimized for Mobile**: Responsive layout with minimized margins and optimized font sizes for better readability on phone devices.
 - **Glassmorphism Design**: Sleek, modern UI with frosted glass effects and smooth transitions.

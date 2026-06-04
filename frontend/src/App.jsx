@@ -16,6 +16,8 @@ import AdminAuthModal from "./components/AdminAuthModal";
 import AdminToastCard from "./components/AdminToastCard";
 import Footer from "./components/Footer";
 import ThankYouModal from "./components/ThankYouModal";
+import ShareModal from "./components/ShareModal";
+import CommentModal from "./components/CommentModal";
 import {
   addEvent,
   addQuestion,
@@ -98,25 +100,8 @@ function QuestionSEO({ question, answer }) {
 function QuestionCard({ q, designs, comments, onAddComment, likedQuestions, handleLike, handleView, timeAgo, isSingleView = false, isLocked = false }) {
   const cardRef = useRef(null);
   const hasViewed = useRef(false);
-  const [showCopySuccess, setShowCopySuccess] = useState(false);
-  const [commentText, setCommentText] = useState("");
-  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
-  const [showComments, setShowComments] = useState(false);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (cardRef.current && !cardRef.current.contains(event.target)) {
-        setShowComments(false);
-      }
-    };
-
-    if (showComments) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showComments]);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
 
   useEffect(() => {
     if (isLocked) return;
@@ -162,25 +147,7 @@ function QuestionCard({ q, designs, comments, onAddComment, likedQuestions, hand
     if (isLocked) return;
     e.preventDefault();
     e.stopPropagation();
-    const url = `${window.location.origin}/q/${q.id}`;
-    const shareData = {
-      title: 'Ask Sila',
-      text: `Check out this question: "${q.question}"`,
-      url: url,
-    };
-
-    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
-      navigator.share(shareData).catch((err) => {
-        if (err.name !== 'AbortError') {
-          console.error('Error sharing:', err);
-        }
-      });
-    } else {
-      navigator.clipboard.writeText(url).then(() => {
-        setShowCopySuccess(true);
-        setTimeout(() => setShowCopySuccess(false), 2000);
-      });
-    }
+    setIsShareModalOpen(true);
   };
 
   const questionComments = useMemo(() => {
@@ -279,51 +246,6 @@ function QuestionCard({ q, designs, comments, onAddComment, likedQuestions, hand
           </div>
         )}
 
-        {/* User Comments (Collapsible) */}
-        {showComments && (
-          <div className="flex flex-col gap-2 mt-1 animate-in fade-in slide-in-from-top-2 duration-200">
-            {questionComments.length > 0 && questionComments.map((c) => (
-              <div key={c.id} className="w-full p-3 sm:p-4 rounded-xl bg-slate-50 border-l-2 border-slate-300 flex flex-col gap-1.5 dark:bg-black/20 dark:border-white/10">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center shrink-0 overflow-hidden text-slate-500 dark:text-slate-300 text-[10px] font-bold border border-slate-300 dark:border-slate-600">
-                    👻
-                  </div>
-                  <div>
-                    <p className="font-semibold text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
-                      Anonymous replied:
-                    </p>
-                    <p className="text-[9px] text-slate-400 dark:text-slate-500 leading-none mt-0.5">
-                      {timeAgo(c.createdAt)}
-                    </p>
-                  </div>
-                </div>
-                <p className="text-slate-800 dark:text-zinc-200 text-xs sm:text-sm pl-2 sm:pl-8 break-words whitespace-normal">
-                  {c.text}
-                </p>
-              </div>
-            ))}
-
-            {/* Comment Input */}
-            <form onSubmit={submitComment} className="mt-1 flex items-center gap-2">
-              <input
-                type="text"
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                placeholder="Write a comment..."
-                disabled={isSubmittingComment}
-                className="flex-1 h-9 rounded-xl px-3 text-sm bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-cyan-500/30"
-              />
-              <button 
-                type="submit" 
-                disabled={isSubmittingComment || !commentText.trim()}
-                className="h-9 px-4 rounded-xl bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900 text-xs font-bold disabled:opacity-50 transition-colors"
-              >
-                Post
-              </button>
-            </form>
-          </div>
-        )}
-
         {/* Card Footer Row: Interactions */}
         <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -348,23 +270,21 @@ function QuestionCard({ q, designs, comments, onAddComment, likedQuestions, hand
               onClick={handleShare}
               className="flex items-center gap-2 text-slate-600 hover:text-cyan-500 dark:text-slate-400 dark:hover:text-cyan-400 transition-colors group/share"
             >
-              {showCopySuccess ? <FiCheck size={18} className="text-green-500" /> : <FiShare2 size={18} />}
-              <span className="text-sm md:text-base font-semibold">
-                {showCopySuccess ? "Copied!" : "Share"}
-              </span>
+              <FiShare2 size={18} />
+              <span className="text-sm md:text-base font-semibold">Share</span>
             </button>
 
             <button 
-              onClick={() => !isLocked && setShowComments(!showComments)}
+              onClick={() => !isLocked && setIsCommentModalOpen(true)}
               className={`flex items-center gap-2 transition-colors duration-200 group/comment ${
-                showComments
+                isCommentModalOpen
                   ? "text-cyan-500" 
                   : "text-slate-600 hover:text-cyan-500 dark:text-slate-400 dark:hover:text-cyan-400"
               }`}
               title="View comments"
             >
-              <FiMessageCircle size={18} className={showComments ? "fill-cyan-500/20" : ""} />
-              <span className={`text-sm md:text-base font-semibold ${showComments ? "text-cyan-500" : "text-slate-700 dark:text-slate-300"}`}>
+              <FiMessageCircle size={18} className={isCommentModalOpen ? "fill-cyan-500/20" : ""} />
+              <span className={`text-sm md:text-base font-semibold ${isCommentModalOpen ? "text-cyan-500" : "text-slate-700 dark:text-slate-300"}`}>
                 {questionComments.length || 0}
               </span>
             </button>
@@ -376,6 +296,20 @@ function QuestionCard({ q, designs, comments, onAddComment, likedQuestions, hand
           </div>
         </div>
       </div>
+      <ShareModal 
+        isOpen={isShareModalOpen} 
+        onClose={() => setIsShareModalOpen(false)} 
+        url={`${window.location.origin}/q/${q.id}`} 
+        questionText={q.question} 
+      />
+      <CommentModal 
+        isOpen={isCommentModalOpen}
+        onClose={() => setIsCommentModalOpen(false)}
+        comments={questionComments}
+        onAddComment={onAddComment}
+        qId={q.id}
+        timeAgo={timeAgo}
+      />
     </div>
   );
 }

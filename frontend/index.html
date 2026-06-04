@@ -23,6 +23,16 @@
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Ask Sila Anything</title>
+    <script>
+      (function() {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+          document.documentElement.classList.remove('dark');
+        } else {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
