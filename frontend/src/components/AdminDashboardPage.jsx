@@ -72,36 +72,101 @@ export default function AdminDashboardPage({ designs, events, questions = [], on
       <div className="rounded-2xl border border-[color:var(--card-border)] p-3 sm:p-5 bg-white/45 dark:bg-slate-900/30">
         <h3 className="font-semibold mb-4 flex items-center gap-2">
           <FiHelpCircle className="text-cyan-500" />
-          Manage Questions Visibility & Pins
+          Manage Questions
         </h3>
         
         <div className="overflow-hidden rounded-xl border border-[color:var(--card-border)] bg-white/50 dark:bg-black/20">
-          <div className="overflow-x-auto">
+          
+          {/* Mobile View: Card Layout */}
+          <div className="sm:hidden flex flex-col divide-y divide-[color:var(--card-border)]">
+            {sortedQuestions.length > 0 ? sortedQuestions.map((q) => (
+              <div key={`mobile-${q.id}`} className="p-4 flex flex-col gap-3 hover:bg-slate-50/30 dark:hover:bg-white/5 transition-colors">
+                <div>
+                  <p className="line-clamp-3 text-slate-700 dark:text-slate-200 text-sm font-medium mb-2" title={q.question}>
+                    {q.question}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                      q.status === 'answered' 
+                        ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400' 
+                        : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
+                    }`}>
+                      {q.status}
+                    </span>
+                    <span className="text-[10px] text-[color:var(--app-muted)] font-medium">
+                      {new Date(q.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between mt-1 pt-3 border-t border-[color:var(--card-border)]">
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => onTogglePin && onTogglePin(q.id, !q.is_pinned)}
+                      className={`flex items-center justify-center h-8 w-8 rounded-lg transition-colors ${
+                        q.is_pinned 
+                          ? 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400' 
+                          : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                      }`}
+                      title={q.is_pinned ? "Unpin" : "Pin"}
+                    >
+                      <img src="https://img.icons8.com/ios-filled/50/pin--v1.png" alt="Pin" className={`w-4 h-4 ${q.is_pinned ? 'invert-[0.3] sepia-[1] saturate-[5] hue-rotate-[10deg]' : 'opacity-50 dark:invert'}`} />
+                    </button>
+
+                    <button
+                      onClick={() => onToggleVisibility(q.id, !q.is_hidden)}
+                      className={`flex items-center justify-center h-8 px-3 gap-1.5 rounded-lg text-xs font-bold transition-colors ${
+                        !q.is_hidden 
+                          ? 'bg-cyan-100 text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-400' 
+                          : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                      }`}
+                    >
+                      {!q.is_hidden ? <><FiEye size={14} /> Visible</> : <><FiEyeOff size={14} /> Hidden</>}
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => setDeleteModal({ isOpen: true, questionId: q.id, questionText: q.question })}
+                    className="flex items-center justify-center h-8 w-8 rounded-lg text-rose-500 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition-colors"
+                  >
+                    <FiTrash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            )) : (
+              <div className="p-10 text-center text-sm text-[color:var(--app-muted)]">
+                No questions found.
+              </div>
+            )}
+          </div>
+
+          {/* Desktop View: Table Layout */}
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-[color:var(--app-muted)] border-b border-[color:var(--card-border)] bg-slate-50/50 dark:bg-white/5">
                   <th className="px-4 py-3 font-medium">Question</th>
-                  <th className="px-4 py-3 font-medium w-24 text-center">Pin</th>
-                  <th className="px-4 py-3 font-medium w-24 text-center">Visibility</th>
-                  <th className="px-4 py-3 font-medium w-20 text-center">Delete</th>
+                  <th className="px-4 py-3 font-medium w-20 text-center">Pin</th>
+                  <th className="px-4 py-3 font-medium w-32 text-center">Visibility</th>
+                  <th className="px-4 py-3 font-medium w-16 text-center">Del</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[color:var(--card-border)]">
                 {sortedQuestions.length > 0 ? sortedQuestions.map((q) => (
-                  <tr key={q.id} className="hover:bg-slate-50/30 dark:hover:bg-white/5 transition-colors">
+                  <tr key={`desktop-${q.id}`} className="hover:bg-slate-50/30 dark:hover:bg-white/5 transition-colors">
                     <td className="px-4 py-3">
                       <p className="line-clamp-2 text-slate-700 dark:text-slate-200" title={q.question}>
                         {q.question}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium uppercase tracking-wider ${
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
                           q.status === 'answered' 
                             ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400' 
                             : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
                         }`}>
                           {q.status}
                         </span>
-                        <span className="text-[10px] text-[color:var(--app-muted)]">
+                        <span className="text-[10px] text-[color:var(--app-muted)] font-medium">
                           {new Date(q.createdAt).toLocaleString()}
                         </span>
                       </div>
@@ -109,10 +174,10 @@ export default function AdminDashboardPage({ designs, events, questions = [], on
                     <td className="px-4 py-3 text-center">
                       <button
                         onClick={() => onTogglePin && onTogglePin(q.id, !q.is_pinned)}
-                        className={`p-1.5 rounded-lg transition-colors ${
+                        className={`p-2 rounded-xl transition-colors ${
                           q.is_pinned 
                             ? 'bg-amber-100 text-amber-600 hover:bg-amber-200 dark:bg-amber-500/20 dark:text-amber-400 dark:hover:bg-amber-500/30' 
-                            : 'text-slate-400 hover:bg-slate-200 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300'
+                            : 'bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600 dark:bg-slate-800 dark:hover:bg-slate-700 dark:hover:text-slate-300'
                         }`}
                         title={q.is_pinned ? "Unpin Question" : "Pin Question"}
                       >
@@ -146,7 +211,7 @@ export default function AdminDashboardPage({ designs, events, questions = [], on
                     <td className="px-4 py-3 text-center">
                       <button
                         onClick={() => setDeleteModal({ isOpen: true, questionId: q.id, questionText: q.question })}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                        className="p-2 rounded-xl text-rose-500 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition-colors"
                         title="Delete Question"
                       >
                         <FiTrash2 size={16} />
