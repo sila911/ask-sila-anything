@@ -4,20 +4,12 @@ import BuyMeCoffeeModal from "./BuyMeCoffeeModal";
 import CoffeeIcon from "./icons/CoffeeIcon";
 
 export default function Header() {
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"));
   const [isCoffeeModalOpen, setIsCoffeeModalOpen] = useState(false);
 
   useEffect(() => {
-    const html = document.documentElement;
-    const savedTheme = localStorage.getItem("theme");
-
-    if (savedTheme === "dark") {
-      html.classList.add("dark");
-      setIsDark(true);
-    } else {
-      html.classList.remove("dark");
-      setIsDark(false);
-    }
+    // Initial check is done in useState initializer
+    // We can also listen for changes if needed, but for now this is enough
   }, []);
 
   const handleThemeToggle = () => {
