@@ -18,6 +18,7 @@ import Footer from "./components/Footer";
 import ThankYouModal from "./components/ThankYouModal";
 import ShareModal from "./components/ShareModal";
 import CommentModal from "./components/CommentModal";
+import PullToRefresh from "./components/PullToRefresh";
 import {
   addEvent,
   addQuestion,
@@ -33,6 +34,7 @@ import {
   saveQuestions,
   toggleQuestionVisibility,
   toggleQuestionPin,
+  softDeleteQuestion,
   deleteDesign,
   getComments,
   addComment,
@@ -534,6 +536,7 @@ export default function App() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
+  const [hasNewQuestions, setHasNewQuestions] = useState(false);
   const [likedQuestions, setLikedQuestions] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("likedQuestions") || "[]");
@@ -545,29 +548,30 @@ export default function App() {
   const [listRef] = useAutoAnimate();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      setFetchError(null);
-      try {
-        const [nextDesigns, nextEvents, nextQuestions, nextComments] = await Promise.all([
-          getDesigns(),
-          getEvents(),
-          getQuestions(),
-          getComments(),
-        ]);
-        setDesigns(nextDesigns);
-        setEvents(nextEvents);
-        setQuestions(nextQuestions);
-        setComments(nextComments);
-      } catch (error) {
-        console.error(error);
-        setFetchError("Failed to connect to database. Please check your internet.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const loadData = async (silent = false) => {
+    if (!silent) setIsLoading(true);
+    setFetchError(null);
+    try {
+      const [nextDesigns, nextEvents, nextQuestions, nextComments] = await Promise.all([
+        getDesigns(),
+        getEvents(),
+        getQuestions(),
+        getComments(),
+      ]);
+      setDesigns(nextDesigns);
+      setEvents(nextEvents);
+      setQuestions(nextQuestions);
+      setComments(nextComments);
+      setHasNewQuestions(false);
+    } catch (error) {
+      console.error(error);
+      setFetchError("Failed to connect to database. Please check your internet.");
+    } finally {
+      if (!silent) setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadData();
 
     // Listen for auth state changes
@@ -581,6 +585,14 @@ export default function App() {
       }
     });
 
+    // Subscribe to new questions (Real-time)
+    const channel = supabase
+      .channel('public:questions')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'questions' }, () => {
+        setHasNewQuestions(true);
+      })
+      .subscribe();
+
     const params = new URLSearchParams(window.location.search);
     const token = params.get("adminToken");
     if (token) {
@@ -591,6 +603,7 @@ export default function App() {
 
     return () => {
       subscription.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, []);
 
@@ -754,6 +767,19 @@ export default function App() {
     }
   };
 
+  const handleSoftDelete = async (id) => {
+    setQuestions((prev) => prev.filter((q) => q.id !== id));
+
+    try {
+      await softDeleteQuestion(id);
+      showAdminToast("Question Deleted", "The question has been moved to trash.", "info");
+    } catch (error) {
+      console.error("Failed to delete question:", error);
+      loadData(true);
+      showAdminToast("Delete failed", error.message, "error");
+    }
+  };
+
   const markAnswered = async (questionId) => {
     const next = markQuestionAnswered(questions, questionId);
     const persisted = await saveQuestions(next);
@@ -837,53 +863,68 @@ export default function App() {
   }, [questions]);
 
   return (
-    <div className="min-h-screen flex flex-col text-[color:var(--app-text)]">
+    <div className="min-h-screen flex flex-col text-[color:var(--app-text)] relative">
       <Header />
+
+      {/* Real-time Toast */}
+      {hasNewQuestions && (
+        <div className="fixed top-24 left-0 w-full z-[150] flex justify-center px-4 pointer-events-none">
+          <button 
+            onClick={() => loadData()}
+            className="pointer-events-auto flex items-center gap-2 px-4 py-2 bg-cyan-500 text-white rounded-full shadow-2xl shadow-cyan-500/40 animate-in slide-in-from-top-10 duration-500 font-bold text-sm border border-white/20"
+          >
+            <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+            New question asked! Click to refresh
+          </button>
+        </div>
+      )}
 
       <main className="flex-1 flex items-center justify-center px-2 sm:px-4 pb-6">
         <Routes>
           <Route path="/" element={
             viewMode === "user" ? (
-              <div className="flex flex-col gap-8 w-full max-w-2xl">
-                <HomePage
-                  questions={publicQuestions}
-                  designs={designs}
-                  comments={comments}
-                  onAddComment={handleAddComment}
-                  likedQuestions={likedQuestions}
-                  handleLike={handleLike}
-                  handleView={handleView}
-                  timeAgo={timeAgo}
-                  handleSuccess={handleSuccess}
-                  submitUserQuestion={submitUserQuestion}
-                  filterMode={filterMode}
-                  setFilterMode={setFilterMode}
-                  isFilterOpen={isFilterOpen}
-                  setIsFilterOpen={setIsFilterOpen}
-                  listRef={listRef}
-                  hasAskedQuestion={hasAskedQuestion}
-                />
-                
-                {isLoading && (
-                  <div className="flex flex-col items-center justify-center py-10 gap-3">
-                    <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-slate-500 text-sm font-medium">Loading feed...</p>
-                  </div>
-                )}
+              <PullToRefresh onRefresh={() => loadData(true)}>
+                <div className="flex flex-col items-center gap-8 w-full max-w-2xl mx-auto">
+                  <HomePage
+                    questions={publicQuestions}
+                    designs={designs}
+                    comments={comments}
+                    onAddComment={handleAddComment}
+                    likedQuestions={likedQuestions}
+                    handleLike={handleLike}
+                    handleView={handleView}
+                    timeAgo={timeAgo}
+                    handleSuccess={handleSuccess}
+                    submitUserQuestion={submitUserQuestion}
+                    filterMode={filterMode}
+                    setFilterMode={setFilterMode}
+                    isFilterOpen={isFilterOpen}
+                    setIsFilterOpen={setIsFilterOpen}
+                    listRef={listRef}
+                    hasAskedQuestion={hasAskedQuestion}
+                  />
+                  
+                  {isLoading && (
+                    <div className="flex flex-col items-center justify-center py-10 gap-3">
+                      <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+                      <p className="text-slate-500 text-sm font-medium">Loading feed...</p>
+                    </div>
+                  )}
 
-                {fetchError && !isLoading && (
-                  <div className="p-6 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-center animate-in fade-in zoom-in duration-300">
-                    <p className="text-rose-500 font-bold mb-1">Connection Error</p>
-                    <p className="text-rose-400 text-sm mb-4">{fetchError}</p>
-                    <button 
-                      onClick={() => window.location.reload()}
-                      className="px-6 py-2 bg-rose-500 text-white rounded-xl font-bold hover:bg-rose-600 transition-colors shadow-lg shadow-rose-500/20"
-                    >
-                      Retry Connection
-                    </button>
-                  </div>
-                )}
-              </div>
+                  {fetchError && !isLoading && (
+                    <div className="p-6 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-center animate-in fade-in zoom-in duration-300">
+                      <p className="text-rose-500 font-bold mb-1">Connection Error</p>
+                      <p className="text-rose-400 text-sm mb-4">{fetchError}</p>
+                      <button 
+                        onClick={() => window.location.reload()}
+                        className="px-6 py-2 bg-rose-500 text-white rounded-xl font-bold hover:bg-rose-600 transition-colors shadow-lg shadow-rose-500/20"
+                      >
+                        Retry Connection
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </PullToRefresh>
             ) : (
               isAdminUnlocked && (
                 <div className="glass-shell glass-shell--3d w-[95%] max-w-6xl rounded-[2rem] p-5 sm:p-8">
@@ -947,6 +988,7 @@ export default function App() {
                       questions={questions}
                       onToggleVisibility={handleToggleVisibility}
                       onTogglePin={handleTogglePin}
+                      onSoftDelete={handleSoftDelete}
                     />
                   )}
                 </div>

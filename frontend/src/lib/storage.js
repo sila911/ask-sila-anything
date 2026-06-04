@@ -64,6 +64,7 @@ export async function getQuestions() {
     supabase
       .from('questions')
       .select('*')
+      .neq('is_deleted', true)
       .order('createdAt', { ascending: false })
   );
 }
@@ -170,6 +171,18 @@ export async function toggleQuestionPin(id, isPinned) {
   const { data, error } = await supabase
     .from('questions')
     .update({ is_pinned: isPinned })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function softDeleteQuestion(id) {
+  const { data, error } = await supabase
+    .from('questions')
+    .update({ is_deleted: true })
     .eq('id', id)
     .select()
     .single();

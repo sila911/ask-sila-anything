@@ -1,4 +1,6 @@
-import { FiClock, FiCopy, FiDownload, FiHelpCircle, FiImage, FiLayout, FiShare2, FiEye, FiEyeOff } from 'react-icons/fi'
+import { useState } from 'react'
+import { FiClock, FiCopy, FiDownload, FiHelpCircle, FiImage, FiLayout, FiShare2, FiEye, FiEyeOff, FiTrash2 } from 'react-icons/fi'
+import DeleteConfirmModal from './DeleteConfirmModal'
 
 function groupEventsByDay(events) {
   const map = new Map()
@@ -24,7 +26,8 @@ function getTopFonts(designs) {
     .slice(0, 4)
 }
 
-export default function AdminDashboardPage({ designs, events, questions = [], onToggleVisibility, onTogglePin }) {
+export default function AdminDashboardPage({ designs, events, questions = [], onToggleVisibility, onTogglePin, onSoftDelete }) {
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, questionId: null, questionText: "" });
   const total = designs.length
   const rendered = designs.filter((d) => Boolean(d.imageDataUrl)).length
   const totalQuestions = questions.length
@@ -79,7 +82,8 @@ export default function AdminDashboardPage({ designs, events, questions = [], on
                 <tr className="text-left text-[color:var(--app-muted)] border-b border-[color:var(--card-border)] bg-slate-50/50 dark:bg-white/5">
                   <th className="px-4 py-3 font-medium">Question</th>
                   <th className="px-4 py-3 font-medium w-24 text-center">Pin</th>
-                  <th className="px-4 py-3 font-medium w-32 text-center">Visibility</th>
+                  <th className="px-4 py-3 font-medium w-24 text-center">Visibility</th>
+                  <th className="px-4 py-3 font-medium w-20 text-center">Delete</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[color:var(--card-border)]">
@@ -139,10 +143,19 @@ export default function AdminDashboardPage({ designs, events, questions = [], on
                         </button>
                       </div>
                     </td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={() => setDeleteModal({ isOpen: true, questionId: q.id, questionText: q.question })}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                        title="Delete Question"
+                      >
+                        <FiTrash2 size={16} />
+                      </button>
+                    </td>
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan={3} className="px-4 py-10 text-center text-[color:var(--app-muted)]">
+                    <td colSpan={4} className="px-4 py-10 text-center text-[color:var(--app-muted)]">
                       No questions found.
                     </td>
                   </tr>
@@ -152,6 +165,13 @@ export default function AdminDashboardPage({ designs, events, questions = [], on
           </div>
         </div>
       </div>
+
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ ...deleteModal, isOpen: false })}
+        questionText={deleteModal.questionText}
+        onConfirm={() => onSoftDelete && onSoftDelete(deleteModal.questionId)}
+      />
 
       <div className="grid lg:grid-cols-2 gap-3 sm:gap-4">
         <div className="rounded-2xl border border-[color:var(--card-border)] p-3 sm:p-4 bg-white/45 dark:bg-slate-900/30">
