@@ -204,7 +204,7 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
               className="flex items-center gap-2 text-slate-600 hover:text-cyan-500 dark:text-slate-400 dark:hover:text-cyan-400 transition-colors group/share"
             >
               <FiShare2 size={18} />
-              <span className="text-sm md:text-base font-semibold">Share</span>
+              <span className="text-sm md:text-base font-semibold"></span>
             </button>
 
             <button 
@@ -224,7 +224,7 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
           </div>
 
           <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
-            <FiEye size={18} />
+            <img src="https://img.icons8.com/ios-glyphs/50/visible.png" alt="Views" className="w-5 h-5 opacity-50 dark:invert" />
             <span className="text-sm font-semibold">{q.views_count || 0}</span>
           </div>
         </div>
