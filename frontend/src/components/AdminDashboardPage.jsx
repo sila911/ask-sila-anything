@@ -1,4 +1,6 @@
-import { FiClock, FiCopy, FiDownload, FiHelpCircle, FiImage, FiLayout, FiShare2, FiEye, FiEyeOff } from 'react-icons/fi'
+import { useState } from 'react'
+import { FiClock, FiCopy, FiDownload, FiHelpCircle, FiImage, FiLayout, FiShare2, FiEye, FiEyeOff, FiTrash2 } from 'react-icons/fi'
+import DeleteConfirmModal from './DeleteConfirmModal'
 
 function groupEventsByDay(events) {
   const map = new Map()
@@ -24,7 +26,8 @@ function getTopFonts(designs) {
     .slice(0, 4)
 }
 
-export default function AdminDashboardPage({ designs, events, questions = [], onToggleVisibility }) {
+export default function AdminDashboardPage({ designs, events, questions = [], onToggleVisibility, onTogglePin, onSoftDelete }) {
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, questionId: null, questionText: "" });
   const total = designs.length
   const rendered = designs.filter((d) => Boolean(d.imageDataUrl)).length
   const totalQuestions = questions.length
@@ -69,7 +72,7 @@ export default function AdminDashboardPage({ designs, events, questions = [], on
       <div className="rounded-2xl border border-[color:var(--card-border)] p-3 sm:p-5 bg-white/45 dark:bg-slate-900/30">
         <h3 className="font-semibold mb-4 flex items-center gap-2">
           <FiHelpCircle className="text-cyan-500" />
-          Manage Questions Visibility
+          Manage Questions Visibility & Pins
         </h3>
         
         <div className="overflow-hidden rounded-xl border border-[color:var(--card-border)] bg-white/50 dark:bg-black/20">
@@ -78,8 +81,9 @@ export default function AdminDashboardPage({ designs, events, questions = [], on
               <thead>
                 <tr className="text-left text-[color:var(--app-muted)] border-b border-[color:var(--card-border)] bg-slate-50/50 dark:bg-white/5">
                   <th className="px-4 py-3 font-medium">Question</th>
-                  <th className="px-4 py-3 font-medium w-32">Status</th>
-                  <th className="px-4 py-3 font-medium w-40 text-center">Visibility</th>
+                  <th className="px-4 py-3 font-medium w-24 text-center">Pin</th>
+                  <th className="px-4 py-3 font-medium w-24 text-center">Visibility</th>
+                  <th className="px-4 py-3 font-medium w-20 text-center">Delete</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[color:var(--card-border)]">
@@ -89,18 +93,31 @@ export default function AdminDashboardPage({ designs, events, questions = [], on
                       <p className="line-clamp-2 text-slate-700 dark:text-slate-200" title={q.question}>
                         {q.question}
                       </p>
-                      <p className="text-[10px] text-[color:var(--app-muted)] mt-1">
-                        {new Date(q.createdAt).toLocaleString()}
-                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium uppercase tracking-wider ${
+                          q.status === 'answered' 
+                            ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400' 
+                            : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
+                        }`}>
+                          {q.status}
+                        </span>
+                        <span className="text-[10px] text-[color:var(--app-muted)]">
+                          {new Date(q.createdAt).toLocaleString()}
+                        </span>
+                      </div>
                     </td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wider ${
-                        q.status === 'answered' 
-                          ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400' 
-                          : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
-                      }`}>
-                        {q.status}
-                      </span>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={() => onTogglePin && onTogglePin(q.id, !q.is_pinned)}
+                        className={`p-1.5 rounded-lg transition-colors ${
+                          q.is_pinned 
+                            ? 'bg-amber-100 text-amber-600 hover:bg-amber-200 dark:bg-amber-500/20 dark:text-amber-400 dark:hover:bg-amber-500/30' 
+                            : 'text-slate-400 hover:bg-slate-200 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300'
+                        }`}
+                        title={q.is_pinned ? "Unpin Question" : "Pin Question"}
+                      >
+                        <img src="https://img.icons8.com/ios-filled/50/pin--v1.png" alt="Pin" className={`w-4 h-4 ${q.is_pinned ? 'invert-[0.3] sepia-[1] saturate-[5] hue-rotate-[10deg]' : 'opacity-50 dark:invert'}`} />
+                      </button>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-center">
@@ -126,10 +143,19 @@ export default function AdminDashboardPage({ designs, events, questions = [], on
                         </button>
                       </div>
                     </td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={() => setDeleteModal({ isOpen: true, questionId: q.id, questionText: q.question })}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                        title="Delete Question"
+                      >
+                        <FiTrash2 size={16} />
+                      </button>
+                    </td>
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan={3} className="px-4 py-10 text-center text-[color:var(--app-muted)]">
+                    <td colSpan={4} className="px-4 py-10 text-center text-[color:var(--app-muted)]">
                       No questions found.
                     </td>
                   </tr>
@@ -139,6 +165,13 @@ export default function AdminDashboardPage({ designs, events, questions = [], on
           </div>
         </div>
       </div>
+
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ ...deleteModal, isOpen: false })}
+        questionText={deleteModal.questionText}
+        onConfirm={() => onSoftDelete && onSoftDelete(deleteModal.questionId)}
+      />
 
       <div className="grid lg:grid-cols-2 gap-3 sm:gap-4">
         <div className="rounded-2xl border border-[color:var(--card-border)] p-3 sm:p-4 bg-white/45 dark:bg-slate-900/30">
