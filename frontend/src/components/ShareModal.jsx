@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FiCopy, FiCheck, FiFacebook, FiInstagram, FiMessageCircle, FiSend, FiX } from 'react-icons/fi';
+import { FiCopy, FiCheck, FiX } from 'react-icons/fi';
 
 export default function ShareModal({ isOpen, onClose, url, questionText }) {
   const [copied, setCopied] = useState(false);
@@ -51,22 +51,22 @@ export default function ShareModal({ isOpen, onClose, url, questionText }) {
   const shareLinks = [
     {
       name: 'Facebook',
-      icon: <FiFacebook size={24} className="text-[#1877F2] dark:text-[#4267B2]" />,
+      icon: <img src="https://img.icons8.com/3d-fluency/94/facebook-logo.png" alt="Facebook" className="w-8 h-8 object-contain" />,
       href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
     },
     {
       name: 'Messenger',
-      icon: <FiMessageCircle size={24} className="text-[#00B2FF]" />,
+      icon: <img src="https://img.icons8.com/fluency/96/facebook-messenger--v2.png" alt="Messenger" className="w-8 h-8 object-contain" />,
       href: `fb-messenger://share/?link=${encodeURIComponent(url)}`,
     },
     {
       name: 'Instagram',
-      icon: <FiInstagram size={24} className="text-[#E1306C]" />,
+      icon: <img src="https://img.icons8.com/3d-fluency/94/instagram-logo.png" alt="Instagram" className="w-8 h-8 object-contain" />,
       href: `https://instagram.com/`, 
     },
     {
       name: 'Telegram',
-      icon: <FiSend size={24} className="text-[#0088cc] dark:text-[#3390ec]" />,
+      icon: <img src="https://img.icons8.com/external-flat-icons-inmotus-design/67/external-blue-telegram-flat-icons-inmotus-design.png" alt="Telegram" className="w-8 h-8 object-contain" />,
       href: `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(questionText)}`,
     }
   ];
