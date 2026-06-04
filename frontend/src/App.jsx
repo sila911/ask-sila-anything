@@ -16,6 +16,7 @@ import AdminAuthModal from "./components/AdminAuthModal";
 import AdminToastCard from "./components/AdminToastCard";
 import Footer from "./components/Footer";
 import ThankYouModal from "./components/ThankYouModal";
+import ShareModal from "./components/ShareModal";
 import {
   addEvent,
   addQuestion,
@@ -98,7 +99,7 @@ function QuestionSEO({ question, answer }) {
 function QuestionCard({ q, designs, comments, onAddComment, likedQuestions, handleLike, handleView, timeAgo, isSingleView = false, isLocked = false }) {
   const cardRef = useRef(null);
   const hasViewed = useRef(false);
-  const [showCopySuccess, setShowCopySuccess] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -162,25 +163,7 @@ function QuestionCard({ q, designs, comments, onAddComment, likedQuestions, hand
     if (isLocked) return;
     e.preventDefault();
     e.stopPropagation();
-    const url = `${window.location.origin}/q/${q.id}`;
-    const shareData = {
-      title: 'Ask Sila',
-      text: `Check out this question: "${q.question}"`,
-      url: url,
-    };
-
-    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
-      navigator.share(shareData).catch((err) => {
-        if (err.name !== 'AbortError') {
-          console.error('Error sharing:', err);
-        }
-      });
-    } else {
-      navigator.clipboard.writeText(url).then(() => {
-        setShowCopySuccess(true);
-        setTimeout(() => setShowCopySuccess(false), 2000);
-      });
-    }
+    setIsShareModalOpen(true);
   };
 
   const questionComments = useMemo(() => {
@@ -348,10 +331,8 @@ function QuestionCard({ q, designs, comments, onAddComment, likedQuestions, hand
               onClick={handleShare}
               className="flex items-center gap-2 text-slate-600 hover:text-cyan-500 dark:text-slate-400 dark:hover:text-cyan-400 transition-colors group/share"
             >
-              {showCopySuccess ? <FiCheck size={18} className="text-green-500" /> : <FiShare2 size={18} />}
-              <span className="text-sm md:text-base font-semibold">
-                {showCopySuccess ? "Copied!" : "Share"}
-              </span>
+              <FiShare2 size={18} />
+              <span className="text-sm md:text-base font-semibold">Share</span>
             </button>
 
             <button 
@@ -376,6 +357,12 @@ function QuestionCard({ q, designs, comments, onAddComment, likedQuestions, hand
           </div>
         </div>
       </div>
+      <ShareModal 
+        isOpen={isShareModalOpen} 
+        onClose={() => setIsShareModalOpen(false)} 
+        url={`${window.location.origin}/q/${q.id}`} 
+        questionText={q.question} 
+      />
     </div>
   );
 }
