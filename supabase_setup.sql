@@ -4,11 +4,15 @@ CREATE TABLE IF NOT EXISTS questions (
     question TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'pending',
     is_hidden BOOLEAN DEFAULT false,
+    is_pinned BOOLEAN DEFAULT false,
     likes_count INTEGER DEFAULT 0,
     views_count INTEGER DEFAULT 0,
     "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "answeredAt" TIMESTAMP WITH TIME ZONE
 );
+
+-- Migration: Add is_pinned column if table already exists
+ALTER TABLE questions ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT false;
 
 CREATE INDEX IF NOT EXISTS questions_status_idx ON questions (status);
 CREATE INDEX IF NOT EXISTS questions_createdAt_idx ON questions ("createdAt");

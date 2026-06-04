@@ -32,6 +32,7 @@ import {
   saveDesigns,
   saveQuestions,
   toggleQuestionVisibility,
+  toggleQuestionPin,
   deleteDesign,
   getComments,
   addComment,
@@ -189,24 +190,22 @@ function QuestionCard({ q, designs, comments, onAddComment, likedQuestions, hand
         
         {/* Header Row: User Avatar + Info (left), Tag (right) */}
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
+          <Link 
+            to={isLocked ? "#" : `/q/${q.id}`}
+            className={`flex items-center gap-3 ${!isSingleView ? "hover:opacity-80 transition-opacity cursor-pointer" : "cursor-default"}`}
+            title={!isSingleView ? "View detail page" : ""}
+          >
             <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center shrink-0 overflow-hidden text-white shadow-lg border border-white/10">
               <span className="text-lg">👻</span>
             </div>
             <div>
-              <p className="text-slate-800 dark:text-slate-100 font-medium">Anonymous</p>
+              <p className="text-slate-800 dark:text-slate-100 font-medium hover:underline">Anonymous</p>
               <p className="text-slate-500 dark:text-slate-400 text-xs">{timeAgo(q.createdAt)}</p>
             </div>
-          </div>
+          </Link>
           <div className="flex items-center gap-2">
-            {!isSingleView && (
-              <Link 
-                to={isLocked ? "#" : `/q/${q.id}`}
-                className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 transition-colors text-slate-500 dark:text-slate-400"
-                title="View individual page"
-              >
-                <FiArrowRight size={16} />
-              </Link>
+            {!isSingleView && q.is_pinned && (
+              <img src="https://img.icons8.com/ios-filled/50/pin--v1.png" alt="Pinned" className="w-4 h-4 opacity-50 dark:invert" />
             )}
             <div className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-cyan-400 whitespace-nowrap font-bold">
               <span>{tags[tagIndex]}</span>
@@ -476,6 +475,9 @@ function HomePage({
           <div ref={listRef} className="relative z-10 w-full flex flex-col gap-4 p-2 sm:p-4 md:p-6 overflow-visible">
             {[...questions]
               .sort((a, b) => {
+                if (a.is_pinned !== b.is_pinned) {
+                  return a.is_pinned ? -1 : 1;
+                }
                 if (filterMode === "top") {
                   return (b.likes_count || 0) - (a.likes_count || 0);
                 }
@@ -731,6 +733,27 @@ export default function App() {
     }
   };
 
+  const handleTogglePin = async (id, isPinned) => {
+    setQuestions((prev) =>
+      prev.map((q) => (q.id === id ? { ...q, is_pinned: isPinned } : q))
+    );
+
+    try {
+      await toggleQuestionPin(id, isPinned);
+      showAdminToast(
+        isPinned ? "Question Pinned" : "Question Unpinned",
+        `Pin status updated successfully.`,
+        "info"
+      );
+    } catch (error) {
+      console.error("Failed to toggle pin:", error);
+      setQuestions((prev) =>
+        prev.map((q) => (q.id === id ? { ...q, is_pinned: !isPinned } : q))
+      );
+      showAdminToast("Update failed", error.message, "error");
+    }
+  };
+
   const markAnswered = async (questionId) => {
     const next = markQuestionAnswered(questions, questionId);
     const persisted = await saveQuestions(next);
@@ -923,6 +946,7 @@ export default function App() {
                       events={events}
                       questions={questions}
                       onToggleVisibility={handleToggleVisibility}
+                      onTogglePin={handleTogglePin}
                     />
                   )}
                 </div>

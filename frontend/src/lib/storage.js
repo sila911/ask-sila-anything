@@ -166,6 +166,18 @@ export async function toggleQuestionVisibility(id, isHidden) {
   return data;
 }
 
+export async function toggleQuestionPin(id, isPinned) {
+  const { data, error } = await supabase
+    .from('questions')
+    .update({ is_pinned: isPinned })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 export async function saveQuestions(questions) {
   const { error } = await supabase
     .from('questions')
