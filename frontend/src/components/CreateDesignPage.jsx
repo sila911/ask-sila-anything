@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import {
   FiCopy,
   FiDownload,
@@ -6,6 +6,9 @@ import {
   FiInstagram,
   FiSave,
   FiShare2,
+  FiChevronDown,
+  FiSearch,
+  FiCheck,
 } from "react-icons/fi";
 import { FaFacebookF } from "react-icons/fa";
 import { dataUrlToBlob, renderTextToImage } from "../lib/imageRenderer";
@@ -65,12 +68,22 @@ export default function CreateDesignPage({
   const [style, setStyle] = useState(defaultStyle);
   const [imageDataUrl, setImageDataUrl] = useState("");
   const [message, setMessage] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const dropdownRef = useRef(null);
 
   const sortedQuestions = useMemo(() => {
     return [...questions].sort((a, b) =>
       b.createdAt.localeCompare(a.createdAt),
     );
   }, [questions]);
+
+  const filteredQuestions = useMemo(() => {
+    if (!searchTerm.trim()) return sortedQuestions;
+    return sortedQuestions.filter(q => 
+      q.question.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [sortedQuestions, searchTerm]);
 
   useEffect(() => {
     const pending = sortedQuestions.find((q) => q.status !== "answered");
@@ -88,6 +101,17 @@ export default function CreateDesignPage({
       setSelectedQuestionId(seedDesign.questionId);
     }
   }, [seedDesign]);
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const selectedQuestion = sortedQuestions.find(
     (q) => q.id === selectedQuestionId,
@@ -159,6 +183,8 @@ export default function CreateDesignPage({
       };
       await onSave(designData);
 
+      setAnswer("");
+      setImageDataUrl("");
       setMessage("Answer saved to library.");
       onEvent("answer_saved", { hasImage: Boolean(imageDataUrl) });
       onNotify?.("Saved", "Answer saved to library and displayed publicly.", "success");
@@ -234,31 +260,81 @@ export default function CreateDesignPage({
 
       <div className="grid gap-5 lg:grid-cols-2">
         <div className="space-y-3">
-          <label className="block text-sm">
-            <span className="text-[color:var(--app-muted)]">User Question</span>
-            <select
-              value={selectedQuestionId}
-              onChange={(e) => setSelectedQuestionId(e.target.value)}
-              className="mt-1 h-11 w-full rounded-xl px-3 bg-[color:var(--input-bg)] border border-[color:var(--input-border)]"
+          {/* Custom User Question Dropdown */}
+          <div className="relative" ref={dropdownRef}>
+            <span className="block text-sm text-[color:var(--app-muted)] mb-1">User Question</span>
+            <button
+              type="button"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="flex items-center justify-between w-full h-12 px-4 rounded-2xl bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-cyan-500/50 transition-all text-left group"
             >
-              {!sortedQuestions.length && (
-                <option value="">No questions yet</option>
-              )}
-              {sortedQuestions.map((q) => (
-                <option key={q.id} value={q.id}>
-                  [{q.status}] {q.question.slice(0, 70)}
-                </option>
-              ))}
-            </select>
-          </label>
+              <span className="truncate text-sm font-medium">
+                {selectedQuestion ? (
+                  <span className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${selectedQuestion.status === 'answered' ? 'bg-green-500' : 'bg-amber-500 animate-pulse'}`} />
+                    <span className="truncate">{selectedQuestion.question}</span>
+                  </span>
+                ) : (
+                  <span className="text-slate-400">Select a question...</span>
+                )}
+              </span>
+              <FiChevronDown className={`shrink-0 text-slate-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
 
-          <div className="rounded-xl border border-[color:var(--input-border)] p-3 bg-white/40 dark:bg-slate-900/30">
-            <p className="text-xs uppercase tracking-wide text-[color:var(--app-muted)]">
-              Question (Read only)
-            </p>
-            <p className="mt-1 text-sm">
-              {selectedQuestion?.question || "No question selected yet."}
-            </p>
+            {isDropdownOpen && (
+              <div className="absolute top-full left-0 right-0 mt-2 z-[100] rounded-2xl bg-[#fcfcfd] dark:bg-[#131b2b] border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-xl">
+                <div className="p-2 border-b border-slate-200 dark:border-white/5">
+                  <div className="relative">
+                    <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="Search questions..."
+                      className="w-full h-10 pl-9 pr-4 rounded-xl bg-slate-100 dark:bg-white/5 border-none focus:ring-2 focus:ring-cyan-500/30 text-sm outline-none"
+                    />
+                  </div>
+                </div>
+                
+                <div className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700">
+                  {filteredQuestions.length > 0 ? (
+                    filteredQuestions.map((q) => (
+                      <button
+                        key={q.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedQuestionId(q.id);
+                          setIsDropdownOpen(false);
+                          setSearchTerm("");
+                        }}
+                        className={`w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-white/5 flex flex-col gap-1 transition-colors ${selectedQuestionId === q.id ? 'bg-cyan-500/10 dark:bg-cyan-500/5' : ''}`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
+                            q.status === 'answered' 
+                              ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400' 
+                              : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
+                          }`}>
+                            {q.status}
+                          </span>
+                          {selectedQuestionId === q.id && <FiCheck className="text-cyan-500" size={14} />}
+                        </div>
+                        <p className="text-sm font-medium line-clamp-2 leading-relaxed">
+                          {q.question}
+                        </p>
+                        <p className="text-[10px] text-slate-400">
+                          {new Date(q.createdAt).toLocaleDateString()}
+                        </p>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="p-8 text-center text-slate-400 text-sm italic">
+                      No matching questions.
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-2">
