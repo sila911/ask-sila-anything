@@ -1,10 +1,45 @@
-import React, { useState } from 'react';
-import { FiCopy, FiCheck, FiFacebook, FiTwitter, FiSend, FiX } from 'react-icons/fi';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { FiCopy, FiCheck, FiFacebook, FiInstagram, FiMessageCircle, FiSend, FiX } from 'react-icons/fi';
 
 export default function ShareModal({ isOpen, onClose, url, questionText }) {
   const [copied, setCopied] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [shouldRender, setShouldRender] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true);
+      // Small delay to allow the DOM element to mount before adding transition classes
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setIsVisible(true);
+        });
+      });
+    } else {
+      setIsVisible(false);
+      // Wait for the slide-out animation to complete before unmounting
+      const timer = setTimeout(() => setShouldRender(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  // Close on Escape key and prevent body scroll when open
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, onClose]);
+
+  if (!shouldRender) return null;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(url).then(() => {
@@ -16,33 +51,38 @@ export default function ShareModal({ isOpen, onClose, url, questionText }) {
   const shareLinks = [
     {
       name: 'Facebook',
-      icon: <FiFacebook size={20} />,
+      icon: <FiFacebook size={24} className="text-[#1877F2] dark:text-[#4267B2]" />,
       href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
-      colorClass: 'text-[#1877F2] bg-[#1877F2]/10 hover:bg-[#1877F2]/20 border-[#1877F2]/20 dark:text-[#4267B2] dark:bg-[#4267B2]/20 dark:border-[#4267B2]/30',
     },
     {
-      name: 'X (Twitter)',
-      icon: <FiTwitter size={20} />,
-      href: `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent('Check out this question: "' + questionText + '"')}`,
-      colorClass: 'text-slate-900 bg-slate-200/50 hover:bg-slate-300/50 border-slate-300/50 dark:text-white dark:bg-white/10 dark:hover:bg-white/20 dark:border-white/20',
+      name: 'Messenger',
+      icon: <FiMessageCircle size={24} className="text-[#00B2FF]" />,
+      href: `fb-messenger://share/?link=${encodeURIComponent(url)}`,
+    },
+    {
+      name: 'Instagram',
+      icon: <FiInstagram size={24} className="text-[#E1306C]" />,
+      href: `https://instagram.com/`, 
     },
     {
       name: 'Telegram',
-      icon: <FiSend size={20} />,
+      icon: <FiSend size={24} className="text-[#0088cc] dark:text-[#3390ec]" />,
       href: `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(questionText)}`,
-      colorClass: 'text-[#0088cc] bg-[#0088cc]/10 hover:bg-[#0088cc]/20 border-[#0088cc]/20 dark:text-[#3390ec] dark:bg-[#3390ec]/20 dark:border-[#3390ec]/30',
     }
   ];
 
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+  return createPortal(
+    <div 
+      className={`fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ease-out ${isVisible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+      onClick={onClose}
+    >
       <div 
-        className="relative w-full max-w-sm rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-6 sm:p-8 shadow-2xl border border-white/20 dark:border-slate-800/50 text-center animate-in zoom-in-95 duration-200"
+        className={`relative w-full max-w-sm rounded-3xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl p-6 sm:p-8 shadow-2xl border border-white/20 dark:border-slate-800/50 text-center transition-transform duration-300 ease-out transform ${isVisible ? 'translate-y-0 scale-100' : 'translate-y-[150%] sm:translate-y-12 sm:scale-95'}`}
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 p-2 rounded-full text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-white/20 dark:hover:bg-slate-700/50 transition-colors"
+          className="absolute right-4 top-4 p-2 rounded-full text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors"
           aria-label="Close modal"
         >
           <FiX size={20} />
@@ -50,17 +90,17 @@ export default function ShareModal({ isOpen, onClose, url, questionText }) {
         
         <h1 className="text-xl font-bold mb-6 text-slate-800 dark:text-white">Share Question</h1>
         
-        <div className="flex flex-col gap-3 mb-6">
+        <div className="grid grid-cols-2 gap-3 mb-6">
           {shareLinks.map((link) => (
             <a
               key={link.name}
               href={link.href}
               target="_blank"
               rel="noopener noreferrer"
-              className={`flex items-center justify-center gap-3 rounded-2xl py-3 font-bold transition-all transform active:scale-95 border backdrop-blur-md shadow-sm ${link.colorClass}`}
+              className="flex flex-col items-center justify-center gap-2 rounded-2xl py-4 font-semibold transition-all transform active:scale-95 border bg-white/60 hover:bg-white border-slate-200 dark:bg-slate-800/60 dark:hover:bg-slate-800 dark:border-slate-700 shadow-sm"
             >
               {link.icon}
-              <span>Share to {link.name}</span>
+              <span className="text-sm text-slate-700 dark:text-slate-200">{link.name}</span>
             </a>
           ))}
         </div>
@@ -70,7 +110,7 @@ export default function ShareModal({ isOpen, onClose, url, questionText }) {
             <div className="w-full border-t border-slate-200 dark:border-slate-700/50"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white/80 dark:bg-slate-900/80 text-slate-500 dark:text-slate-400">Or copy link</span>
+            <span className="px-2 bg-[#fcfcfd] dark:bg-[#131b2b] text-slate-500 dark:text-slate-400 rounded-full">Or copy link</span>
           </div>
         </div>
         
@@ -87,9 +127,7 @@ export default function ShareModal({ isOpen, onClose, url, questionText }) {
           </button>
         </div>
       </div>
-      
-      {/* Click outside to close */}
-      <div className="absolute inset-0 -z-10" onClick={onClose} />
-    </div>
+    </div>,
+    document.body
   );
 }
