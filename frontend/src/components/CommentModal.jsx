@@ -53,7 +53,7 @@ export default function CommentModal({ isOpen, onClose, comments, onAddComment, 
       onClick={onClose}
     >
       <div 
-        className={`relative w-full max-w-2xl h-[75vh] flex flex-col bg-white dark:bg-slate-900 rounded-t-3xl shadow-2xl transition-transform duration-300 ease-out transform ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}
+        className={`relative w-full max-w-2xl h-[50vh] flex flex-col bg-white dark:bg-slate-900 rounded-t-3xl shadow-2xl transition-transform duration-300 ease-out transform ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* TikTok style drag indicator / header */}
