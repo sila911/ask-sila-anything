@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { FiHeart, FiTag, FiMessageCircle, FiEye, FiShare2, FiLock, FiTag as FiTagIcon } from "react-icons/fi";
+import { FiHeart, FiTag, FiMessageCircle, FiEye, FiSend, FiLock, FiTag as FiTagIcon } from "react-icons/fi";
 import ShareModal from "./ShareModal";
 import CommentModal from "./CommentModal";
 import CoverBanner from "./CoverBanner";
@@ -180,48 +180,46 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
           </div>
         )}
 
-        <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={() => !isLocked && handleLike(q.id)}
-              className={`flex items-center gap-2 transition-colors duration-200 group/heart ${
-                isLiked 
-                  ? "text-red-500" 
-                  : "text-slate-600 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400"
-              }`}
-            >
-              <FiHeart 
-                size={18} 
-                className={`transition-all ${isLiked ? "fill-red-500" : "group-heart:fill-rose-400/20"}`} 
-              />
-              <span className={`text-sm md:text-base font-semibold ${isLiked ? "text-red-500" : "text-slate-700 dark:text-slate-300"}`}>
-                {q.likes_count || 0}
-              </span>
-            </button>
-            
-            <button 
-              onClick={handleShare}
-              className="flex items-center gap-2 text-slate-600 hover:text-cyan-500 dark:text-slate-400 dark:hover:text-cyan-400 transition-colors group/share"
-            >
-              <FiShare2 size={18} />
-              <span className="text-sm md:text-base font-semibold"></span>
-            </button>
+        <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-around">
+          <button 
+            onClick={() => !isLocked && handleLike(q.id)}
+            className={`flex items-center gap-2 transition-colors duration-200 group/heart ${
+              isLiked 
+                ? "text-red-500" 
+                : "text-slate-600 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400"
+            }`}
+          >
+            <FiHeart 
+              size={18} 
+              className={`transition-all ${isLiked ? "fill-red-500" : "group-heart:fill-rose-400/20"}`} 
+            />
+            <span className={`text-sm md:text-base font-semibold ${isLiked ? "text-red-500" : "text-slate-700 dark:text-slate-300"}`}>
+              {q.likes_count || 0}
+            </span>
+          </button>
+          
+          <button 
+            onClick={() => !isLocked && setIsCommentModalOpen(true)}
+            className={`flex items-center gap-2 transition-colors duration-200 group/comment ${
+              isCommentModalOpen
+                ? "text-cyan-500" 
+                : "text-slate-600 hover:text-cyan-500 dark:text-slate-400 dark:hover:text-cyan-400"
+            }`}
+            title="View comments"
+          >
+            <FiMessageCircle size={18} className={isCommentModalOpen ? "fill-cyan-500/20" : ""} />
+            <span className={`text-sm md:text-base font-semibold ${isCommentModalOpen ? "text-cyan-500" : "text-slate-700 dark:text-slate-300"}`}>
+              {questionComments.length || 0}
+            </span>
+          </button>
 
-            <button 
-              onClick={() => !isLocked && setIsCommentModalOpen(true)}
-              className={`flex items-center gap-2 transition-colors duration-200 group/comment ${
-                isCommentModalOpen
-                  ? "text-cyan-500" 
-                  : "text-slate-600 hover:text-cyan-500 dark:text-slate-400 dark:hover:text-cyan-400"
-              }`}
-              title="View comments"
-            >
-              <FiMessageCircle size={18} className={isCommentModalOpen ? "fill-cyan-500/20" : ""} />
-              <span className={`text-sm md:text-base font-semibold ${isCommentModalOpen ? "text-cyan-500" : "text-slate-700 dark:text-slate-300"}`}>
-                {questionComments.length || 0}
-              </span>
-            </button>
-          </div>
+          <button 
+            onClick={handleShare}
+            className="flex items-center gap-2 text-slate-600 hover:text-cyan-500 dark:text-slate-400 dark:hover:text-cyan-400 transition-colors group/share"
+          >
+            <FiSend size={18} />
+            <span className="text-sm md:text-base font-semibold"></span>
+          </button>
 
           <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
             <img src="https://img.icons8.com/ios-glyphs/50/visible.png" alt="Views" className="w-5 h-5 opacity-50 dark:invert" />
