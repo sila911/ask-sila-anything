@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { flushSync } from "react-dom";
 import { FiMoon, FiSun } from "react-icons/fi";
 import BuyMeCoffeeModal from "./BuyMeCoffeeModal";
 import CoffeeIcon from "./icons/CoffeeIcon";
@@ -12,12 +13,52 @@ export default function Header() {
     // We can also listen for changes if needed, but for now this is enough
   }, []);
 
-  const handleThemeToggle = () => {
-    const html = document.documentElement;
-    html.classList.toggle("dark");
-    const nextThemeIsDark = html.classList.contains("dark");
-    setIsDark(nextThemeIsDark);
-    localStorage.setItem("theme", nextThemeIsDark ? "dark" : "light");
+  const handleThemeToggle = (e) => {
+    const isAppearanceTransition = document.startViewTransition &&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (!isAppearanceTransition) {
+      const html = document.documentElement;
+      html.classList.toggle("dark");
+      const nextThemeIsDark = html.classList.contains("dark");
+      setIsDark(nextThemeIsDark);
+      localStorage.setItem("theme", nextThemeIsDark ? "dark" : "light");
+      return;
+    }
+
+    const x = e.clientX;
+    const y = e.clientY;
+    const endRadius = Math.hypot(
+      Math.max(x, window.innerWidth - x),
+      Math.max(y, window.innerHeight - y)
+    );
+
+    const transition = document.startViewTransition(async () => {
+      flushSync(() => {
+        const html = document.documentElement;
+        html.classList.toggle("dark");
+        const nextThemeIsDark = html.classList.contains("dark");
+        setIsDark(nextThemeIsDark);
+        localStorage.setItem("theme", nextThemeIsDark ? "dark" : "light");
+      });
+    });
+
+    transition.ready.then(() => {
+      const clipPath = [
+        `circle(0px at ${x}px ${y}px)`,
+        `circle(${endRadius}px at ${x}px ${y}px)`,
+      ];
+      document.documentElement.animate(
+        {
+          clipPath: clipPath,
+        },
+        {
+          duration: 400,
+          easing: "ease-in",
+          pseudoElement: "::view-transition-new(root)",
+        }
+      );
+    });
   };
 
   return (
