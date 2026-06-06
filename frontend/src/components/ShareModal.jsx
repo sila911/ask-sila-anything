@@ -66,7 +66,7 @@ export default function ShareModal({ isOpen, onClose, url, questionText }) {
     },
     {
       name: 'Telegram',
-      icon: <img src="https://img.icons8.com/external-flat-icons-inmotus-design/67/external-blue-telegram-flat-icons-inmotus-design.png" alt="Telegram" className="w-8 h-8 object-contain" />,
+      icon: <img src="https://img.icons8.com/3d-fluency/94/telegram.png" alt="Telegram" className="w-8 h-8 object-contain" />,
       href: `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(questionText)}`,
     }
   ];
