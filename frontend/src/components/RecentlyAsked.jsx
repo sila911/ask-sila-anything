@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { FiHeart, FiTag, FiMessageCircle, FiEye, FiShare2, FiLock, FiTag as FiTagIcon } from "react-icons/fi";
+import { FiHeart, FiTag, FiMessageCircle, FiEye, FiSend, FiLock, FiTag as FiTagIcon } from "react-icons/fi";
 import ShareModal from "./ShareModal";
 import CommentModal from "./CommentModal";
 import CoverBanner from "./CoverBanner";
@@ -180,48 +180,46 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
           </div>
         )}
 
-        <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={() => !isLocked && handleLike(q.id)}
-              className={`flex items-center gap-2 transition-colors duration-200 group/heart ${
-                isLiked 
-                  ? "text-red-500" 
-                  : "text-slate-600 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400"
-              }`}
-            >
-              <FiHeart 
-                size={18} 
-                className={`transition-all ${isLiked ? "fill-red-500" : "group-heart:fill-rose-400/20"}`} 
-              />
-              <span className={`text-sm md:text-base font-semibold ${isLiked ? "text-red-500" : "text-slate-700 dark:text-slate-300"}`}>
-                {q.likes_count || 0}
-              </span>
-            </button>
-            
-            <button 
-              onClick={handleShare}
-              className="flex items-center gap-2 text-slate-600 hover:text-cyan-500 dark:text-slate-400 dark:hover:text-cyan-400 transition-colors group/share"
-            >
-              <FiShare2 size={18} />
-              <span className="text-sm md:text-base font-semibold"></span>
-            </button>
+        <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-around">
+          <button 
+            onClick={() => !isLocked && handleLike(q.id)}
+            className={`flex items-center gap-2 transition-colors duration-200 group/heart ${
+              isLiked 
+                ? "text-red-500" 
+                : "text-slate-600 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400"
+            }`}
+          >
+            <FiHeart 
+              size={18} 
+              className={`transition-all ${isLiked ? "fill-red-500" : "group-heart:fill-rose-400/20"}`} 
+            />
+            <span className={`text-sm md:text-base font-semibold ${isLiked ? "text-red-500" : "text-slate-700 dark:text-slate-300"}`}>
+              {q.likes_count || 0}
+            </span>
+          </button>
+          
+          <button 
+            onClick={() => !isLocked && setIsCommentModalOpen(true)}
+            className={`flex items-center gap-2 transition-colors duration-200 group/comment ${
+              isCommentModalOpen
+                ? "text-cyan-500" 
+                : "text-slate-600 hover:text-cyan-500 dark:text-slate-400 dark:hover:text-cyan-400"
+            }`}
+            title="View comments"
+          >
+            <FiMessageCircle size={18} className={isCommentModalOpen ? "fill-cyan-500/20" : ""} />
+            <span className={`text-sm md:text-base font-semibold ${isCommentModalOpen ? "text-cyan-500" : "text-slate-700 dark:text-slate-300"}`}>
+              {questionComments.length || 0}
+            </span>
+          </button>
 
-            <button 
-              onClick={() => !isLocked && setIsCommentModalOpen(true)}
-              className={`flex items-center gap-2 transition-colors duration-200 group/comment ${
-                isCommentModalOpen
-                  ? "text-cyan-500" 
-                  : "text-slate-600 hover:text-cyan-500 dark:text-slate-400 dark:hover:text-cyan-400"
-              }`}
-              title="View comments"
-            >
-              <FiMessageCircle size={18} className={isCommentModalOpen ? "fill-cyan-500/20" : ""} />
-              <span className={`text-sm md:text-base font-semibold ${isCommentModalOpen ? "text-cyan-500" : "text-slate-700 dark:text-slate-300"}`}>
-                {questionComments.length || 0}
-              </span>
-            </button>
-          </div>
+          <button 
+            onClick={handleShare}
+            className="flex items-center gap-2 text-slate-600 hover:text-cyan-500 dark:text-slate-400 dark:hover:text-cyan-400 transition-colors group/share"
+          >
+            <FiSend size={18} />
+            <span className="text-sm md:text-base font-semibold"></span>
+          </button>
 
           <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
             <img src="https://img.icons8.com/ios-glyphs/50/visible.png" alt="Views" className="w-5 h-5 opacity-50 dark:invert" />
@@ -278,7 +276,7 @@ export default function RecentlyAsked({
               <button
                 type="button"
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className="inline-flex items-center justify-between gap-2 bg-slate-100 text-slate-800 dark:bg-white/5 dark:text-slate-200 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs font-medium backdrop-blur-md transition-all duration-200"
+                className="inline-flex items-center justify-between gap-2 bg-[color:var(--icon-chip)] text-[color:var(--app-text)] border border-[color:var(--card-border)] rounded-xl px-3 py-1.5 text-xs font-medium backdrop-blur-md transition-all duration-200 hover:bg-[color:var(--icon-chip-hover)]"
               >
                 <span>
                   {filterMode === "all" && "All"}
@@ -302,7 +300,7 @@ export default function RecentlyAsked({
                     onClick={() => setIsFilterOpen(false)}
                   ></div>
                   
-                  <div className="absolute right-0 top-full mt-1.5 w-36 rounded-xl bg-[#1e293b]/95 dark:bg-black/90 border border-white/10 shadow-2xl p-1 flex flex-col gap-0.5 z-[100] animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="absolute right-0 top-full mt-1.5 w-36 rounded-xl bg-white/95 dark:bg-slate-900/95 border border-[color:var(--card-border)] shadow-2xl p-1 flex flex-col gap-0.5 z-[100] animate-in fade-in slide-in-from-top-2 duration-150 backdrop-blur-xl">
                     <button
                       onClick={() => {
                         setFilterMode("all");
@@ -310,8 +308,8 @@ export default function RecentlyAsked({
                       }}
                       className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-all font-medium ${
                         filterMode === "all" 
-                          ? "bg-slate-200 text-slate-900 dark:bg-white/10 dark:text-white" 
-                          : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
+                          ? "bg-cyan-500/10 text-cyan-600 dark:bg-cyan-500/20 dark:text-cyan-400" 
+                          : "text-[color:var(--app-text)] opacity-80 hover:opacity-100 hover:bg-[color:var(--icon-chip-hover)]"
                       }`}
                     >
                       All
@@ -323,8 +321,8 @@ export default function RecentlyAsked({
                       }}
                       className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-all font-medium ${
                         filterMode === "top" 
-                          ? "bg-slate-200 text-slate-900 dark:bg-white/10 dark:text-white" 
-                          : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
+                          ? "bg-cyan-500/10 text-cyan-600 dark:bg-cyan-500/20 dark:text-cyan-400" 
+                          : "text-[color:var(--app-text)] opacity-80 hover:opacity-100 hover:bg-[color:var(--icon-chip-hover)]"
                       }`}
                     >
                       Top React
@@ -336,8 +334,8 @@ export default function RecentlyAsked({
                       }}
                       className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-all font-medium ${
                         filterMode === "oldest" 
-                          ? "bg-slate-200 text-slate-900 dark:bg-white/10 dark:text-white" 
-                          : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
+                          ? "bg-cyan-500/10 text-cyan-600 dark:bg-cyan-500/20 dark:text-cyan-400" 
+                          : "text-[color:var(--app-text)] opacity-80 hover:opacity-100 hover:bg-[color:var(--icon-chip-hover)]"
                       }`}
                     >
                       Oldest
