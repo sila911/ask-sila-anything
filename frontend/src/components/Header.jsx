@@ -7,10 +7,14 @@ import CoffeeIcon from "./icons/CoffeeIcon";
 export default function Header() {
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"));
   const [isCoffeeModalOpen, setIsCoffeeModalOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    // Initial check is done in useState initializer
-    // We can also listen for changes if needed, but for now this is enough
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const handleThemeToggle = (e) => {
@@ -63,7 +67,11 @@ export default function Header() {
 
   return (
     <>
-      <header className="flex justify-between items-center p-4">
+      <header className={`sticky top-0 z-[100] w-full flex justify-between items-center px-4 py-3 transition-all duration-300 ${
+        scrolled 
+          ? "border-b border-slate-200/30 dark:border-white/5 shadow-sm bg-transparent" 
+          : "border-b border-transparent bg-transparent"
+      }`}>
         <a
           href="#"
           onClick={(e) => e.preventDefault()}
