@@ -2,7 +2,8 @@ export default function Profile() {
   return (
     <div className="flex flex-col items-center text-center mb-5">
       <img
-        src="/sila4.jpg"
+        src="https://avatars.githubusercontent.com/u/192683408?s=400&u=0e2366b9474c48b097610a1e7954224fae04f2cb&v=4"
+        // src="/sila4.jpg"
         alt="Sila profile"
         className="w-28 h-28 rounded-full object-cover border-4 border-solid border-white dark:border-slate-900 mb-3 -mt-14 relative z-10"
       />
