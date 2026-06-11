@@ -1,13 +1,37 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import qrCode from '../assets/qr-code.jpg';
 
 export default function BuyMeCoffeeModal({ isOpen, onClose }) {
-  if (!isOpen) return null;
+  const [shouldRender, setShouldRender] = useState(isOpen);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true);
+      // Small delay to ensure the initial state is rendered before animating
+      const timer = setTimeout(() => setIsAnimating(true), 10);
+      return () => clearTimeout(timer);
+    } else {
+      setIsAnimating(false);
+      // Wait for the animation to finish before unmounting
+      const timer = setTimeout(() => setShouldRender(false), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  if (!shouldRender) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+    <div 
+      className={`fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-all duration-500 ease-in-out ${
+        isAnimating ? "opacity-100 visible" : "opacity-0 invisible"
+      }`}
+      onClick={onClose}
+    >
       <div 
-        className="relative w-full max-w-sm rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-8 shadow-2xl border border-white/20 dark:border-slate-800/50 text-center animate-in zoom-in-95 duration-200"
+        className={`relative w-full max-w-sm rounded-[2.5rem] bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl p-8 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] border border-white/20 dark:border-slate-800/50 text-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform ${
+          isAnimating ? "translate-y-0 opacity-100 scale-100" : "translate-y-[100vh] opacity-0 scale-90"
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -23,7 +47,7 @@ export default function BuyMeCoffeeModal({ isOpen, onClose }) {
         <h1 className="text-2xl font-bold mb-6 text-green-600 dark:text-green-400">Buy me a coffee</h1>
         
         <div className="mb-8 flex p-1 justify-center">
-          <div className="relative  bg-white/50 dark:bg-slate-800/50 rounded-2xl shadow-inner border border-white/20 dark:border-slate-700/30 backdrop-blur-sm">
+          <div className="relative bg-white/50 dark:bg-slate-800/50 rounded-2xl shadow-inner border border-white/20 dark:border-slate-700/30 backdrop-blur-sm">
             <img 
               src={qrCode} 
               alt="QR Code" 
@@ -58,11 +82,9 @@ export default function BuyMeCoffeeModal({ isOpen, onClose }) {
         </div>
         
         <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
-          Your support means the world to me! 💫</p>
+          Your support means the world to me! 💫
+        </p>
       </div>
-      
-      {/* Click outside to close */}
-      <div className="absolute inset-0 -z-10" onClick={onClose} />
     </div>
   );
 }
