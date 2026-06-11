@@ -8,13 +8,13 @@ export default function BuyMeCoffeeModal({ isOpen, onClose }) {
   useEffect(() => {
     if (isOpen) {
       setShouldRender(true);
-      // Small delay to ensure the initial state is rendered before animating
+      // Small delay to allow DOM to render before starting animation
       const timer = setTimeout(() => setIsAnimating(true), 10);
       return () => clearTimeout(timer);
     } else {
       setIsAnimating(false);
-      // Wait for the animation to finish before unmounting (increased to match slower duration)
-      const timer = setTimeout(() => setShouldRender(false), 800);
+      // Wait for the slide-down animation (1s) to finish before unmounting
+      const timer = setTimeout(() => setShouldRender(false), 1000);
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
@@ -23,14 +23,14 @@ export default function BuyMeCoffeeModal({ isOpen, onClose }) {
 
   return (
     <div 
-      className={`fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-all duration-700 ease-in-out ${
+      className={`fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-opacity duration-700 ease-in-out ${
         isAnimating ? "opacity-100 visible" : "opacity-0 invisible"
       }`}
       onClick={onClose}
     >
       <div 
-        className={`relative w-full max-w-sm rounded-[2.5rem] bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl p-8 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] border border-white/20 dark:border-slate-800/50 text-center transition-all duration-800 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform ${
-          isAnimating ? "translate-y-0 opacity-100 scale-100" : "translate-y-[100vh] opacity-0 scale-90"
+        className={`relative w-full max-w-sm rounded-[2.5rem] bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl p-8 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] border border-white/20 dark:border-slate-800/50 text-center transition-transform duration-1000 ease-[cubic-bezier(0.4,0,0.2,1)] transform ${
+          isAnimating ? "translate-y-0" : "translate-y-[100vh]"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
