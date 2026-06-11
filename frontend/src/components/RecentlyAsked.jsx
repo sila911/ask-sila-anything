@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { FiHeart, FiTag, FiMessageCircle, FiEye, FiSend, FiLock, FiTag as FiTagIcon } from "react-icons/fi";
+import { FiHeart, FiTag, FiMessageCircle, FiEye, FiSend, FiLock, FiCheck, FiTag as FiTagIcon } from "react-icons/fi";
 import ShareModal from "./ShareModal";
 import CommentModal from "./CommentModal";
 import CoverBanner from "./CoverBanner";
@@ -306,39 +306,42 @@ export default function RecentlyAsked({
                         setFilterMode("all");
                         setIsFilterOpen(false);
                       }}
-                      className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-all font-medium ${
+                      className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-all font-medium ${
                         filterMode === "all" 
                           ? "bg-cyan-500/10 text-cyan-600 dark:bg-cyan-500/20 dark:text-cyan-400" 
                           : "text-[color:var(--app-text)] opacity-80 hover:opacity-100 hover:bg-[color:var(--icon-chip-hover)]"
                       }`}
                     >
-                      All
+                      <span>All</span>
+                      {filterMode === "all" && <FiCheck size={14} className="shrink-0" />}
                     </button>
                     <button
                       onClick={() => {
                         setFilterMode("top");
                         setIsFilterOpen(false);
                       }}
-                      className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-all font-medium ${
+                      className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-all font-medium ${
                         filterMode === "top" 
                           ? "bg-cyan-500/10 text-cyan-600 dark:bg-cyan-500/20 dark:text-cyan-400" 
                           : "text-[color:var(--app-text)] opacity-80 hover:opacity-100 hover:bg-[color:var(--icon-chip-hover)]"
                       }`}
                     >
-                      Top React
+                      <span>Top React</span>
+                      {filterMode === "top" && <FiCheck size={14} className="shrink-0" />}
                     </button>
                     <button
                       onClick={() => {
                         setFilterMode("oldest");
                         setIsFilterOpen(false);
                       }}
-                      className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-all font-medium ${
+                      className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-all font-medium ${
                         filterMode === "oldest" 
                           ? "bg-cyan-500/10 text-cyan-600 dark:bg-cyan-500/20 dark:text-cyan-400" 
                           : "text-[color:var(--app-text)] opacity-80 hover:opacity-100 hover:bg-[color:var(--icon-chip-hover)]"
                       }`}
                     >
-                      Oldest
+                      <span>Oldest</span>
+                      {filterMode === "oldest" && <FiCheck size={14} className="shrink-0" />}
                     </button>
                   </div>
                 </>

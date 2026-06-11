@@ -1,5 +1,6 @@
 export default function CoverBanner({ 
-  imageUrl = "https://i.pinimg.com/736x/68/f2/aa/68f2aa0d9922f9db69c00b2a3813caea.jpg", 
+  imageUrl = "https://i.pinimg.com/originals/50/0d/05/500d05bcbc3c80383458ee245122acb8.gif", 
+  // imageUrl = "https://i.pinimg.com/736x/68/f2/aa/68f2aa0d9922f9db69c00b2a3813caea.jpg", 
   altText = "Profile cover banner" 
 }) {
   return (
