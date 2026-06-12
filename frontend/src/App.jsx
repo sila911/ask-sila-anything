@@ -565,7 +565,6 @@ export default function App() {
                     setFilterMode={setFilterMode}
                     isFilterOpen={isFilterOpen}
                     setIsFilterOpen={setIsFilterOpen}
-                    listRef={listRef}
                     hasAskedQuestion={hasAskedQuestion}
                   />
                   

@@ -365,7 +365,7 @@ export default function RecentlyAsked({
             </div>
           </div>
 
-          <div ref={listRef} className="relative z-10 w-full flex flex-col gap-4 p-2 sm:p-4 md:p-6 overflow-visible">
+          <div className="relative z-10 w-full flex flex-col gap-4 p-2 sm:p-4 md:p-6 overflow-visible">
             {[...questions]
               .sort((a, b) => {
                 if (filterMode === "all" && a.is_pinned !== b.is_pinned) {
@@ -380,20 +380,27 @@ export default function RecentlyAsked({
                 return new Date(b.createdAt) - new Date(a.createdAt);
               })
               .map((q) => (
-                <QuestionCard
+                <motion.div
                   key={q.id}
-                  q={q}
-                  designs={designs}
-                  comments={comments}
-                  onAddComment={onAddComment}
-                  likedQuestions={likedQuestions}
-                  handleLike={handleLike}
-                  likedComments={likedComments}
-                  handleLikeComment={handleLikeComment}
-                  handleView={handleView}
-                  timeAgo={timeAgo}
-                  isLocked={!hasAskedQuestion}
-                />
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <QuestionCard
+                    q={q}
+                    designs={designs}
+                    comments={comments}
+                    onAddComment={onAddComment}
+                    likedQuestions={likedQuestions}
+                    handleLike={handleLike}
+                    likedComments={likedComments}
+                    handleLikeComment={handleLikeComment}
+                    handleView={handleView}
+                    timeAgo={timeAgo}
+                    isLocked={!hasAskedQuestion}
+                  />
+                </motion.div>
               ))}
           </div>
         </div>
