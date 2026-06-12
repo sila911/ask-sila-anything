@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { FiHeart } from "react-icons/fi";
 
-export default function CommentModal({ isOpen, onClose, comments, onAddComment, qId, timeAgo }) {
+export default function CommentModal({ isOpen, onClose, comments, onAddComment, likedComments = [], handleLikeComment, qId, timeAgo }) {
   const [commentText, setCommentText] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -47,6 +48,8 @@ export default function CommentModal({ isOpen, onClose, comments, onAddComment, 
     setIsSubmittingComment(false);
   };
 
+  const sortedComments = [...comments].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
   return createPortal(
     <div 
       className={`fixed inset-0 z-[100] flex items-end justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-300 ease-out ${isVisible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
@@ -67,19 +70,36 @@ export default function CommentModal({ isOpen, onClose, comments, onAddComment, 
         {/* Comments List */}
         <div className="flex-1 overflow-y-auto px-4 pb-4">
           <div className="flex flex-col gap-4 mt-2">
-            {comments.length > 0 ? comments.map((c) => (
+            {sortedComments.length > 0 ? sortedComments.map((c) => (
               <div key={c.id} className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center shrink-0 overflow-hidden text-slate-500 dark:text-slate-400 text-sm">
                   👻
                 </div>
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold text-xs text-slate-500 dark:text-slate-400">
-                      Anonymous
-                    </p>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                      {timeAgo(c.createdAt)}
-                    </span>
+                <div className="flex flex-col flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-xs text-slate-500 dark:text-slate-400">
+                        Anonymous
+                      </p>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                        {timeAgo(c.createdAt)}
+                      </span>
+                    </div>
+                    
+                    <button 
+                      onClick={() => handleLikeComment?.(c.id)}
+                      className={`flex items-center gap-1 transition-colors duration-200 group/heart ${
+                        likedComments?.includes(c.id)
+                          ? "text-red-500" 
+                          : "text-slate-400 hover:text-red-500"
+                      }`}
+                    >
+                      <span className="text-[10px] font-bold">{c.likes_count || 0}</span>
+                      <FiHeart 
+                        size={14} 
+                        className={`transition-all ${likedComments?.includes(c.id) ? "fill-red-500" : "group-hover:fill-rose-400/20"}`} 
+                      />
+                    </button>
                   </div>
                   <p className="text-slate-800 dark:text-zinc-200 text-sm mt-0.5 break-words whitespace-normal">
                     {c.text}

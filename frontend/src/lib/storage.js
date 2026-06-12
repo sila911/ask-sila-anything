@@ -30,10 +30,6 @@ export async function deleteDesign(id) {
 }
 
 export async function saveDesigns(designs) {
-  // Use upsert to replace or update designs
-  // Note: This logic assumes 'id' is the primary key and will update existing or insert new.
-  // To match the 'replace' behavior of the backend (delete and re-insert), 
-  // we would need to delete all then insert. But upsert is usually better.
   const { error } = await supabase
     .from('designs')
     .upsert(designs);
@@ -86,10 +82,6 @@ export async function addQuestion(questionText) {
 }
 
 export async function likeQuestion(id) {
-  // Supabase doesn't have a direct 'increment' method in the JS client without RPC 
-  // or fetching first. We'll use a simple RPC call if available, or fetch and update.
-  // For now, let's assume an RPC 'increment_likes' exists, or we fetch-then-update.
-  
   const { data: question, error: fetchError } = await supabase
     .from('questions')
     .select('likes_count')
@@ -264,6 +256,7 @@ export async function addComment(questionId, text) {
     text,
     author: 'Anonymous',
     createdAt: new Date().toISOString(),
+    likes_count: 0,
   };
 
   const { error } = await supabase
@@ -274,3 +267,46 @@ export async function addComment(questionId, text) {
   return newComment;
 }
 
+export async function likeComment(id) {
+  const { data: comment, error: fetchError } = await supabase
+    .from('comments')
+    .select('likes_count')
+    .eq('id', id)
+    .single();
+
+  if (fetchError) throw new Error(fetchError.message);
+
+  const newCount = (comment.likes_count || 0) + 1;
+
+  const { data, error } = await supabase
+    .from('comments')
+    .update({ likes_count: newCount })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function unlikeComment(id) {
+  const { data: comment, error: fetchError } = await supabase
+    .from('comments')
+    .select('likes_count')
+    .eq('id', id)
+    .single();
+
+  if (fetchError) throw new Error(fetchError.message);
+
+  const newCount = Math.max(0, (comment.likes_count || 0) - 1);
+
+  const { data, error } = await supabase
+    .from('comments')
+    .update({ likes_count: newCount })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
