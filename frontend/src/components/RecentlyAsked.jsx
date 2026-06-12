@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { FiHeart, FiTag, FiMessageCircle, FiEye, FiSend, FiLock, FiCheck, FiTag as FiTagIcon } from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion";
 import ShareModal from "./ShareModal";
 import CommentModal from "./CommentModal";
 import CoverBanner from "./CoverBanner";
@@ -50,7 +51,7 @@ function QuestionSEO({ question, answer }) {
   );
 }
 
-export function QuestionCard({ q, designs, comments, onAddComment, likedQuestions, handleLike, handleView, timeAgo, isSingleView = false, isLocked = false }) {
+export function QuestionCard({ q, designs, comments, onAddComment, likedQuestions, handleLike, likedComments, handleLikeComment, handleView, timeAgo, isSingleView = false, isLocked = false }) {
   const cardRef = useRef(null);
   const hasViewed = useRef(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -238,6 +239,8 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
         onClose={() => setIsCommentModalOpen(false)}
         comments={questionComments}
         onAddComment={onAddComment}
+        likedComments={likedComments}
+        handleLikeComment={handleLikeComment}
         qId={q.id}
         timeAgo={timeAgo}
       />
@@ -246,7 +249,7 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
 }
 
 export default function RecentlyAsked({ 
-  questions, designs, comments, onAddComment, likedQuestions, handleLike, handleView, timeAgo, 
+  questions, designs, comments, onAddComment, likedQuestions, handleLike, likedComments, handleLikeComment, handleView, timeAgo, 
   handleSuccess, submitUserQuestion, filterMode, setFilterMode, isFilterOpen, setIsFilterOpen, listRef,
   hasAskedQuestion 
 }) {
@@ -293,14 +296,27 @@ export default function RecentlyAsked({
                 </svg>
               </button>
 
-              {isFilterOpen && (
-                <>
-                  <div 
+              <AnimatePresence>
+                {isFilterOpen && (
+                  <motion.div 
+                    key="filter-backdrop"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
                     className="fixed inset-0 z-[90]" 
                     onClick={() => setIsFilterOpen(false)}
-                  ></div>
-                  
-                  <div className="absolute right-0 top-full mt-1.5 w-36 rounded-xl bg-white/95 dark:bg-slate-900/95 border border-[color:var(--card-border)] shadow-2xl p-1 flex flex-col gap-0.5 z-[100] animate-in fade-in slide-in-from-top-2 duration-150 backdrop-blur-xl">
+                  />
+                )}
+                
+                {isFilterOpen && (
+                  <motion.div 
+                    key="filter-dropdown"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="absolute right-0 top-full mt-1.5 w-36 rounded-xl bg-white/95 dark:bg-slate-900/95 border border-[color:var(--card-border)] shadow-2xl p-1 flex flex-col gap-0.5 z-[100] animate-in fade-in slide-in-from-top-2 duration-150 backdrop-blur-xl"
+                  >
                     <button
                       onClick={() => {
                         setFilterMode("all");
@@ -343,16 +359,16 @@ export default function RecentlyAsked({
                       <span>Oldest</span>
                       {filterMode === "oldest" && <FiCheck size={14} className="shrink-0" />}
                     </button>
-                  </div>
-                </>
-              )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
 
           <div ref={listRef} className="relative z-10 w-full flex flex-col gap-4 p-2 sm:p-4 md:p-6 overflow-visible">
             {[...questions]
               .sort((a, b) => {
-                if (a.is_pinned !== b.is_pinned) {
+                if (filterMode === "all" && a.is_pinned !== b.is_pinned) {
                   return a.is_pinned ? -1 : 1;
                 }
                 if (filterMode === "top") {
@@ -372,6 +388,8 @@ export default function RecentlyAsked({
                   onAddComment={onAddComment}
                   likedQuestions={likedQuestions}
                   handleLike={handleLike}
+                  likedComments={likedComments}
+                  handleLikeComment={handleLikeComment}
                   handleView={handleView}
                   timeAgo={timeAgo}
                   isLocked={!hasAskedQuestion}

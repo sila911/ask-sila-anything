@@ -39,6 +39,8 @@ import {
   deleteDesign,
   getComments,
   addComment,
+  likeComment,
+  unlikeComment,
 } from "./lib/storage";
 import {
   createEncryptedAdminToken,
@@ -151,6 +153,13 @@ export default function App() {
       return [];
     }
   });
+  const [likedComments, setLikedComments] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("likedComments") || "[]");
+    } catch {
+      return [];
+    }
+  });
 
   const [listRef] = useAutoAnimate();
   const navigate = useNavigate();
@@ -192,11 +201,20 @@ export default function App() {
       }
     });
 
-    // Subscribe to new questions (Real-time)
+    // Subscribe to changes (Real-time)
     const channel = supabase
-      .channel('public:questions')
+      .channel('public_changes')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'questions' }, () => {
         setHasNewQuestions(true);
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'comments' }, (payload) => {
+        setComments((prev) => prev.map(c => c.id === payload.new.id ? payload.new : c));
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments' }, (payload) => {
+        setComments((prev) => {
+          if (prev.some(c => c.id === payload.new.id)) return prev;
+          return [...prev, payload.new];
+        });
       })
       .subscribe();
 
@@ -316,6 +334,44 @@ export default function App() {
       );
     } catch (error) {
       console.error("Failed to toggle like:", error);
+    }
+  };
+
+  const handleLikeComment = async (id) => {
+    const isCurrentlyLiked = likedComments.includes(id);
+
+    // Optimistic Update
+    setComments((prev) =>
+      prev.map((c) =>
+        c.id === id
+          ? {
+              ...c,
+              likes_count: isCurrentlyLiked
+                ? Math.max(0, (c.likes_count || 0) - 1)
+                : (c.likes_count || 0) + 1,
+            }
+          : c
+      )
+    );
+
+    let nextLiked;
+    if (isCurrentlyLiked) {
+      nextLiked = likedComments.filter((lid) => lid !== id);
+    } else {
+      nextLiked = [...likedComments, id];
+    }
+
+    setLikedComments(nextLiked);
+    localStorage.setItem("likedComments", JSON.stringify(nextLiked));
+
+    try {
+      const data = isCurrentlyLiked ? await unlikeComment(id) : await likeComment(id);
+      // Sync with server count
+      setComments((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, likes_count: data.likes_count } : c))
+      );
+    } catch (error) {
+      console.error("Failed to toggle comment like:", error);
     }
   };
 
@@ -499,6 +555,8 @@ export default function App() {
                     onAddComment={handleAddComment}
                     likedQuestions={likedQuestions}
                     handleLike={handleLike}
+                    likedComments={likedComments}
+                    handleLikeComment={handleLikeComment}
                     handleView={handleView}
                     timeAgo={timeAgo}
                     handleSuccess={handleSuccess}
@@ -611,6 +669,8 @@ export default function App() {
              onAddComment={handleAddComment}
              likedQuestions={likedQuestions}
              handleLike={handleLike}
+             likedComments={likedComments}
+             handleLikeComment={handleLikeComment}
              handleView={handleView}
              timeAgo={timeAgo}
              hasAskedQuestion={hasAskedQuestion}
