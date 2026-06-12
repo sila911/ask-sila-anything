@@ -365,7 +365,7 @@ export default function RecentlyAsked({
             </div>
           </div>
 
-          <div ref={listRef} className="relative z-10 w-full flex flex-col gap-4 p-2 sm:p-4 md:p-6 overflow-visible">
+          <div className="relative z-10 w-full flex flex-col gap-4 p-2 sm:p-4 md:p-6 overflow-visible">
             {[...questions]
               .sort((a, b) => {
                 if (filterMode === "all" && a.is_pinned !== b.is_pinned) {
