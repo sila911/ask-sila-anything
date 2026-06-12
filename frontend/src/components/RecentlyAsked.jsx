@@ -380,20 +380,27 @@ export default function RecentlyAsked({
                 return new Date(b.createdAt) - new Date(a.createdAt);
               })
               .map((q) => (
-                <QuestionCard
+                <motion.div
                   key={q.id}
-                  q={q}
-                  designs={designs}
-                  comments={comments}
-                  onAddComment={onAddComment}
-                  likedQuestions={likedQuestions}
-                  handleLike={handleLike}
-                  likedComments={likedComments}
-                  handleLikeComment={handleLikeComment}
-                  handleView={handleView}
-                  timeAgo={timeAgo}
-                  isLocked={!hasAskedQuestion}
-                />
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <QuestionCard
+                    q={q}
+                    designs={designs}
+                    comments={comments}
+                    onAddComment={onAddComment}
+                    likedQuestions={likedQuestions}
+                    handleLike={handleLike}
+                    likedComments={likedComments}
+                    handleLikeComment={handleLikeComment}
+                    handleView={handleView}
+                    timeAgo={timeAgo}
+                    isLocked={!hasAskedQuestion}
+                  />
+                </motion.div>
               ))}
           </div>
         </div>
