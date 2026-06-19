@@ -49,8 +49,45 @@ function formatAskedAt(value) {
 }
 
 export function renderTextToImage(text, style) {
-  const width = 1080
-  const height = 1920
+  const aspectRatio = style.aspectRatio || "9:16"
+  let width = 1080
+  let height = 1920
+  let panelMarginX = 70
+  let panelMarginY = 140
+  let footerOffset = 98
+  let questionMaxLines = 4
+  let answerMaxLines = 7
+  let questionStartYOffset = 120
+  let dateYOffset = 58
+  let dividerPaddingTop = 38
+  let dividerPaddingBottom = 54
+
+  if (aspectRatio === "1:1") {
+    width = 1080
+    height = 1080
+    panelMarginX = 60
+    panelMarginY = 80
+    footerOffset = 60
+    questionMaxLines = 3
+    answerMaxLines = 5
+    questionStartYOffset = 90
+    dateYOffset = 42
+    dividerPaddingTop = 26
+    dividerPaddingBottom = 38
+  } else if (aspectRatio === "16:9") {
+    width = 1920
+    height = 1080
+    panelMarginX = 140
+    panelMarginY = 100
+    footerOffset = 70
+    questionMaxLines = 3
+    answerMaxLines = 5
+    questionStartYOffset = 100
+    dateYOffset = 46
+    dividerPaddingTop = 30
+    dividerPaddingBottom = 44
+  }
+
   const canvas = document.createElement('canvas')
   canvas.width = width
   canvas.height = height
@@ -78,21 +115,22 @@ export function renderTextToImage(text, style) {
   ctx.fillStyle = gradient
   ctx.fillRect(0, 0, width, height)
 
-  drawRoundedRect(ctx, 70, 140, width - 140, height - 280, frameRadius)
+  const panelX = panelMarginX
+  const panelY = panelMarginY
+  const panelWidth = width - (panelMarginX * 2)
+  const panelHeight = height - (panelMarginY * 2)
+
+  drawRoundedRect(ctx, panelX, panelY, panelWidth, panelHeight, frameRadius)
   ctx.fillStyle = panelColor
   ctx.fill()
 
   if (frameWidth > 0) {
-    drawRoundedRect(ctx, 70, 140, width - 140, height - 280, frameRadius)
+    drawRoundedRect(ctx, panelX, panelY, panelWidth, panelHeight, frameRadius)
     ctx.lineWidth = frameWidth
     ctx.strokeStyle = frameColor
     ctx.stroke()
   }
 
-  const panelX = 70
-  const panelY = 140
-  const panelWidth = width - 140
-  const panelHeight = height - 280
   const contentX = align === 'left' ? panelX + 72 : align === 'right' ? panelX + panelWidth - 72 : width / 2
   const maxTextWidth = panelWidth - 140
 
@@ -106,7 +144,7 @@ export function renderTextToImage(text, style) {
     ctx.textBaseline = 'top'
     ctx.textAlign = 'right'
     ctx.fillStyle = 'rgba(255,255,255,0.9)'
-    ctx.fillText(dateLabel, panelX + panelWidth - 70, panelY + 58)
+    ctx.fillText(dateLabel, panelX + panelWidth - 70, panelY + dateYOffset)
     ctx.fillStyle = textColor
     ctx.textAlign = align
   }
@@ -115,13 +153,13 @@ export function renderTextToImage(text, style) {
   ctx.textBaseline = 'top'
   const questionLines = wrapText(ctx, questionText || 'Question', maxTextWidth)
   const questionLineHeight = questionFontSize * 1.22
-  let y = panelY + 120
-  for (const line of questionLines.slice(0, 4)) {
+  let y = panelY + questionStartYOffset
+  for (const line of questionLines.slice(0, questionMaxLines)) {
     ctx.fillText(line, contentX, y)
     y += questionLineHeight
   }
 
-  y += 38
+  y += dividerPaddingTop
   const dividerLeft = panelX + 70
   const dividerRight = panelX + panelWidth - 70
   ctx.strokeStyle = 'rgba(255,255,255,0.45)'
@@ -131,11 +169,11 @@ export function renderTextToImage(text, style) {
   ctx.lineTo(dividerRight, y)
   ctx.stroke()
 
-  y += 54
+  y += dividerPaddingBottom
   ctx.font = `700 ${answerFontSize}px ${fontFamily}`
   const answerLines = wrapText(ctx, answerText || 'Answer goes here...', maxTextWidth)
   const answerLineHeight = answerFontSize * 1.2
-  for (const line of answerLines.slice(0, 7)) {
+  for (const line of answerLines.slice(0, answerMaxLines)) {
     ctx.fillText(line, contentX, y)
     y += answerLineHeight
   }
@@ -143,7 +181,7 @@ export function renderTextToImage(text, style) {
   ctx.font = '500 38px Georgia'
   ctx.fillStyle = 'rgba(255,255,255,0.8)'
   ctx.textAlign = 'center'
-  ctx.fillText('Created with Ask Sila Story Studio', width / 2, height - 98)
+  ctx.fillText('Created with Ask Sila Story Studio', width / 2, height - footerOffset)
 
   return canvas.toDataURL('image/png')
 }

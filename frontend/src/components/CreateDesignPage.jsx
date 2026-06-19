@@ -33,6 +33,7 @@ const defaultStyle = {
   answerFontSize: 62,
   fontFamily: "Georgia",
   align: "center",
+  aspectRatio: "9:16",
 };
 
 function formatAskedAt(value) {
@@ -69,8 +70,12 @@ export default function CreateDesignPage({
   const [imageDataUrl, setImageDataUrl] = useState("");
   const [message, setMessage] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isFontDropdownOpen, setIsFontDropdownOpen] = useState(false);
+  const [isRatioDropdownOpen, setIsRatioDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const dropdownRef = useRef(null);
+  const fontDropdownRef = useRef(null);
+  const ratioDropdownRef = useRef(null);
 
   const sortedQuestions = useMemo(() => {
     return [...questions].sort((a, b) =>
@@ -102,11 +107,17 @@ export default function CreateDesignPage({
     }
   }, [seedDesign]);
 
-  // Handle click outside to close dropdown
+  // Handle click outside to close dropdowns
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
+      }
+      if (fontDropdownRef.current && !fontDropdownRef.current.contains(event.target)) {
+        setIsFontDropdownOpen(false);
+      }
+      if (ratioDropdownRef.current && !ratioDropdownRef.current.contains(event.target)) {
+        setIsRatioDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -366,16 +377,80 @@ export default function CreateDesignPage({
                 />
               </label>
             ))}
-            <label className="space-y-1 col-span-2 sm:col-span-1">
+            {/* Custom Font Dropdown */}
+            <div className="relative space-y-1" ref={fontDropdownRef}>
               <span className="block text-[10px] text-[color:var(--app-muted)] font-bold ml-1 uppercase">Font</span>
-              <select
-                value={style.fontFamily}
-                onChange={(e) => setField("fontFamily", e.target.value)}
-                className="h-9 w-full rounded-xl px-2 bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs outline-none"
+              <button
+                type="button"
+                onClick={() => setIsFontDropdownOpen(!isFontDropdownOpen)}
+                className="flex items-center justify-between w-full h-9 px-3 rounded-xl bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-cyan-500/50 transition-all text-left text-xs font-semibold"
               >
-                {FONT_OPTIONS.map(font => <option key={font} value={font}>{font}</option>)}
-              </select>
-            </label>
+                <span style={{ fontFamily: style.fontFamily }}>{style.fontFamily}</span>
+                <FiChevronDown className={`shrink-0 text-slate-400 transition-transform duration-200 ${isFontDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isFontDropdownOpen && (
+                <div className="absolute bottom-full mb-2 left-0 right-0 z-[110] rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200 backdrop-blur-xl">
+                  <div className="py-1">
+                    {FONT_OPTIONS.map((font) => (
+                      <button
+                        key={font}
+                        type="button"
+                        onClick={() => {
+                          setField("fontFamily", font);
+                          setIsFontDropdownOpen(false);
+                        }}
+                        style={{ fontFamily: font }}
+                        className={`w-full px-3 py-2 text-left text-xs hover:bg-slate-50 dark:hover:bg-white/5 flex items-center justify-between transition-colors ${style.fontFamily === font ? 'text-cyan-500 font-bold bg-cyan-500/5' : 'text-slate-700 dark:text-slate-300'}`}
+                      >
+                        <span>{font}</span>
+                        {style.fontFamily === font && <FiCheck className="text-cyan-500" size={12} />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Custom Aspect Ratio Dropdown */}
+            <div className="relative space-y-1" ref={ratioDropdownRef}>
+              <span className="block text-[10px] text-[color:var(--app-muted)] font-bold ml-1 uppercase">Aspect Ratio</span>
+              <button
+                type="button"
+                onClick={() => setIsRatioDropdownOpen(!isRatioDropdownOpen)}
+                className="flex items-center justify-between w-full h-9 px-3 rounded-xl bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-cyan-500/50 transition-all text-left text-xs font-semibold"
+              >
+                <span>
+                  {style.aspectRatio === "9:16" ? "Story (9:16)" : style.aspectRatio === "1:1" ? "Square (1:1)" : "Landscape (16:9)"}
+                </span>
+                <FiChevronDown className={`shrink-0 text-slate-400 transition-transform duration-200 ${isRatioDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isRatioDropdownOpen && (
+                <div className="absolute bottom-full mb-2 left-0 right-0 z-[110] rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200 backdrop-blur-xl">
+                  <div className="py-1">
+                    {[
+                      { value: "9:16", label: "Story (9:16)" },
+                      { value: "1:1", label: "Square (1:1)" },
+                      { value: "16:9", label: "Landscape (16:9)" },
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => {
+                          setField("aspectRatio", opt.value);
+                          setIsRatioDropdownOpen(false);
+                        }}
+                        className={`w-full px-3 py-2 text-left text-xs hover:bg-slate-50 dark:hover:bg-white/5 flex items-center justify-between transition-colors ${style.aspectRatio === opt.value ? 'text-cyan-500 font-bold bg-cyan-500/5' : 'text-slate-700 dark:text-slate-300'}`}
+                      >
+                        <span>{opt.label}</span>
+                        {style.aspectRatio === opt.value && <FiCheck className="text-cyan-500" size={12} />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="space-y-3 pt-2">
@@ -405,40 +480,48 @@ export default function CreateDesignPage({
 
         {/* Right Column: Preview & Actions */}
         <div className="space-y-4 min-w-0">
-          <div
-            className="h-[340px] sm:h-[450px] rounded-[2.5rem] border-4 border-white/20 shadow-2xl overflow-hidden w-full flex flex-col relative"
-            style={previewStyle}
-          >
+          <div className="flex items-center justify-center bg-slate-100/50 dark:bg-black/10 rounded-[2.5rem] p-4 border border-slate-200 dark:border-white/5 h-[340px] sm:h-[480px]">
             <div
-              className="flex-1 rounded-[1.8rem] m-2 px-4 py-6 sm:px-6 sm:py-8 flex flex-col gap-3 sm:gap-5 overflow-hidden"
-              style={{ background: style.panelColor }}
+              className={`shadow-2xl overflow-hidden flex flex-col relative transition-all duration-300 ${
+                style.aspectRatio === "9:16"
+                  ? "h-full aspect-[9/16]"
+                  : style.aspectRatio === "1:1"
+                  ? "h-full aspect-square"
+                  : "w-full aspect-[16/9] max-h-full"
+              }`}
+              style={previewStyle}
             >
-              {selectedQuestion?.createdAt && (
-                <p className="text-right text-[9px] sm:text-xs opacity-70 font-mono tracking-tighter">
-                  {formatAskedAt(selectedQuestion.createdAt)}
-                </p>
-              )}
+              <div
+                className="flex-1 rounded-[1.8rem] m-2 px-4 py-6 sm:px-6 sm:py-8 flex flex-col gap-3 sm:gap-5 overflow-hidden"
+                style={{ background: style.panelColor }}
+              >
+                {selectedQuestion?.createdAt && (
+                  <p className="text-right text-[9px] sm:text-xs opacity-70 font-mono tracking-tighter">
+                    {formatAskedAt(selectedQuestion.createdAt)}
+                  </p>
+                )}
 
-              <div className="min-w-0">
-                <p className="text-[0.6rem] sm:text-[0.7rem] uppercase tracking-widest font-bold opacity-60">Question</p>
-                <p
-                  className="whitespace-pre-wrap leading-snug mt-1 break-all sm:break-words italic"
-                  style={{ fontSize: `${Math.max(13, style.questionFontSize / 3.2)}px` }}
-                >
-                  {selectedQuestion?.question || "Question preview..."}
-                </p>
-              </div>
+                <div className="min-w-0">
+                  <p className="text-[0.6rem] sm:text-[0.7rem] uppercase tracking-widest font-bold opacity-60">Question</p>
+                  <p
+                    className="whitespace-pre-wrap leading-snug mt-1 break-all sm:break-words italic"
+                    style={{ fontSize: `${Math.max(13, style.questionFontSize / 3.2)}px` }}
+                  >
+                    {selectedQuestion?.question || "Question preview..."}
+                  </p>
+                </div>
 
-              <div className="h-px bg-white/20 w-full" />
+                <div className="h-px bg-white/20 w-full" />
 
-              <div className="flex-1 min-w-0 overflow-hidden">
-                <p className="text-[0.6rem] sm:text-[0.7rem] uppercase tracking-widest font-bold opacity-60">Answer</p>
-                <p
-                  className="whitespace-pre-wrap leading-tight mt-1.5 break-all sm:break-words font-bold"
-                  style={{ fontSize: `${Math.max(15, style.answerFontSize / 3)}px` }}
-                >
-                  {answer || "Answer preview..."}
-                </p>
+                <div className="flex-1 min-w-0 overflow-hidden">
+                  <p className="text-[0.6rem] sm:text-[0.7rem] uppercase tracking-widest font-bold opacity-60">Answer</p>
+                  <p
+                    className="whitespace-pre-wrap leading-tight mt-1.5 break-all sm:break-words font-bold"
+                    style={{ fontSize: `${Math.max(15, style.answerFontSize / 3)}px` }}
+                  >
+                    {answer || "Answer preview..."}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
