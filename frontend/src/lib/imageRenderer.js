@@ -9,22 +9,30 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
 }
 
 function wrapText(ctx, text, maxWidth) {
-  const words = text.trim().split(/\s+/)
+  const paragraphs = text.split('\n')
   const lines = []
-  let current = ''
 
-  for (const word of words) {
-    const candidate = current ? `${current} ${word}` : word
-    const width = ctx.measureText(candidate).width
-    if (width <= maxWidth) {
-      current = candidate
-    } else {
-      if (current) lines.push(current)
-      current = word
+  for (const para of paragraphs) {
+    const words = para.trim().split(/\s+/)
+    if (words.length === 1 && words[0] === '') {
+      lines.push('') // Preserve empty line
+      continue
     }
-  }
 
-  if (current) lines.push(current)
+    let current = ''
+    for (const word of words) {
+      if (!word) continue
+      const candidate = current ? `${current} ${word}` : word
+      const width = ctx.measureText(candidate).width
+      if (width <= maxWidth) {
+        current = candidate
+      } else {
+        if (current) lines.push(current)
+        current = word
+      }
+    }
+    if (current) lines.push(current)
+  }
   return lines
 }
 

@@ -451,6 +451,31 @@ export default function CreateDesignPage({
                 </div>
               )}
             </div>
+
+            {/* Text Alignment */}
+            <div className="relative space-y-1 col-span-2 sm:col-span-3">
+              <span className="block text-[10px] text-[color:var(--app-muted)] font-bold ml-1 uppercase">Alignment</span>
+              <div className="flex h-9 rounded-xl bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-0.5 gap-0.5">
+                {[
+                  { value: 'left', label: 'Left' },
+                  { value: 'center', label: 'Center' },
+                  { value: 'right', label: 'Right' },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setField('align', opt.value)}
+                    className={`flex-1 text-xs font-semibold rounded-lg transition-all ${
+                      (style.align || 'center') === opt.value
+                        ? 'bg-cyan-500 text-white dark:text-slate-950 shadow-md font-bold'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="space-y-3 pt-2">
@@ -493,7 +518,7 @@ export default function CreateDesignPage({
             >
               <div
                 className="flex-1 rounded-[1.8rem] m-2 px-4 py-6 sm:px-6 sm:py-8 flex flex-col gap-3 sm:gap-5 overflow-hidden"
-                style={{ background: style.panelColor }}
+                style={{ background: style.panelColor, textAlign: style.align }}
               >
                 {selectedQuestion?.createdAt && (
                   <p className="text-right text-[9px] sm:text-xs opacity-70 font-mono tracking-tighter">

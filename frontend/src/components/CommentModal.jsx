@@ -101,7 +101,7 @@ export default function CommentModal({ isOpen, onClose, comments, onAddComment, 
                       />
                     </button>
                   </div>
-                  <p className="text-slate-800 dark:text-zinc-200 text-sm mt-0.5 break-words whitespace-normal">
+                  <p className="text-slate-800 dark:text-zinc-200 text-sm mt-0.5 break-words whitespace-pre-wrap">
                     {c.text}
                   </p>
                 </div>
