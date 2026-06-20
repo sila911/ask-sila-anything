@@ -51,6 +51,70 @@ function QuestionSEO({ question, answer }) {
   );
 }
 
+function ExpandableText({ text, className = "", innerClassName = "" }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const safeText = text || "";
+  const lines = safeText.split('\n');
+  const hasManyLines = lines.length > 8;
+  const isTooLong = safeText.length > 450 || hasManyLines;
+
+  if (!isTooLong) {
+    return (
+      <div className={`${className} ${innerClassName} whitespace-pre-wrap break-words`}>
+        {safeText}
+      </div>
+    );
+  }
+
+  let displayText = safeText;
+  if (!isExpanded) {
+    if (hasManyLines) {
+      const first8Lines = lines.slice(0, 8);
+      const joined = first8Lines.join('\n');
+      if (joined.length > 450) {
+        displayText = joined.slice(0, 450).trim();
+      } else {
+        displayText = joined.trim();
+      }
+    } else {
+      displayText = safeText.slice(0, 450).trim();
+    }
+  }
+
+  return (
+    <motion.div
+      layout
+      className={`${className} ${innerClassName} whitespace-pre-wrap break-words`}
+      transition={{ duration: 0.3, ease: "easeInOut" }}
+    >
+      {isExpanded ? (
+        <>
+          {safeText}{' '}
+          <button
+            type="button"
+            onClick={() => setIsExpanded(false)}
+            className="text-cyan-500 hover:text-cyan-600 dark:text-cyan-400 dark:hover:text-cyan-300 font-bold text-xs inline ml-1 transition-colors focus:outline-none"
+          >
+            (show less)
+          </button>
+        </>
+      ) : (
+        <>
+          {displayText}
+          <button
+            type="button"
+            onClick={() => setIsExpanded(true)}
+            className="text-cyan-500 hover:text-cyan-600 dark:text-cyan-400 dark:hover:text-cyan-300 font-bold text-xs inline ml-1 transition-colors focus:outline-none"
+          >
+            ...(see more)
+          </button>
+        </>
+      )}
+    </motion.div>
+  );
+}
+
 export function QuestionCard({ q, designs, comments, onAddComment, likedQuestions, handleLike, likedComments, handleLikeComment, handleView, timeAgo, isSingleView = false, isLocked = false }) {
   const cardRef = useRef(null);
   const hasViewed = useRef(false);
@@ -152,10 +216,11 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
           </div>
         </div>
 
-        <div className="w-full block break-words whitespace-normal mb-1">
-          <p className="text-slate-950 dark:text-white text-base md:text-lg font-semibold break-words mt-2">
-            "{q.question}"
-          </p>
+        <div className="w-full block break-words mb-1">
+          <ExpandableText
+            text={`"${q.question}"`}
+            innerClassName="text-slate-950 dark:text-white text-base md:text-lg font-semibold mt-2"
+          />
         </div>
 
         {designWithAnswer && (designWithAnswer.answerText || designWithAnswer.text) && (
@@ -175,9 +240,11 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
                 </p>
               </div>
             </div>
-            <p className="text-slate-800 dark:text-zinc-200 text-xs sm:text-sm pl-2 sm:pl-7 break-words whitespace-normal">
-              {designWithAnswer.answerText || (designWithAnswer.text && designWithAnswer.text.includes('\nA: ') ? designWithAnswer.text.split('\nA: ')[1] : designWithAnswer.text)}
-            </p>
+            <ExpandableText
+              text={designWithAnswer.answerText || (designWithAnswer.text && designWithAnswer.text.includes('\nA: ') ? designWithAnswer.text.split('\nA: ')[1] : designWithAnswer.text)}
+              className="pl-2 sm:pl-7"
+              innerClassName="text-slate-800 dark:text-zinc-200 text-xs sm:text-sm capriola-regular"
+            />
           </div>
         )}
 
