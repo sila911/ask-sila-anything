@@ -58,7 +58,7 @@ export default function FAQSection() {
       <ContainerScroll
         titleComponent={
           <div className="flex items-center justify-center mb-6 w-full px-2">
-            <h2 className="flex items-center justify-center gap-1.5 sm:gap-2.5 text-[15px] min-[360px]:text-[16px] min-[390px]:text-[18px] sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-[color:var(--app-text)] whitespace-nowrap">
+            <h2 className="flex items-center justify-center gap-1.5 sm:gap-2.5 text-[15px] min-[360px]:text-[16px] min-[390px]:text-[18px] sm:text-3xl md:text-4xl lg:text-5xl tracking-tight text-[color:var(--app-text)] whitespace-nowrap mali-bold">
               <FiHelpCircle className="text-cyan-500 w-5 h-5 sm:w-8 sm:h-8 md:w-10 md:h-10 animate-pulse shrink-0" />
               <span>
                 Frequently Asked <span className="text-cyan-500">Questions</span>
@@ -78,7 +78,7 @@ export default function FAQSection() {
                 <button
                   type="button"
                   onClick={() => toggleAccordion(index)}
-                  className="w-full flex items-center justify-between p-4 text-left font-semibold text-sm sm:text-base text-[color:var(--app-text)] transition-colors hover:text-cyan-500 focus:outline-none"
+                  className="w-full flex items-center justify-between p-4 text-left text-sm sm:text-base text-[color:var(--app-text)] transition-colors hover:text-cyan-500 focus:outline-none mali-semibold"
                 >
                   <span>{item.question}</span>
                   <motion.div
@@ -98,7 +98,7 @@ export default function FAQSection() {
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.25, ease: "easeInOut" }}
                     >
-                      <div className="p-4 pt-0 text-xs sm:text-sm text-[color:var(--app-text)] opacity-85 leading-relaxed border-t border-white/5 whitespace-pre-line">
+                      <div className="p-4 pt-0 text-xs sm:text-sm text-[color:var(--app-text)] opacity-85 leading-relaxed border-t border-white/5 whitespace-pre-line mali-regular">
                         {item.answer}
                       </div>
                     </motion.div>

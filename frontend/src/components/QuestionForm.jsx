@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { FiLoader, FiSend, FiShuffle } from 'react-icons/fi'
 
 const QUESTIONS = [
@@ -30,6 +30,46 @@ const QUESTIONS = [
 export default function QuestionForm({ onSuccess, onSubmitQuestion }) {
   const [question, setQuestion] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [placeholder, setPlaceholder] = useState('')
+
+  useEffect(() => {
+    const texts = [
+      "Ask Sila anything...",
+      "Something in your mind to ask Sila?...",
+    ];
+    let textIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    let timeoutId;
+
+    const type = () => {
+      const currentText = texts[textIndex];
+      
+      if (isDeleting) {
+        setPlaceholder(currentText.substring(0, charIndex - 1));
+        charIndex--;
+      } else {
+        setPlaceholder(currentText.substring(0, charIndex + 1));
+        charIndex++;
+      }
+
+      let speed = isDeleting ? 30 : 60;
+
+      if (!isDeleting && charIndex === currentText.length) {
+        speed = 2200; // Pause at end of text
+        isDeleting = true;
+      } else if (isDeleting && charIndex === 0) {
+        isDeleting = false;
+        textIndex = (textIndex + 1) % texts.length;
+        speed = 400; // Pause before starting next text
+      }
+
+      timeoutId = setTimeout(type, speed);
+    };
+
+    type();
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   const handleShuffle = () => {
     const randomQuestion = QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)]
@@ -109,8 +149,8 @@ export default function QuestionForm({ onSuccess, onSubmitQuestion }) {
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           rows="6"
-          placeholder="Ask Sila anything..."
-          className="w-full rounded-3xl p-4 px-14 bg-[color:var(--input-bg)] border border-[color:var(--input-border)] focus:outline-none resize-none text-[color:var(--app-text)] placeholder-[color:var(--app-muted)] focus:ring-2 focus:ring-cyan-300/40 dark:focus:ring-cyan-500/35 transition-all"
+          placeholder={placeholder}
+          className="w-full rounded-3xl p-4 px-14 bg-[color:var(--input-bg)] border border-[color:var(--input-border)] focus:outline-none resize-none text-[color:var(--app-text)] placeholder-[color:var(--app-muted)] focus:ring-2 focus:ring-cyan-300/40 dark:focus:ring-cyan-500/35 focus:border-cyan-400 dark:focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(34,211,238,0.25)] transition-all mali-regular"
         />
 
         <button
