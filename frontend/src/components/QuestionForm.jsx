@@ -35,11 +35,7 @@ export default function QuestionForm({ onSuccess, onSubmitQuestion }) {
   useEffect(() => {
     const texts = [
       "Ask Sila anything...",
-      "What motivates you every day?",
-      "Be honest, did you think I was cute first time? 👀",
-      "What advice would you give your younger self?",
-      "What is something people don't know about you?",
-      "If we got married, who would win the arguments? 💍",
+      "Something in your mind to ask Sila?...",
     ];
     let textIndex = 0;
     let charIndex = 0;
