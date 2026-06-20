@@ -8,6 +8,7 @@ import CommentModal from "./CommentModal";
 import CoverBanner from "./CoverBanner";
 import Profile from "./Profile";
 import QuestionForm from "./QuestionForm";
+import FAQSection from "./FAQSection";
 
 function QuestionSEO({ question, answer }) {
   const title = question ? `"${question}" - Ask Sila` : "Ask Sila Anything";
@@ -472,6 +473,7 @@ export default function RecentlyAsked({
           </div>
         </div>
       )}
+      <FAQSection />
     </div>
   );
 }
