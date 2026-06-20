@@ -243,7 +243,7 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
             <ExpandableText
               text={designWithAnswer.answerText || (designWithAnswer.text && designWithAnswer.text.includes('\nA: ') ? designWithAnswer.text.split('\nA: ')[1] : designWithAnswer.text)}
               className="pl-2 sm:pl-7"
-              innerClassName="text-slate-800 dark:text-zinc-200 text-xs sm:text-sm"
+              innerClassName="text-slate-800 dark:text-zinc-200 text-xs sm:text-sm capriola-regular"
             />
           </div>
         )}
