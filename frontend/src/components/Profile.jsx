@@ -8,7 +8,7 @@ export default function Profile() {
         className="w-28 h-28 rounded-full object-cover border-4 border-solid border-white dark:border-slate-900 mb-3 -mt-14 relative z-10"
       />
 
-      <h1 className="text-2xl flex items-center gap-2 mali-bold">
+      <h1 className="text-2xl flex items-center gap-2 racing-sans-one-regular">
         Ask Sila Anything
       </h1>
 
