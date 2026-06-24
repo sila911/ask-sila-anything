@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { flushSync } from "react-dom";
-import { FiMoon, FiSun } from "react-icons/fi";
+import { Moon, Sun1, Coffee } from "iconsax-react";
 import BuyMeCoffeeModal from "./BuyMeCoffeeModal";
-import CoffeeIcon from "./icons/CoffeeIcon";
 
 export default function Header() {
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"));
@@ -94,7 +93,7 @@ export default function Header() {
             className="theme-toggle-btn inline-flex h-10 items-center justify-center gap-2 rounded-full px-3 py-1.5 sm:px-4 bg-[color:var(--icon-chip)] border border-[color:var(--card-border)] text-[color:var(--app-text)] hover:bg-[color:var(--icon-chip-hover)] transition active:scale-95"
             aria-label="Buy me a coffee"
           >
-            <CoffeeIcon className="w-5 h-5" />
+            <Coffee size="20" variant="Linear" />
             <span className="hidden sm:inline text-sm font-semibold tracking-wide">
               Buy me a coffee
             </span>
@@ -108,7 +107,7 @@ export default function Header() {
             <span
               className={`theme-icon ${isDark ? "theme-icon--sun" : "theme-icon--moon"}`}
             >
-              {isDark ? <FiSun size={17} /> : <FiMoon size={18} />}
+              {isDark ? <Sun1 size={17} /> : <Moon size={18} />}
             </span>
           </button>
         </div>

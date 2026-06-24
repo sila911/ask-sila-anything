@@ -110,7 +110,7 @@ export function renderTextToImage(text, style) {
   const frameRadius = Number(style.frameRadius || 48)
   const questionFontSize = Number(style.questionFontSize || 42)
   const answerFontSize = Number(style.answerFontSize || 62)
-  const fontFamily = style.fontFamily || 'Georgia'
+  const fontFamily = style.fontFamily || 'Mali'
   const align = style.align || 'center'
 
   const questionText = typeof text === 'object' ? text.question || '' : String(text || '')
@@ -186,7 +186,7 @@ export function renderTextToImage(text, style) {
     y += answerLineHeight
   }
 
-  ctx.font = '500 38px Georgia'
+  ctx.font = '500 38px Mali'
   ctx.fillStyle = 'rgba(255,255,255,0.8)'
   ctx.textAlign = 'center'
   ctx.fillText('Created with Ask Sila Story Studio', width / 2, height - footerOffset)

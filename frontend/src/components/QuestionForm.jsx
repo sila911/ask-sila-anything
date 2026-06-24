@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { FiLoader, FiSend, FiShuffle } from 'react-icons/fi'
+import { Refresh, Send2, Shuffle } from 'iconsax-react'
 
 const QUESTIONS = [
   // --- Original & Core Prompts ---
@@ -162,7 +162,7 @@ export default function QuestionForm({ onSuccess, onSubmitQuestion }) {
              transition-all duration-200 hover:bg-white dark:hover:bg-slate-700 hover:scale-105"
           title="Random Question"
         >
-          <FiShuffle size={16} />
+          <Shuffle size={16} />
         </button>
 
         <button
@@ -173,9 +173,9 @@ export default function QuestionForm({ onSuccess, onSubmitQuestion }) {
              hover:scale-110 active:scale-90 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (
-            <FiLoader size={16} className="animate-spin" />
+            <Refresh size={16} className="animate-spin" />
           ) : (
-            <FiSend size={15} className="translate-x-[-1px] translate-y-[1px]" />
+            <Send2 size={15} className="translate-x-[-1px] translate-y-[1px]" />
           )}
         </button>
       </div>

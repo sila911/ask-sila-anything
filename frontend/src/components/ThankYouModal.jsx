@@ -1,4 +1,4 @@
-import { FiCheckCircle } from 'react-icons/fi'
+import { TickCircle } from 'iconsax-react'
 
 export default function ThankYouModal({ isOpen, onClose }) {
   if (!isOpen) return null
@@ -13,7 +13,7 @@ export default function ThankYouModal({ isOpen, onClose }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="text-4xl text-emerald-500 dark:text-emerald-400 mb-3">
-          <FiCheckCircle className="mx-auto" />
+          <TickCircle className="mx-auto" />
         </div>
 
         <h2 className="text-lg font-semibold mb-1">

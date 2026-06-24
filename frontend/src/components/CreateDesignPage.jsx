@@ -1,24 +1,21 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import {
-  FiCopy,
-  FiDownload,
-  FiImage,
-  FiInstagram,
-  FiSave,
-  FiShare2,
-  FiChevronDown,
-  FiSearch,
-  FiCheck,
-} from "react-icons/fi";
-import { FaFacebookF } from "react-icons/fa";
+  Copy,
+  DocumentDownload,
+  Image,
+  Instagram,
+  Save2,
+  Share,
+  ArrowDown2,
+  SearchNormal1,
+  Check,
+  Facebook,
+} from "iconsax-react";
 import { dataUrlToBlob, renderTextToImage } from "../lib/imageRenderer";
 
 const FONT_OPTIONS = [
-  "Georgia",
-  "Verdana",
-  "Trebuchet MS",
-  "Times New Roman",
-  "Arial",
+  "Mali",
+  "Racing Sans One",
 ];
 
 const defaultStyle = {
@@ -31,10 +28,16 @@ const defaultStyle = {
   frameRadius: 48,
   questionFontSize: 42,
   answerFontSize: 62,
-  fontFamily: "Georgia",
+  fontFamily: "Mali",
   align: "center",
   aspectRatio: "9:16",
 };
+
+const ASPECT_RATIOS = [
+  { value: "9:16", label: "Story (9:16)" },
+  { value: "1:1", label: "Square (1:1)" },
+  { value: "16:9", label: "Landscape (16:9)" },
+];
 
 function formatAskedAt(value) {
   const date = new Date(value);
@@ -290,14 +293,14 @@ export default function CreateDesignPage({
                   <span className="text-slate-400">Select a question...</span>
                 )}
               </span>
-              <FiChevronDown className={`shrink-0 text-slate-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+              <ArrowDown2 className={`shrink-0 text-slate-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} size={16} />
             </button>
 
             {isDropdownOpen && (
               <div className="absolute top-full left-0 right-0 mt-2 z-[100] rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-xl">
                 <div className="p-2 border-b border-slate-200 dark:border-white/5">
                   <div className="relative">
-                    <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <SearchNormal1 className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                     <input
                       type="text"
                       value={searchTerm}
@@ -324,7 +327,7 @@ export default function CreateDesignPage({
                           <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${q.status === 'answered' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
                             {q.status}
                           </span>
-                          {selectedQuestionId === q.id && <FiCheck className="text-cyan-500" size={14} />}
+                          {selectedQuestionId === q.id && <Check className="text-cyan-500" size={14} />}
                         </div>
                         <p className="text-xs sm:text-sm font-medium line-clamp-2">{q.question}</p>
                       </button>
@@ -354,7 +357,7 @@ export default function CreateDesignPage({
                 onClick={saveDesign}
                 className="rounded-xl px-4 py-2 bg-cyan-600 text-white font-bold hover:bg-cyan-500 transition-all text-xs sm:text-sm shadow-lg shadow-cyan-600/20 active:scale-95"
               >
-                <FiSave className="inline-block mr-2" size={14} /> Submit Reply
+                <Save2 className="inline-block mr-2" size={14} /> Submit Reply
               </button>
             </div>
           </div>
@@ -386,25 +389,24 @@ export default function CreateDesignPage({
                 className="flex items-center justify-between w-full h-9 px-3 rounded-xl bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-cyan-500/50 transition-all text-left text-xs font-semibold"
               >
                 <span style={{ fontFamily: style.fontFamily }}>{style.fontFamily}</span>
-                <FiChevronDown className={`shrink-0 text-slate-400 transition-transform duration-200 ${isFontDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              {isFontDropdownOpen && (
-                <div className="absolute bottom-full mb-2 left-0 right-0 z-[110] rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200 backdrop-blur-xl">
-                  <div className="py-1">
-                    {FONT_OPTIONS.map((font) => (
-                      <button
-                        key={font}
-                        type="button"
-                        onClick={() => {
-                          setField("fontFamily", font);
-                          setIsFontDropdownOpen(false);
-                        }}
-                        style={{ fontFamily: font }}
-                        className={`w-full px-3 py-2 text-left text-xs hover:bg-slate-50 dark:hover:bg-white/5 flex items-center justify-between transition-colors ${style.fontFamily === font ? 'text-cyan-500 font-bold bg-cyan-500/5' : 'text-slate-700 dark:text-slate-300'}`}
-                      >
-                        <span>{font}</span>
-                        {style.fontFamily === font && <FiCheck className="text-cyan-500" size={12} />}
+                <ArrowDown2 className={`shrink-0 text-slate-400 transition-transform duration-200 ${isFontDropdownOpen ? 'rotate-180' : ''}`} size={14} />
+            </button>
+            {isFontDropdownOpen && (
+              <div className="absolute bottom-full left-0 right-0 mb-1 z-50 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden py-1 max-h-40 overflow-y-auto custom-scrollbar">
+                <div className="flex flex-col">
+                  {FONT_OPTIONS.map((font) => (
+                    <button
+                      key={font}
+                      type="button"
+                      onClick={() => {
+                        setField("fontFamily", font);
+                        setIsFontDropdownOpen(false);
+                      }}
+                      style={{ fontFamily: font }}
+                      className={`w-full px-3 py-2 text-left text-xs hover:bg-slate-50 dark:hover:bg-white/5 flex items-center justify-between transition-colors ${style.fontFamily === font ? 'text-cyan-500 font-bold bg-cyan-500/5' : 'text-slate-700 dark:text-slate-300'}`}
+                    >
+                      <span>{font}</span>
+                      {style.fontFamily === font && <Check className="text-cyan-500" size={12} />}
                       </button>
                     ))}
                   </div>
@@ -423,28 +425,23 @@ export default function CreateDesignPage({
                 <span>
                   {style.aspectRatio === "9:16" ? "Story (9:16)" : style.aspectRatio === "1:1" ? "Square (1:1)" : "Landscape (16:9)"}
                 </span>
-                <FiChevronDown className={`shrink-0 text-slate-400 transition-transform duration-200 ${isRatioDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              {isRatioDropdownOpen && (
-                <div className="absolute bottom-full mb-2 left-0 right-0 z-[110] rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200 backdrop-blur-xl">
-                  <div className="py-1">
-                    {[
-                      { value: "9:16", label: "Story (9:16)" },
-                      { value: "1:1", label: "Square (1:1)" },
-                      { value: "16:9", label: "Landscape (16:9)" },
-                    ].map((opt) => (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => {
-                          setField("aspectRatio", opt.value);
-                          setIsRatioDropdownOpen(false);
-                        }}
-                        className={`w-full px-3 py-2 text-left text-xs hover:bg-slate-50 dark:hover:bg-white/5 flex items-center justify-between transition-colors ${style.aspectRatio === opt.value ? 'text-cyan-500 font-bold bg-cyan-500/5' : 'text-slate-700 dark:text-slate-300'}`}
-                      >
-                        <span>{opt.label}</span>
-                        {style.aspectRatio === opt.value && <FiCheck className="text-cyan-500" size={12} />}
+                <ArrowDown2 className={`shrink-0 text-slate-400 transition-transform duration-200 ${isRatioDropdownOpen ? 'rotate-180' : ''}`} size={14} />
+            </button>
+            {isRatioDropdownOpen && (
+              <div className="absolute bottom-full left-0 right-0 mb-1 z-50 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden py-1">
+                <div className="flex flex-col">
+                  {ASPECT_RATIOS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => {
+                        setField("aspectRatio", opt.value);
+                        setIsRatioDropdownOpen(false);
+                      }}
+                      className={`w-full px-3 py-2 text-left text-xs hover:bg-slate-50 dark:hover:bg-white/5 flex items-center justify-between transition-colors ${style.aspectRatio === opt.value ? 'text-cyan-500 font-bold bg-cyan-500/5' : 'text-slate-700 dark:text-slate-300'}`}
+                    >
+                      <span>{opt.label}</span>
+                      {style.aspectRatio === opt.value && <Check className="text-cyan-500" size={12} />}
                       </button>
                     ))}
                   </div>
@@ -553,12 +550,12 @@ export default function CreateDesignPage({
 
           {/* Action Buttons moved here */}
           <div className="flex flex-wrap gap-2 py-2">
-            <ActionButton onClick={generateImage} icon={<FiImage />} label="Generate" color="bg-cyan-700" />
-            <ActionButton onClick={saveDesign} icon={<FiSave />} label="Save" color="bg-slate-800 dark:bg-slate-100 dark:text-slate-900" />
-            <ActionButton onClick={copyImage} icon={<FiCopy />} label="Copy" color="bg-emerald-700" />
-            <ActionButton onClick={downloadImage} icon={<FiDownload />} label="Download" color="bg-indigo-700" />
-            <ActionButton onClick={() => openPlatform("instagram")} icon={<FiInstagram />} label="IG Story" color="bg-pink-600" />
-            <ActionButton onClick={() => openPlatform("facebook")} icon={<FaFacebookF size={12} />} label="FB Story" color="bg-blue-700" />
+            <ActionButton onClick={generateImage} icon={<Image size={18} />} label="Generate" color="bg-cyan-700" />
+            <ActionButton onClick={saveDesign} icon={<Save2 size={18} />} label="Save" color="bg-slate-800 dark:bg-slate-100 dark:text-slate-900" />
+            <ActionButton onClick={copyImage} icon={<Copy size={18} />} label="Copy" color="bg-emerald-700" />
+            <ActionButton onClick={downloadImage} icon={<DocumentDownload size={18} />} label="Download" color="bg-indigo-700" />
+            <ActionButton onClick={() => openPlatform("instagram")} icon={<Instagram size={18} />} label="IG Story" color="bg-pink-600" />
+            <ActionButton onClick={() => openPlatform("facebook")} icon={<Facebook size={18} />} label="FB Story" color="bg-blue-700" />
           </div>
 
           <div className="space-y-3">
@@ -568,14 +565,14 @@ export default function CreateDesignPage({
               </div>
             ) : (
               <div className="rounded-2xl border-2 border-dashed border-slate-200 dark:border-white/10 p-8 text-center text-xs text-slate-400">
-                <FiImage className="mx-auto mb-2 opacity-20" size={32} />
+                <Image className="mx-auto mb-2 opacity-20" size={32} />
                 Generate image for preview
               </div>
             )}
 
             {message && (
               <div className="p-3 rounded-2xl bg-cyan-500/5 border border-cyan-500/20 flex items-start gap-2.5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <FiShare2 className="mt-0.5 shrink-0 text-cyan-500" size={14} /> 
+                <Share className="mt-0.5 shrink-0 text-cyan-500" size={14} /> 
                 <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium">{message}</p>
               </div>
             )}

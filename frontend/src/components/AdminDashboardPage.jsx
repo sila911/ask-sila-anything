@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FiClock, FiCopy, FiDownload, FiHelpCircle, FiImage, FiLayout, FiShare2, FiEye, FiEyeOff, FiTrash2 } from 'react-icons/fi'
+import { Clock, Copy, DocumentDownload, InfoCircle, Image, Category, Share, Eye, EyeSlash, Trash } from 'iconsax-react'
 import DeleteConfirmModal from './DeleteConfirmModal'
 
 function groupEventsByDay(events) {
@@ -71,7 +71,7 @@ export default function AdminDashboardPage({ designs, events, questions = [], on
 
       <div className="rounded-2xl border border-[color:var(--card-border)] p-3 sm:p-5 bg-white/45 dark:bg-slate-900/30">
         <h3 className="font-semibold mb-4 flex items-center gap-2">
-          <FiHelpCircle className="text-cyan-500" />
+          <InfoCircle className="text-cyan-500" />
           Manage Questions
         </h3>
         
@@ -121,7 +121,7 @@ export default function AdminDashboardPage({ designs, events, questions = [], on
                           : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
                       }`}
                     >
-                      {!q.is_hidden ? <><FiEye size={14} /> Visible</> : <><FiEyeOff size={14} /> Hidden</>}
+                      {!q.is_hidden ? <><Eye size={14} /> Visible</> : <><EyeSlash size={14} /> Hidden</>}
                     </button>
                   </div>
 
@@ -129,7 +129,7 @@ export default function AdminDashboardPage({ designs, events, questions = [], on
                     onClick={() => setDeleteModal({ isOpen: true, questionId: q.id, questionText: q.question })}
                     className="flex items-center justify-center h-8 w-8 rounded-lg text-rose-500 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition-colors"
                   >
-                    <FiTrash2 size={14} />
+                    <Trash size={14} />
                   </button>
                 </div>
               </div>
@@ -200,9 +200,9 @@ export default function AdminDashboardPage({ designs, events, questions = [], on
                             }`}
                           >
                             {!q.is_hidden ? (
-                              <FiEye size={12} className="text-cyan-700" />
+                              <Eye size={12} className="text-cyan-700" />
                             ) : (
-                              <FiEyeOff size={12} className="text-slate-400" />
+                              <EyeSlash size={12} className="text-slate-400" />
                             )}
                           </span>
                         </button>
@@ -214,7 +214,7 @@ export default function AdminDashboardPage({ designs, events, questions = [], on
                         className="p-2 rounded-xl text-rose-500 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition-colors"
                         title="Delete Question"
                       >
-                        <FiTrash2 size={16} />
+                        <Trash size={16} />
                       </button>
                     </td>
                   </tr>
@@ -322,15 +322,15 @@ export default function AdminDashboardPage({ designs, events, questions = [], on
 
 function Metric({ title, value, className = '', centered = false }) {
   const iconMap = {
-    Questions: FiHelpCircle,
-    Pending: FiClock,
-    Designs: FiLayout,
-    Rendered: FiImage,
-    Copies: FiCopy,
-    Downloads: FiDownload,
-    'Share Clicks': FiShare2,
+    Questions: InfoCircle,
+    Pending: Clock,
+    Designs: Category,
+    Rendered: Image,
+    Copies: Copy,
+    Downloads: DocumentDownload,
+    'Share Clicks': Share,
   }
-  const Icon = iconMap[title] || FiLayout
+  const Icon = iconMap[title] || Category
 
   return (
     <article className={`relative overflow-hidden rounded-xl border border-[color:var(--card-border)] bg-white/50 dark:bg-slate-900/35 p-3 ${centered ? 'text-center' : ''} ${className}`}>

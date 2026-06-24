@@ -1,4 +1,4 @@
-import { FiEdit2, FiTrash2 } from 'react-icons/fi'
+import { Edit2, Trash } from 'iconsax-react'
 
 function formatDate(value) {
   return new Date(value).toLocaleString()
@@ -46,7 +46,7 @@ export default function LibraryPage({ designs, onReuse, onDelete }) {
                 onClick={() => onReuse(design)}
                 className="rounded-lg px-3 py-2 bg-cyan-700 text-white inline-flex items-center justify-center gap-2"
               >
-                <FiEdit2 size={14} /> Reuse
+                <Edit2 size={14} /> Reuse
               </button>
 
               <button
@@ -54,7 +54,7 @@ export default function LibraryPage({ designs, onReuse, onDelete }) {
                 onClick={() => onDelete(design.id)}
                 className="rounded-lg px-3 py-2 bg-rose-700 text-white inline-flex items-center justify-center gap-2"
               >
-                <FiTrash2 size={14} /> Delete
+                <Trash size={14} /> Delete
               </button>
             </div>
           </article>

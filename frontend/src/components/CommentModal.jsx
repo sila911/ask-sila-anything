@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FiHeart } from "react-icons/fi";
+import { Heart, ArrowRight2 } from "iconsax-react";
 
 export default function CommentModal({ isOpen, onClose, comments, onAddComment, likedComments = [], handleLikeComment, qId, timeAgo }) {
   const [commentText, setCommentText] = useState("");
@@ -95,7 +95,7 @@ export default function CommentModal({ isOpen, onClose, comments, onAddComment, 
                       }`}
                     >
                       <span className="text-[10px] font-bold">{c.likes_count || 0}</span>
-                      <FiHeart 
+                      <Heart 
                         size={14} 
                         className={`transition-all ${likedComments?.includes(c.id) ? "fill-red-500" : "group-hover:fill-rose-400/20"}`} 
                       />
@@ -131,9 +131,7 @@ export default function CommentModal({ isOpen, onClose, comments, onAddComment, 
               disabled={isSubmittingComment || !commentText.trim()}
               className="w-10 h-10 flex items-center justify-center rounded-full bg-cyan-500 text-white disabled:opacity-50 disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-800 transition-colors shrink-0"
             >
-              <svg className="w-4 h-4 translate-x-px translate-y-px" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
+              <ArrowRight2 size={16} variant="Linear" />
             </button>
           </form>
         </div>

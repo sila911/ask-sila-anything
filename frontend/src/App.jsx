@@ -90,7 +90,7 @@ function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQ
         onClick={() => navigate('/')}
         className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-cyan-500 transition-colors font-medium self-start px-2"
       >
-        <FiArrowLeft /> Back to Feed
+        <ArrowLeft2 size="18" /> Back to Feed
       </button>
       
       <QuestionCard 
