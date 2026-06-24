@@ -173,7 +173,7 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
     <div
       ref={cardRef}
       key={q.id}
-      className={`relative w-full h-auto flex flex-col gap-3.5 p-3 sm:p-5 rounded-2xl bg-white/90 border border-slate-200 text-slate-900 dark:bg-white/5 dark:border-white/10 dark:text-white backdrop-blur-md overflow-hidden ${isSingleView ? 'shadow-2xl' : ''}`}
+      className={`glass-shell glass-shell--3d w-full h-auto flex flex-col gap-3.5 p-3 sm:p-5 rounded-2xl text-slate-900 dark:text-white ${isSingleView ? 'shadow-2xl' : ''}`}
     >
       {isLocked && (
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/40 dark:bg-black/40 backdrop-blur-xl">
@@ -210,7 +210,7 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
             {!isSingleView && q.is_pinned && (
               <img src="https://img.icons8.com/ios-filled/50/pin--v1.png" alt="Pinned" className="w-4 h-4 opacity-50 dark:invert" />
             )}
-            <div className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-cyan-400 whitespace-nowrap font-bold">
+            <div className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/50 border border-white/60 dark:bg-white/10 dark:border-white/20 text-cyan-700 dark:text-cyan-400 whitespace-nowrap font-bold shadow-sm backdrop-blur-sm">
               <span>{tags[tagIndex]}</span>
               <Tag size={12} className="stroke-[2.5]" />
             </div>
@@ -225,7 +225,7 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
         </div>
 
         {designWithAnswer && (designWithAnswer.answerText || designWithAnswer.text) && (
-          <div className="w-full p-3 sm:p-4 rounded-xl bg-slate-100 border-l-2 border-cyan-500 flex flex-col gap-1.5 mt-1 dark:bg-black/20">
+          <div className="glass-subpane w-full p-3 sm:p-4 rounded-xl border-l-2 border-l-cyan-500 flex flex-col gap-1.5 mt-1">
             <div className="flex items-center gap-2">
               <img 
                 src="/sila2.jpg" 
@@ -336,7 +336,7 @@ export default function RecentlyAsked({
       </div>
 
       {questions.length > 0 && (
-        <div className="w-full md:max-w-2xl mx-auto flex flex-col gap-4 p-2 sm:p-5 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md overflow-visible">
+        <div className="glass-shell !shadow-none w-full md:max-w-2xl mx-auto flex flex-col gap-4 p-2 sm:p-5 rounded-3xl overflow-visible">
           <div className="relative z-50 w-full flex items-center justify-between px-1 mb-6">
             <h2 className="text-xl font-bold flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
@@ -380,7 +380,7 @@ export default function RecentlyAsked({
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
                     transition={{ duration: 0.2, ease: "easeOut" }}
-                    className="absolute right-0 top-full mt-1.5 w-36 rounded-xl bg-white/95 dark:bg-slate-900/95 border border-[color:var(--card-border)] shadow-2xl p-1 flex flex-col gap-0.5 z-[100] animate-in fade-in slide-in-from-top-2 duration-150 backdrop-blur-xl"
+                    className="glass-shell absolute right-0 top-full mt-1.5 w-36 rounded-xl p-1 flex flex-col gap-0.5 z-[100] animate-in fade-in slide-in-from-top-2 duration-150"
                   >
                     <button
                       onClick={() => {

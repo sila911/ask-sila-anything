@@ -56,7 +56,7 @@ export default function CommentModal({ isOpen, onClose, comments, onAddComment, 
       onClick={onClose}
     >
       <div 
-        className={`relative w-full max-w-2xl h-[50vh] flex flex-col bg-white dark:bg-slate-900 rounded-t-3xl shadow-2xl transition-transform duration-300 ease-out transform ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}
+        className={`glass-shell relative w-full max-w-2xl h-[50vh] flex flex-col rounded-t-3xl shadow-2xl transition-transform duration-300 ease-out transform ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* TikTok style drag indicator / header */}
@@ -78,10 +78,10 @@ export default function CommentModal({ isOpen, onClose, comments, onAddComment, 
                 <div className="flex flex-col flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <p className="font-semibold text-xs text-slate-500 dark:text-slate-400">
+                      <p className="font-semibold text-xs text-slate-700 dark:text-slate-300">
                         Anonymous
                       </p>
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400">
                         {timeAgo(c.createdAt)}
                       </span>
                     </div>
@@ -116,7 +116,7 @@ export default function CommentModal({ isOpen, onClose, comments, onAddComment, 
         </div>
 
         {/* Comment Input Footer */}
-        <div className="shrink-0 p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <div className="shrink-0 p-4 border-t border-slate-200/50 dark:border-slate-800/50 bg-transparent">
           <form onSubmit={submitComment} className="flex items-center gap-3">
             <input
               type="text"
@@ -124,7 +124,7 @@ export default function CommentModal({ isOpen, onClose, comments, onAddComment, 
               onChange={(e) => setCommentText(e.target.value)}
               placeholder="Add comment..."
               disabled={isSubmittingComment}
-              className="flex-1 h-10 rounded-full px-4 text-sm bg-slate-100 dark:bg-slate-800 border-none focus:outline-none focus:ring-2 focus:ring-cyan-500/30 text-slate-900 dark:text-white placeholder:text-slate-500"
+              className="flex-1 h-10 rounded-full px-4 text-sm bg-[color:var(--input-bg)] border border-[color:var(--input-border)] focus:outline-none focus:ring-2 focus:ring-cyan-500/30 text-slate-900 dark:text-white placeholder:text-slate-500 transition-all"
             />
             <button 
               type="submit" 
