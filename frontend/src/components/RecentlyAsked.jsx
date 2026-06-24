@@ -219,8 +219,8 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
 
         <div className="w-full block break-words mb-1">
           <ExpandableText
-            text={`"${q.question}"`}
-            innerClassName="text-slate-950 dark:text-white text-base md:text-lg cause-semibold mt-2"
+            text={q.question}
+            innerClassName="text-slate-950 dark:text-white text-sm md:text-base cause-semibold mt-2"
           />
         </div>
 
@@ -352,6 +352,7 @@ export default function RecentlyAsked({
                 <span>
                   {filterMode === "all" && "All"}
                   {filterMode === "top" && "Top React"}
+                  {filterMode === "top_views" && "Top Views"}
                   {filterMode === "oldest" && "Oldest"}
                 </span>
                 <ArrowDown2
@@ -411,6 +412,20 @@ export default function RecentlyAsked({
                     </button>
                     <button
                       onClick={() => {
+                        setFilterMode("top_views");
+                        setIsFilterOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-all font-medium ${
+                        filterMode === "top_views" 
+                          ? "bg-cyan-500/10 text-cyan-600 dark:bg-cyan-500/20 dark:text-cyan-400" 
+                          : "text-[color:var(--app-text)] opacity-80 hover:opacity-100 hover:bg-[color:var(--icon-chip-hover)]"
+                      }`}
+                    >
+                      <span>Top Views</span>
+                      {filterMode === "top_views" && <Check size={14} className="shrink-0" />}
+                    </button>
+                    <button
+                      onClick={() => {
                         setFilterMode("oldest");
                         setIsFilterOpen(false);
                       }}
@@ -437,6 +452,9 @@ export default function RecentlyAsked({
                 }
                 if (filterMode === "top") {
                   return (b.likes_count || 0) - (a.likes_count || 0);
+                }
+                if (filterMode === "top_views") {
+                  return (b.views_count || 0) - (a.views_count || 0);
                 }
                 if (filterMode === "oldest") {
                   return new Date(a.createdAt) - new Date(b.createdAt);
