@@ -23,6 +23,8 @@ The project is built with a **React frontend** and uses **Supabase** for a robus
 - **Modern Profile Card**: Features a beautiful cover banner and an overlapping profile avatar for a professional look.
 - **Optimized for Mobile**: Responsive layout with minimized margins and optimized font sizes for better readability on phone devices.
 - **Glassmorphism Design**: Sleek, modern UI with frosted glass effects and smooth transitions.
+- **Consolidated Typography**: The application uses exactly two premium font families: **Racing Sans One** (headers) and **Mali** (body & Sila's answers).
+- **Premium Iconography**: Integrated **IconSax** (`iconsax-react`) across all pages and modals for a unified, high-quality, and modern style.
 
 ### Story Generator
 - Renders question (top) and answer (bottom) in one high-quality image.
@@ -34,7 +36,7 @@ The project is built with a **React frontend** and uses **Supabase** for a robus
 ### Frontend
 - **React 18** + **Vite**
 - **Tailwind CSS**
-- **React Icons**
+- **IconSax React** (`iconsax-react`)
 
 ### Backend (BaaS)
 - **Supabase** (Authentication, Database, Real-time)

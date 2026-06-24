@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { FiHeart, FiTag, FiMessageCircle, FiEye, FiSend, FiLock, FiCheck, FiTag as FiTagIcon } from "react-icons/fi";
+import { Heart, Tag, Message, Eye, Send2, Lock, Check, ArrowDown2 } from "iconsax-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ShareModal from "./ShareModal";
 import CommentModal from "./CommentModal";
@@ -108,7 +108,7 @@ function ExpandableText({ text, className = "", innerClassName = "" }) {
             onClick={() => setIsExpanded(true)}
             className="text-cyan-500 hover:text-cyan-600 dark:text-cyan-400 dark:hover:text-cyan-300 font-bold text-xs inline ml-1 transition-colors focus:outline-none"
           >
-            ...(see more)
+            ...see more
           </button>
         </>
       )}
@@ -179,7 +179,7 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/40 dark:bg-black/40 backdrop-blur-xl">
           <div className="flex flex-col items-center gap-3 animate-in zoom-in duration-300">
             <div className="w-16 h-16 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30">
-              <FiLock size={32} className="text-cyan-500" />
+              <Lock size={32} className="text-cyan-500" />
             </div>
             <div className="text-center">
               <p className="text-lg font-bold text-slate-900 dark:text-white leading-tight">Question Locked</p>
@@ -212,15 +212,15 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
             )}
             <div className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-cyan-400 whitespace-nowrap font-bold">
               <span>{tags[tagIndex]}</span>
-              <FiTag size={12} className="stroke-[2.5]" />
+              <Tag size={12} className="stroke-[2.5]" />
             </div>
           </div>
         </div>
 
         <div className="w-full block break-words mb-1">
           <ExpandableText
-            text={`"${q.question}"`}
-            innerClassName="text-slate-950 dark:text-white text-base md:text-lg font-semibold mt-2"
+            text={q.question}
+            innerClassName="text-slate-950 dark:text-white text-sm md:text-base cause-semibold mt-2"
           />
         </div>
 
@@ -244,7 +244,7 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
             <ExpandableText
               text={designWithAnswer.answerText || (designWithAnswer.text && designWithAnswer.text.includes('\nA: ') ? designWithAnswer.text.split('\nA: ')[1] : designWithAnswer.text)}
               className="pl-2 sm:pl-7"
-              innerClassName="text-slate-800 dark:text-zinc-200 text-xs sm:text-sm capriola-regular"
+              innerClassName="text-slate-800 dark:text-zinc-200 text-xs sm:text-sm mali-regular"
             />
           </div>
         )}
@@ -258,7 +258,7 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
                 : "text-slate-600 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400"
             }`}
           >
-            <FiHeart 
+            <Heart 
               size={18} 
               className={`transition-all ${isLiked ? "fill-red-500" : "group-heart:fill-rose-400/20"}`} 
             />
@@ -276,7 +276,7 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
             }`}
             title="View comments"
           >
-            <FiMessageCircle size={18} className={isCommentModalOpen ? "fill-cyan-500/20" : ""} />
+            <Message size={18} className={isCommentModalOpen ? "fill-cyan-500/20" : ""} />
             <span className={`text-sm md:text-base font-semibold ${isCommentModalOpen ? "text-cyan-500" : "text-slate-700 dark:text-slate-300"}`}>
               {questionComments.length || 0}
             </span>
@@ -286,7 +286,7 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
             onClick={handleShare}
             className="flex items-center gap-2 text-slate-600 hover:text-cyan-500 dark:text-slate-400 dark:hover:text-cyan-400 transition-colors group/share"
           >
-            <FiSend size={18} />
+            <Send2 size={18} />
             <span className="text-sm md:text-base font-semibold"></span>
           </button>
 
@@ -352,16 +352,13 @@ export default function RecentlyAsked({
                 <span>
                   {filterMode === "all" && "All"}
                   {filterMode === "top" && "Top React"}
+                  {filterMode === "top_views" && "Top Views"}
                   {filterMode === "oldest" && "Oldest"}
                 </span>
-                <svg
+                <ArrowDown2
                   className={`w-3 h-3 transition-transform duration-200 ${isFilterOpen ? "rotate-180" : ""}`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                  size={12}
+                />
               </button>
 
               <AnimatePresence>
@@ -397,7 +394,7 @@ export default function RecentlyAsked({
                       }`}
                     >
                       <span>All</span>
-                      {filterMode === "all" && <FiCheck size={14} className="shrink-0" />}
+                      {filterMode === "all" && <Check size={14} className="shrink-0" />}
                     </button>
                     <button
                       onClick={() => {
@@ -411,7 +408,21 @@ export default function RecentlyAsked({
                       }`}
                     >
                       <span>Top React</span>
-                      {filterMode === "top" && <FiCheck size={14} className="shrink-0" />}
+                      {filterMode === "top" && <Check size={14} className="shrink-0" />}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setFilterMode("top_views");
+                        setIsFilterOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-all font-medium ${
+                        filterMode === "top_views" 
+                          ? "bg-cyan-500/10 text-cyan-600 dark:bg-cyan-500/20 dark:text-cyan-400" 
+                          : "text-[color:var(--app-text)] opacity-80 hover:opacity-100 hover:bg-[color:var(--icon-chip-hover)]"
+                      }`}
+                    >
+                      <span>Top Views</span>
+                      {filterMode === "top_views" && <Check size={14} className="shrink-0" />}
                     </button>
                     <button
                       onClick={() => {
@@ -425,7 +436,7 @@ export default function RecentlyAsked({
                       }`}
                     >
                       <span>Oldest</span>
-                      {filterMode === "oldest" && <FiCheck size={14} className="shrink-0" />}
+                      {filterMode === "oldest" && <Check size={14} className="shrink-0" />}
                     </button>
                   </motion.div>
                 )}
@@ -441,6 +452,9 @@ export default function RecentlyAsked({
                 }
                 if (filterMode === "top") {
                   return (b.likes_count || 0) - (a.likes_count || 0);
+                }
+                if (filterMode === "top_views") {
+                  return (b.views_count || 0) - (a.views_count || 0);
                 }
                 if (filterMode === "oldest") {
                   return new Date(a.createdAt) - new Date(b.createdAt);

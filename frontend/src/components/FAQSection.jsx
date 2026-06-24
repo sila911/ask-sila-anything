@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiChevronDown, FiHelpCircle } from "react-icons/fi";
+import { ArrowDown2, InfoCircle } from "iconsax-react";
 import { ContainerScroll } from "./ui/container-scroll-animation";
 
 const faqData = [
@@ -59,7 +59,7 @@ export default function FAQSection() {
         titleComponent={
           <div className="flex items-center justify-center mb-6 w-full px-2">
             <h2 className="flex items-center justify-center gap-1.5 sm:gap-2.5 text-[15px] min-[360px]:text-[16px] min-[390px]:text-[18px] sm:text-3xl md:text-4xl lg:text-5xl tracking-tight text-[color:var(--app-text)] whitespace-nowrap mali-bold">
-              <FiHelpCircle className="text-cyan-500 w-5 h-5 sm:w-8 sm:h-8 md:w-10 md:h-10 animate-pulse shrink-0" />
+              <InfoCircle className="text-cyan-500 w-5 h-5 sm:w-8 sm:h-8 md:w-10 md:h-10 animate-pulse shrink-0" />
               <span>
                 Frequently Asked <span className="text-cyan-500">Questions</span>
               </span>
@@ -86,7 +86,7 @@ export default function FAQSection() {
                     transition={{ duration: 0.2 }}
                     className="text-cyan-500 ml-3 shrink-0"
                   >
-                    <FiChevronDown size={20} />
+                    <ArrowDown2 size={20} />
                   </motion.div>
                 </button>
 

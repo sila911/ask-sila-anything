@@ -1,20 +1,20 @@
 import { Footer as AnimatedFooter } from './ui/modem-animated-footer'
-import { FaGithub, FaInstagram, FaFacebookF } from 'react-icons/fa'
+import { Code, Instagram, Facebook } from 'iconsax-react'
 
 export default function Footer({ onSilaClick }) {
   const socialLinks = [
     {
-      icon: <FaGithub className="w-5 h-5" />,
+      icon: <Code className="w-5 h-5" />,
       href: "https://github.com/sila911",
       label: "GitHub",
     },
     {
-      icon: <FaInstagram className="w-5 h-5" />,
+      icon: <Instagram className="w-5 h-5" />,
       href: "https://www.instagram.com/siladc/",
       label: "Instagram",
     },
     {
-      icon: <FaFacebookF className="w-5 h-5" />,
+      icon: <Facebook className="w-5 h-5" />,
       href: "https://www.facebook.com/silaadc",
       label: "Facebook",
     },

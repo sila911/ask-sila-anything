@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FiCopy, FiCheck, FiX } from 'react-icons/fi';
+import { Copy, Check, CloseCircle } from 'iconsax-react';
 
 export default function ShareModal({ isOpen, onClose, url, questionText }) {
   const [copied, setCopied] = useState(false);
@@ -85,7 +85,7 @@ export default function ShareModal({ isOpen, onClose, url, questionText }) {
           className="absolute right-4 top-4 p-2 rounded-full text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors"
           aria-label="Close modal"
         >
-          <FiX size={20} />
+          <CloseCircle size={20} />
         </button>
         
         <h1 className="text-xl font-bold mb-6 text-slate-800 dark:text-white">Share Question</h1>
@@ -123,7 +123,7 @@ export default function ShareModal({ isOpen, onClose, url, questionText }) {
             className="flex items-center justify-center w-11 h-11 shrink-0 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white transition-colors border border-cyan-400/20 shadow-sm"
             title="Copy link"
           >
-            {copied ? <FiCheck size={20} /> : <FiCopy size={20} />}
+            {copied ? <Check size={20} /> : <Copy size={20} />}
           </button>
         </div>
       </div>

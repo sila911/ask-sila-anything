@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import qrCode from '../assets/qr-code.jpg';
+import { CloseCircle } from 'iconsax-react';
 
 export default function BuyMeCoffeeModal({ isOpen, onClose }) {
   const [shouldRender, setShouldRender] = useState(isOpen);
@@ -39,9 +40,7 @@ export default function BuyMeCoffeeModal({ isOpen, onClose }) {
           className="absolute right-5 top-5 p-2 rounded-full text-slate-400 hover:text-red-600 dark:hover:text-red-600 hover:bg-white/20 dark:hover:bg-slate-700/50 transition-colors"
           aria-label="Close modal"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <CloseCircle size={20} />
         </button>
         
         <h1 className="text-2xl font-bold mb-6 text-green-600 dark:text-green-400">Buy me a coffee</h1>
