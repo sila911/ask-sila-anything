@@ -73,7 +73,7 @@ export default function FAQSection() {
             return (
               <div
                 key={index}
-                className="border border-white/5 bg-slate-900/30 dark:bg-black/25 rounded-2xl overflow-hidden transition-all duration-300 hover:border-cyan-500/20"
+                className="glass-subpane rounded-2xl overflow-hidden transition-all duration-300 hover:border-cyan-500/20"
               >
                 <button
                   type="button"
@@ -98,7 +98,7 @@ export default function FAQSection() {
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.25, ease: "easeInOut" }}
                     >
-                      <div className="p-4 pt-0 text-xs sm:text-sm text-[color:var(--app-text)] opacity-85 leading-relaxed border-t border-white/5 whitespace-pre-line mali-regular">
+                      <div className="p-4 pt-0 text-xs sm:text-sm text-[color:var(--app-text)] opacity-85 leading-relaxed border-t border-slate-200/30 dark:border-white/5 whitespace-pre-line mali-regular">
                         {item.answer}
                       </div>
                     </motion.div>

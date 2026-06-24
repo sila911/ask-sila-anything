@@ -80,7 +80,7 @@ export default function AdminAuthModal({
   return (
     <div className="fixed inset-0 z-50 bg-black/45 backdrop-blur-[2px] flex items-center justify-center px-4" onClick={onClose}>
       <div
-        className="w-full max-w-md rounded-3xl border border-[color:var(--card-border)] bg-[color:var(--card-bg)] p-6 relative"
+        className="glass-shell w-full max-w-md rounded-3xl p-6 relative"
         onClick={(e) => e.stopPropagation()}
       >
         <button 

@@ -30,7 +30,7 @@ export default function BuyMeCoffeeModal({ isOpen, onClose }) {
       onClick={onClose}
     >
       <div 
-        className={`relative w-full max-w-sm rounded-[2.5rem] bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl p-8 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] border border-white/20 dark:border-slate-800/50 text-center transition-transform duration-1000 ease-[cubic-bezier(0.4,0,0.2,1)] transform ${
+        className={`glass-shell relative w-full max-w-sm rounded-[2.5rem] p-8 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] text-center transition-transform duration-1000 ease-[cubic-bezier(0.4,0,0.2,1)] transform ${
           isAnimating ? "translate-y-0" : "translate-y-[100vh]"
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -43,10 +43,10 @@ export default function BuyMeCoffeeModal({ isOpen, onClose }) {
           <CloseCircle size={20} />
         </button>
         
-        <h1 className="text-2xl font-bold mb-6 text-green-600 dark:text-green-400">Buy me a coffee</h1>
+        <h1 className="text-2xl font-bold mb-6 text-emerald-700 dark:text-emerald-400">Buy me a coffee</h1>
         
         <div className="mb-8 flex p-1 justify-center">
-          <div className="relative bg-white/50 dark:bg-slate-800/50 rounded-2xl shadow-inner border border-white/20 dark:border-slate-700/30 backdrop-blur-sm">
+          <div className="bg-white dark:bg-white border border-slate-200/60 p-3 rounded-2xl shadow-inner relative">
             <img 
               src={qrCode} 
               alt="QR Code" 
@@ -64,7 +64,7 @@ export default function BuyMeCoffeeModal({ isOpen, onClose }) {
             href="https://acledabank.com.kh/acleda?payment_data=qWY5B2SAUfIhLblxzOtfu45tm4QZydtR8ste17vNItjT3Chxy1uq2e1VifDvybGWoX8Md+nprYtJNaV2/goNF2hYO52Bv9AprFiSGN6OqxO2yg4RP2jReNqNssWZ+QE7O65BbuNH2o6b8t3mBcqXBjIaqihYWpVThtY8hw/mDS1tNqRWNqDUhPee+iISOuavOO6/wAZ16a/Gdnh+ovIdCw==&key=khqr"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-blue-50/50 dark:bg-[#005aab]/10 hover:bg-blue-100/50 dark:hover:bg-[#005aab]/20 text-[#005aab] dark:text-blue-400 py-3 font-bold transition-all transform active:scale-95 border border-[#005aab]/20 dark:border-[#005aab]/30 backdrop-blur-md shadow-sm"
+            className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-blue-50/70 dark:bg-[#005aab]/15 hover:bg-blue-100/70 dark:hover:bg-[#005aab]/25 text-[#004b93] dark:text-blue-300 py-3 font-bold transition-all transform active:scale-95 border border-[#005aab]/30 dark:border-[#005aab]/20 shadow-sm"
           >
             <img src="https://www.acledabank.com.kh/kh/assets/download_material/download-logo-icon.png" alt="" className="w-6 h-6 object-contain" />
             <span>Acleda</span>
@@ -73,14 +73,14 @@ export default function BuyMeCoffeeModal({ isOpen, onClose }) {
             href="https://pay.ababank.com/oRF8/37utlwxa"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-red-50/50 dark:bg-[#ec1c24]/10 hover:bg-red-100/50 dark:hover:bg-[#ec1c24]/20 text-[#ec1c24] dark:text-red-400 py-3 font-bold transition-all transform active:scale-95 border border-[#ec1c24]/20 dark:border-[#ec1c24]/30 backdrop-blur-md shadow-sm"
+            className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-red-50/70 dark:bg-[#ec1c24]/15 hover:bg-red-100/70 dark:hover:bg-[#ec1c24]/25 text-[#c5121a] dark:text-red-400 py-3 font-bold transition-all transform active:scale-95 border border-[#ec1c24]/30 dark:border-[#ec1c24]/20 shadow-sm"
           >
             <img src="https://informal.digitaleconomy.gov.kh/images/ministry-icon/aba_round.png" alt="" className="w-6 h-6 object-contain" />
             <span>ABA</span>
           </a>
         </div>
         
-        <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-4 text-sm text-slate-700 dark:text-slate-300">
           Your support means the world to me! 💫
         </p>
       </div>

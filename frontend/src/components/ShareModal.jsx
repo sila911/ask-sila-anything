@@ -77,7 +77,7 @@ export default function ShareModal({ isOpen, onClose, url, questionText }) {
       onClick={onClose}
     >
       <div 
-        className={`relative w-full max-w-sm rounded-3xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl p-6 sm:p-8 shadow-2xl border border-white/20 dark:border-slate-800/50 text-center transition-transform duration-300 ease-out transform ${isVisible ? 'translate-y-0 scale-100' : 'translate-y-[150%] sm:translate-y-12 sm:scale-95'}`}
+        className={`glass-shell relative w-full max-w-sm rounded-3xl p-6 sm:p-8 shadow-2xl text-center transition-transform duration-300 ease-out transform ${isVisible ? 'translate-y-0 scale-100' : 'translate-y-[150%] sm:translate-y-12 sm:scale-95'}`}
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -97,7 +97,7 @@ export default function ShareModal({ isOpen, onClose, url, questionText }) {
               href={link.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex flex-col items-center justify-center gap-2 rounded-2xl py-4 font-semibold transition-all transform active:scale-95 border bg-white/60 hover:bg-white border-slate-200 dark:bg-slate-800/60 dark:hover:bg-slate-800 dark:border-slate-700 shadow-sm"
+              className="glass-subpane flex flex-col items-center justify-center gap-2 rounded-2xl py-4 font-semibold transition-all transform active:scale-95 hover:bg-white/40 dark:hover:bg-white/5 shadow-sm"
             >
               {link.icon}
               <span className="text-sm text-slate-700 dark:text-slate-200">{link.name}</span>
@@ -115,7 +115,7 @@ export default function ShareModal({ isOpen, onClose, url, questionText }) {
         </div>
         
         <div className="mt-6 flex items-center gap-2">
-          <div className="flex-1 truncate bg-white/50 dark:bg-slate-800/50 rounded-xl px-3 py-2.5 text-sm text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700/50 backdrop-blur-sm text-left">
+          <div className="glass-subpane flex-1 truncate rounded-xl px-3 py-2.5 text-sm text-slate-600 dark:text-slate-300 text-left">
             {url}
           </div>
           <button
