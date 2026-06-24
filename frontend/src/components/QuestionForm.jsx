@@ -150,7 +150,7 @@ export default function QuestionForm({ onSuccess, onSubmitQuestion }) {
           onChange={(e) => setQuestion(e.target.value)}
           rows="6"
           placeholder={placeholder}
-          className="w-full rounded-3xl p-4 px-14 bg-[color:var(--input-bg)] border border-[color:var(--input-border)] focus:outline-none resize-none text-[color:var(--app-text)] placeholder-[color:var(--app-muted)] focus:ring-2 focus:ring-cyan-300/40 dark:focus:ring-cyan-500/35 focus:border-cyan-400 dark:focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(34,211,238,0.25)] transition-all mali-regular"
+          className="w-full rounded-3xl p-4 px-14 bg-[color:var(--input-bg)] border border-[color:var(--input-border)] focus:outline-none resize-none text-[color:var(--app-text)] placeholder-[color:var(--app-muted)] focus:ring-2 focus:ring-cyan-300/40 dark:focus:ring-cyan-500/35 focus:border-cyan-400 dark:focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(34,211,238,0.25)] transition-all cause-medium"
         />
 
         <button

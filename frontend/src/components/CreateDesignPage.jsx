@@ -16,6 +16,7 @@ import { dataUrlToBlob, renderTextToImage } from "../lib/imageRenderer";
 const FONT_OPTIONS = [
   "Mali",
   "Racing Sans One",
+  "Cause",
 ];
 
 const defaultStyle = {
@@ -329,7 +330,7 @@ export default function CreateDesignPage({
                           </span>
                           {selectedQuestionId === q.id && <Check className="text-cyan-500" size={14} />}
                         </div>
-                        <p className="text-xs sm:text-sm font-medium line-clamp-2">{q.question}</p>
+                        <p className="text-xs sm:text-sm cause-medium line-clamp-2">{q.question}</p>
                       </button>
                     ))
                   ) : (

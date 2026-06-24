@@ -82,7 +82,7 @@ export default function AdminDashboardPage({ designs, events, questions = [], on
             {sortedQuestions.length > 0 ? sortedQuestions.map((q) => (
               <div key={`mobile-${q.id}`} className="p-4 flex flex-col gap-3 hover:bg-slate-50/30 dark:hover:bg-white/5 transition-colors">
                 <div>
-                  <p className="line-clamp-3 text-slate-700 dark:text-slate-200 text-sm font-medium mb-2" title={q.question}>
+                  <p className="line-clamp-3 text-slate-700 dark:text-slate-200 text-sm cause-medium mb-2" title={q.question}>
                     {q.question}
                   </p>
                   <div className="flex flex-wrap items-center gap-2">
@@ -155,7 +155,7 @@ export default function AdminDashboardPage({ designs, events, questions = [], on
                 {sortedQuestions.length > 0 ? sortedQuestions.map((q) => (
                   <tr key={`desktop-${q.id}`} className="hover:bg-slate-50/30 dark:hover:bg-white/5 transition-colors">
                     <td className="px-4 py-3">
-                      <p className="line-clamp-2 text-slate-700 dark:text-slate-200" title={q.question}>
+                      <p className="line-clamp-2 text-slate-700 dark:text-slate-200 cause-regular" title={q.question}>
                         {q.question}
                       </p>
                       <div className="flex items-center gap-2 mt-1">

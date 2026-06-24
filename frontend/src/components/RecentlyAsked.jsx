@@ -108,7 +108,7 @@ function ExpandableText({ text, className = "", innerClassName = "" }) {
             onClick={() => setIsExpanded(true)}
             className="text-cyan-500 hover:text-cyan-600 dark:text-cyan-400 dark:hover:text-cyan-300 font-bold text-xs inline ml-1 transition-colors focus:outline-none"
           >
-            ...(see more)
+            ...see more
           </button>
         </>
       )}
@@ -220,7 +220,7 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
         <div className="w-full block break-words mb-1">
           <ExpandableText
             text={`"${q.question}"`}
-            innerClassName="text-slate-950 dark:text-white text-base md:text-lg font-semibold mt-2"
+            innerClassName="text-slate-950 dark:text-white text-base md:text-lg cause-semibold mt-2"
           />
         </div>
 
