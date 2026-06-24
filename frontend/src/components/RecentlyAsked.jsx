@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Heart, Tag, MessageCircle, Eye, Send2, Lock, Check, ArrowDown2 } from "iconsax-react";
+import { Heart, Tag, Message, Eye, Send2, Lock, Check, ArrowDown2 } from "iconsax-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ShareModal from "./ShareModal";
 import CommentModal from "./CommentModal";
@@ -276,7 +276,7 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
             }`}
             title="View comments"
           >
-            <MessageCircle size={18} className={isCommentModalOpen ? "fill-cyan-500/20" : ""} />
+            <Message size={18} className={isCommentModalOpen ? "fill-cyan-500/20" : ""} />
             <span className={`text-sm md:text-base font-semibold ${isCommentModalOpen ? "text-cyan-500" : "text-slate-700 dark:text-slate-300"}`}>
               {questionComments.length || 0}
             </span>
