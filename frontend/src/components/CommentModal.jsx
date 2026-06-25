@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Heart, Send2, Refresh } from "iconsax-react";
+import { motion } from "framer-motion";
 
 export default function CommentModal({ isOpen, onClose, comments, onAddComment, likedComments = [], handleLikeComment, qId, timeAgo }) {
   const [commentText, setCommentText] = useState("");
@@ -94,11 +95,20 @@ export default function CommentModal({ isOpen, onClose, comments, onAddComment, 
                           : "text-slate-400 hover:text-red-500"
                       }`}
                     >
+                      <motion.div
+                        key={likedComments?.includes(c.id) ? "liked" : "unliked"}
+                        initial={likedComments?.includes(c.id) ? { scale: 0.85 } : { scale: 1 }}
+                        animate={likedComments?.includes(c.id) ? { scale: [1, 1.45, 0.9, 1], rotate: [0, 15, -15, 0] } : { scale: 1 }}
+                        whileTap={{ scale: 0.8 }}
+                        transition={{ duration: 0.4, ease: "easeInOut" }}
+                        className="flex items-center justify-center"
+                      >
+                        <Heart 
+                          size={14} 
+                          className={`transition-all ${likedComments?.includes(c.id) ? "fill-red-500" : "group-hover:fill-rose-400/20"}`} 
+                        />
+                      </motion.div>
                       <span className="text-[10px] font-bold">{c.likes_count || 0}</span>
-                      <Heart 
-                        size={14} 
-                        className={`transition-all ${likedComments?.includes(c.id) ? "fill-red-500" : "group-hover:fill-rose-400/20"}`} 
-                      />
                     </button>
                   </div>
                   <p className="text-slate-800 dark:text-zinc-200 text-sm mt-0.5 break-words whitespace-pre-wrap">
