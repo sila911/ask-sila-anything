@@ -116,7 +116,7 @@ function ExpandableText({ text, className = "", innerClassName = "" }) {
   );
 }
 
-export function QuestionCard({ q, designs, comments, onAddComment, likedQuestions, handleLike, likedComments, handleLikeComment, handleView, timeAgo, isSingleView = false, isLocked = false }) {
+export function QuestionCard({ q, designs, comments, onAddComment, likedQuestions, handleLike, likedComments, handleLikeComment, handleView, timeAgo, isSingleView = false, isLocked = false, typingState }) {
   const cardRef = useRef(null);
   const hasViewed = useRef(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -249,6 +249,42 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
           </div>
         )}
 
+        {/* Live Typing State */}
+        {!designWithAnswer && typingState && typingState.questionId === q.id && typingState.isTyping && (
+          <div className="glass-subpane w-full p-3 sm:p-4 rounded-xl border-l-2 border-l-amber-500 bg-amber-500/5 flex flex-col gap-1.5 mt-1 transition-all duration-300">
+            <div className="flex items-center gap-2">
+              <img 
+                src="/sila2.jpg" 
+                className="w-6 h-6 rounded-full object-cover border border-amber-500/30 animate-[bounce_1.5s_infinite]" 
+                alt="Sila" 
+              />
+              <div className="flex flex-col">
+                <div className="flex items-center gap-1.5">
+                  <p className="font-semibold text-xs text-amber-600 dark:text-amber-400 leading-tight">
+                    Sila is answering
+                  </p>
+                  <div className="flex gap-0.5 items-center">
+                    <span className="w-1 h-1 rounded-full bg-amber-500 dark:bg-amber-400 animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                    <span className="w-1 h-1 rounded-full bg-amber-500 dark:bg-amber-400 animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                    <span className="w-1 h-1 rounded-full bg-amber-500 dark:bg-amber-400 animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                  </div>
+                </div>
+                <p className="text-[9px] text-slate-500 dark:text-slate-400 leading-none mt-0.5">
+                  typing in real-time
+                </p>
+              </div>
+            </div>
+            <div className="pl-2 sm:pl-7 text-slate-800 dark:text-zinc-200 text-xs sm:text-sm mali-regular whitespace-pre-wrap break-words min-h-[1.5rem] relative mt-1">
+              {typingState.text || (
+                <span className="italic text-slate-400 dark:text-slate-500">Sila is thinking...</span>
+              )}
+              {typingState.text && (
+                <span className="inline-block w-1.5 h-3.5 ml-0.5 bg-amber-500 dark:bg-amber-400 animate-pulse align-middle">|</span>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-around">
           <button 
             onClick={() => !isLocked && handleLike(q.id)}
@@ -328,7 +364,7 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
 export default function RecentlyAsked({ 
   questions, designs, comments, onAddComment, likedQuestions, handleLike, likedComments, handleLikeComment, handleView, timeAgo, 
   handleSuccess, submitUserQuestion, filterMode, setFilterMode, isFilterOpen, setIsFilterOpen, listRef,
-  hasAskedQuestion 
+  hasAskedQuestion, typingState 
 }) {
   return (
     <div className="flex flex-col gap-8 w-full max-w-2xl">
@@ -490,6 +526,7 @@ export default function RecentlyAsked({
                     handleView={handleView}
                     timeAgo={timeAgo}
                     isLocked={!hasAskedQuestion}
+                    typingState={typingState}
                   />
                 </motion.div>
               ))}

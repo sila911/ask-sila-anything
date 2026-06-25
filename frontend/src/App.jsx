@@ -63,7 +63,7 @@ function timeAgo(dateString) {
   return `${Math.floor(diffInSeconds / 86400)} days ago`;
 }
 
-function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQuestions, handleLike, handleView, timeAgo, hasAskedQuestion }) {
+function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQuestions, handleLike, handleView, timeAgo, hasAskedQuestion, typingState }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const question = questions.find(q => q.id.toString() === id);
@@ -104,6 +104,7 @@ function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQ
         timeAgo={timeAgo}
         isSingleView={true}
         isLocked={!hasAskedQuestion}
+        typingState={typingState}
       />
 
       <div className="mt-8 p-6 rounded-[2rem] bg-cyan-500/10 border border-cyan-500/20 backdrop-blur-md">
@@ -176,6 +177,21 @@ export default function App() {
       return [];
     }
   });
+
+  const [typingState, setTypingState] = useState({ questionId: null, text: "", isTyping: false });
+
+  useEffect(() => {
+    const typingChannel = supabase
+      .channel('sila-typing')
+      .on('broadcast', { event: 'typing' }, ({ payload }) => {
+        setTypingState(payload);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(typingChannel);
+    };
+  }, []);
 
   const [listRef] = useAutoAnimate();
   const navigate = useNavigate();
@@ -582,6 +598,7 @@ export default function App() {
                     isFilterOpen={isFilterOpen}
                     setIsFilterOpen={setIsFilterOpen}
                     hasAskedQuestion={hasAskedQuestion}
+                    typingState={typingState}
                   />
                   
                   {isLoading && (
@@ -694,6 +711,7 @@ export default function App() {
              handleView={handleView}
              timeAgo={timeAgo}
              hasAskedQuestion={hasAskedQuestion}
+             typingState={typingState}
            />
           } />
         </Routes>
