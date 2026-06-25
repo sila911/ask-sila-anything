@@ -73,11 +73,11 @@ export default function ShareModal({ isOpen, onClose, url, questionText }) {
 
   return createPortal(
     <div 
-      className={`fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ease-out ${isVisible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+      className={`fixed inset-0 z-[100] flex items-end justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-300 ease-out ${isVisible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
       onClick={onClose}
     >
       <div 
-        className={`glass-shell relative w-full max-w-sm rounded-3xl p-6 sm:p-8 shadow-2xl text-center transition-transform duration-300 ease-out transform ${isVisible ? 'translate-y-0 scale-100' : 'translate-y-[150%] sm:translate-y-12 sm:scale-95'}`}
+        className={`glass-shell relative w-full max-w-2xl rounded-t-3xl p-5 sm:p-6 shadow-2xl text-center transition-transform duration-300 ease-out transform ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -88,19 +88,19 @@ export default function ShareModal({ isOpen, onClose, url, questionText }) {
           <CloseCircle size={20} />
         </button>
         
-        <h1 className="text-xl font-bold mb-6 text-slate-800 dark:text-white">Share Question</h1>
+        <h1 className="text-lg font-bold mb-4 text-slate-800 dark:text-white">Share Question</h1>
         
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="grid grid-cols-4 gap-2 mb-4">
           {shareLinks.map((link) => (
             <a
               key={link.name}
               href={link.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="glass-subpane flex flex-col items-center justify-center gap-2 rounded-2xl py-4 font-semibold transition-all transform active:scale-95 hover:bg-white/40 dark:hover:bg-white/5 shadow-sm"
+              className="glass-subpane flex flex-col items-center justify-center gap-1.5 rounded-2xl py-3 font-semibold transition-all transform active:scale-95 hover:bg-white/40 dark:hover:bg-white/5 shadow-sm"
             >
               {link.icon}
-              <span className="text-sm text-slate-700 dark:text-slate-200">{link.name}</span>
+              <span className="text-xs text-slate-700 dark:text-slate-200">{link.name}</span>
             </a>
           ))}
         </div>
@@ -109,12 +109,12 @@ export default function ShareModal({ isOpen, onClose, url, questionText }) {
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-slate-200 dark:border-slate-700/50"></div>
           </div>
-          <div className="relative flex justify-center text-sm">
+          <div className="relative flex justify-center text-xs">
             <span className="px-2 bg-[#fcfcfd] dark:bg-[#131b2b] text-slate-500 dark:text-slate-400 rounded-full">Or copy link</span>
           </div>
         </div>
         
-        <div className="mt-6 flex items-center gap-2">
+        <div className="mt-4 flex items-center gap-2">
           <div className="glass-subpane flex-1 truncate rounded-xl px-3 py-2.5 text-sm text-slate-600 dark:text-slate-300 text-left">
             {url}
           </div>

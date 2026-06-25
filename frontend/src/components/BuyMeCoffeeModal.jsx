@@ -3,36 +3,60 @@ import qrCode from '../assets/qr-code.jpg';
 import { CloseCircle } from 'iconsax-react';
 
 export default function BuyMeCoffeeModal({ isOpen, onClose }) {
-  const [shouldRender, setShouldRender] = useState(isOpen);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [animationState, setAnimationState] = useState('hidden-top'); // 'hidden-top', 'visible', 'hidden-bottom'
+  const [shouldRender, setShouldRender] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setShouldRender(true);
-      // Small delay to allow DOM to render before starting animation
-      const timer = setTimeout(() => setIsAnimating(true), 10);
-      return () => clearTimeout(timer);
+      const frame = requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setAnimationState('visible');
+        });
+      });
+      return () => cancelAnimationFrame(frame);
     } else {
-      setIsAnimating(false);
-      // Wait for the slide-down animation (1s) to finish before unmounting
-      const timer = setTimeout(() => setShouldRender(false), 1000);
+      setAnimationState('hidden-bottom');
+      const timer = setTimeout(() => {
+        setShouldRender(false);
+        setAnimationState('hidden-top');
+      }, 500);
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   if (!shouldRender) return null;
+
+  const isVisible = animationState === 'visible';
+
+  let transformClass = 'translate-y-0 scale-100';
+  if (animationState === 'hidden-top') {
+    transformClass = '-translate-y-[100vh] scale-95';
+  } else if (animationState === 'hidden-bottom') {
+    transformClass = 'translate-y-[100vh] scale-95';
+  }
 
   return (
     <div 
-      className={`fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-opacity duration-700 ease-in-out ${
-        isAnimating ? "opacity-100 visible" : "opacity-0 invisible"
+      className={`fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-all duration-500 ${
+        isVisible ? "opacity-100 visible" : "opacity-0 invisible"
       }`}
       onClick={onClose}
     >
       <div 
-        className={`glass-shell relative w-full max-w-sm rounded-[2.5rem] p-8 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] text-center transition-transform duration-1000 ease-[cubic-bezier(0.4,0,0.2,1)] transform ${
-          isAnimating ? "translate-y-0" : "translate-y-[100vh]"
-        }`}
+        className={`glass-shell relative w-full max-w-sm rounded-[2.5rem] p-8 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] text-center transition-transform duration-500 ease-in-out transform ${transformClass}`}
         onClick={(e) => e.stopPropagation()}
       >
         <button

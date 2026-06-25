@@ -258,10 +258,19 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
                 : "text-slate-600 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400"
             }`}
           >
-            <Heart 
-              size={18} 
-              className={`transition-all ${isLiked ? "fill-red-500" : "group-heart:fill-rose-400/20"}`} 
-            />
+            <motion.div
+              key={isLiked ? "liked" : "unliked"}
+              initial={isLiked ? { scale: 0.85 } : { scale: 1 }}
+              animate={isLiked ? { scale: [1, 1.45, 0.9, 1], rotate: [0, 15, -15, 0] } : { scale: 1 }}
+              whileTap={{ scale: 0.8 }}
+              transition={{ duration: 0.4, ease: "easeInOut" }}
+              className="flex items-center justify-center"
+            >
+              <Heart 
+                size={18} 
+                className={`transition-all ${isLiked ? "fill-red-500" : "group-heart:fill-rose-400/20"}`} 
+              />
+            </motion.div>
             <span className={`text-sm md:text-base font-semibold ${isLiked ? "text-red-500" : "text-slate-700 dark:text-slate-300"}`}>
               {q.likes_count || 0}
             </span>
