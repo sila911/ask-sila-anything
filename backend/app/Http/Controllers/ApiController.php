@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Design;
 use App\Models\Event;
 use App\Models\Question;
+use App\Models\QuestionLike;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -12,12 +13,23 @@ use Illuminate\Support\Facades\Log;
 
 class ApiController extends Controller
 {
-    public function getQuestions()
+    public function getQuestions(Request $request)
     {
-        return response()->json(Question::orderBy('createdAt', 'desc')->get());
+        $ip = $request->ip();
+        $questions = Question::orderBy('createdAt', 'desc')->get();
+
+        $likedIds = QuestionLike::where('ip_address', $ip)
+            ->pluck('question_id')
+            ->toArray();
+
+        foreach ($questions as $question) {
+            $question->is_liked = in_array($question->id, $likedIds);
+        }
+
+        return response()->json($questions);
     }
 
-    public function likeQuestion($id)
+    public function likeQuestion(Request $request, $id)
     {
         $question = Question::find($id);
 
@@ -25,7 +37,30 @@ class ApiController extends Controller
             return response()->json(['message' => 'Question not found'], 404);
         }
 
-        $question->increment('likes_count');
+        $ip = $request->ip();
+
+        // Check if already liked by this IP
+        $existingLike = QuestionLike::where('question_id', $id)
+            ->where('ip_address', $ip)
+            ->exists();
+
+        if ($existingLike) {
+            return response()->json([
+                'message' => 'Already liked',
+                'likes_count' => $question->likes_count
+            ], 200);
+        }
+
+        DB::transaction(function () use ($question, $id, $ip) {
+            QuestionLike::create([
+                'question_id' => $id,
+                'ip_address' => $ip,
+            ]);
+
+            $question->increment('likes_count');
+        });
+
+        $question->refresh();
 
         return response()->json([
             'message' => 'Liked successfully',
@@ -33,7 +68,7 @@ class ApiController extends Controller
         ], 200);
     }
 
-    public function unlikeQuestion($id)
+    public function unlikeQuestion(Request $request, $id)
     {
         $question = Question::find($id);
 
@@ -41,9 +76,36 @@ class ApiController extends Controller
             return response()->json(['message' => 'Question not found'], 404);
         }
 
-        if ($question->likes_count > 0) {
-            $question->decrement('likes_count');
+        $ip = $request->ip();
+
+        $existingLike = QuestionLike::where('question_id', $id)
+            ->where('ip_address', $ip)
+            ->first();
+
+        if (!$existingLike) {
+            return response()->json([
+                'message' => 'Not liked yet',
+                'likes_count' => $question->likes_count
+            ], 200);
         }
+
+        // Ignore quick double-click unlike (less than 1 second after liking)
+        if ($existingLike->created_at && $existingLike->created_at->gt(now()->subSecond())) {
+            return response()->json([
+                'message' => 'Ignoring quick double-click unlike request',
+                'likes_count' => $question->likes_count
+            ], 200);
+        }
+
+        DB::transaction(function () use ($question, $existingLike) {
+            $existingLike->delete();
+
+            if ($question->likes_count > 0) {
+                $question->decrement('likes_count');
+            }
+        });
+
+        $question->refresh();
 
         return response()->json([
             'message' => 'Unliked successfully',
