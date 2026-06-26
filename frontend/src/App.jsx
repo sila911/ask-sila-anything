@@ -179,6 +179,7 @@ export default function App() {
 
   const [listRef] = useAutoAnimate();
   const navigate = useNavigate();
+  const likingInProgress = useRef(new Set());
 
   const loadData = async (silent = false) => {
     if (!silent) setIsLoading(true);
@@ -195,6 +196,17 @@ export default function App() {
       setQuestions(nextQuestions);
       setComments(nextComments);
       setHasNewQuestions(false);
+
+      // Sync liked status from server if provided
+      if (nextQuestions && Array.isArray(nextQuestions)) {
+        const serverLikedIds = nextQuestions
+          .filter((q) => q.is_liked)
+          .map((q) => q.id);
+        if (serverLikedIds.length > 0) {
+          setLikedQuestions(serverLikedIds);
+          localStorage.setItem("likedQuestions", JSON.stringify(serverLikedIds));
+        }
+      }
     } catch (error) {
       console.error(error);
       setFetchError("Failed to connect to database. Please check your internet.");
@@ -316,6 +328,9 @@ export default function App() {
   };
 
   const handleLike = async (id) => {
+    if (likingInProgress.current.has(id)) return;
+    likingInProgress.current.add(id);
+
     const isCurrentlyLiked = likedQuestions.includes(id);
 
     // Optimistic Update
@@ -350,6 +365,23 @@ export default function App() {
       );
     } catch (error) {
       console.error("Failed to toggle like:", error);
+      // Revert optimistic update
+      setQuestions((prev) =>
+        prev.map((q) =>
+          q.id === id
+            ? {
+                ...q,
+                likes_count: isCurrentlyLiked
+                  ? (q.likes_count || 0) + 1
+                  : Math.max(0, (q.likes_count || 0) - 1),
+              }
+            : q
+        )
+      );
+      setLikedQuestions(likedQuestions);
+      localStorage.setItem("likedQuestions", JSON.stringify(likedQuestions));
+    } finally {
+      likingInProgress.current.delete(id);
     }
   };
 
