@@ -12,6 +12,7 @@ import {
   Facebook,
 } from "iconsax-react";
 import { dataUrlToBlob, renderTextToImage } from "../lib/imageRenderer";
+import { supabase } from "../lib/supabase";
 
 const FONT_OPTIONS = [
   "Mali",
@@ -80,6 +81,111 @@ export default function CreateDesignPage({
   const dropdownRef = useRef(null);
   const fontDropdownRef = useRef(null);
   const ratioDropdownRef = useRef(null);
+
+  // Realtime live typing refs and handlers
+  const channelRef = useRef(null);
+  const prevQuestionIdRef = useRef(selectedQuestionId);
+  const lastBroadcastTimeRef = useRef(0);
+  const pendingBroadcastRef = useRef(null);
+
+  const sendBroadcastThrottled = (text, isTyping) => {
+    const now = Date.now();
+    const minInterval = 200; // ms to throttle typing updates
+
+    if (pendingBroadcastRef.current) {
+      clearTimeout(pendingBroadcastRef.current);
+      pendingBroadcastRef.current = null;
+    }
+
+    const performSend = () => {
+      if (channelRef.current && selectedQuestionId) {
+        channelRef.current.send({
+          type: 'broadcast',
+          event: 'typing',
+          payload: {
+            questionId: selectedQuestionId,
+            text,
+            isTyping
+          }
+        });
+        lastBroadcastTimeRef.current = Date.now();
+      }
+    };
+
+    if (!isTyping || now - lastBroadcastTimeRef.current >= minInterval) {
+      performSend();
+    } else {
+      const delay = minInterval - (now - lastBroadcastTimeRef.current);
+      pendingBroadcastRef.current = setTimeout(performSend, delay);
+    }
+  };
+
+  // Initialize Supabase realtime channel for typing updates
+  useEffect(() => {
+    channelRef.current = supabase.channel('sila-typing');
+    channelRef.current.subscribe();
+
+    return () => {
+      if (channelRef.current) {
+        // Send final stop typing broadcast using current ref values
+        const currentQId = prevQuestionIdRef.current;
+        if (currentQId) {
+          channelRef.current.send({
+            type: 'broadcast',
+            event: 'typing',
+            payload: {
+              questionId: currentQId,
+              text: "",
+              isTyping: false
+            }
+          });
+        }
+        supabase.removeChannel(channelRef.current);
+      }
+    };
+  }, []);
+
+  // Watch for answer changes to broadcast typing state
+  useEffect(() => {
+    if (!selectedQuestionId) return;
+
+    if (!answer.trim()) {
+      sendBroadcastThrottled("", false);
+      return;
+    }
+
+    sendBroadcastThrottled(answer, true);
+
+    // Idle timeout to stop typing after 3 seconds of inactivity
+    const idleTimeout = setTimeout(() => {
+      sendBroadcastThrottled(answer, false);
+    }, 3000);
+
+    return () => {
+      clearTimeout(idleTimeout);
+      if (pendingBroadcastRef.current) {
+        clearTimeout(pendingBroadcastRef.current);
+      }
+    };
+  }, [answer, selectedQuestionId]);
+
+  // Watch for question changes to clear typing state on previous question
+  useEffect(() => {
+    if (prevQuestionIdRef.current && prevQuestionIdRef.current !== selectedQuestionId) {
+      if (channelRef.current) {
+        channelRef.current.send({
+          type: 'broadcast',
+          event: 'typing',
+          payload: {
+            questionId: prevQuestionIdRef.current,
+            text: "",
+            isTyping: false
+          }
+        });
+      }
+    }
+    prevQuestionIdRef.current = selectedQuestionId;
+  }, [selectedQuestionId]);
 
   const sortedQuestions = useMemo(() => {
     return [...questions].sort((a, b) =>
@@ -197,6 +303,19 @@ export default function CreateDesignPage({
         stats: seedDesign?.stats || { copies: 0, downloads: 0, shares: 0 },
       };
       await onSave(designData);
+
+      // Force stop typing broadcast immediately on save
+      if (channelRef.current && selectedQuestion.id) {
+        channelRef.current.send({
+          type: 'broadcast',
+          event: 'typing',
+          payload: {
+            questionId: selectedQuestion.id,
+            text: "",
+            isTyping: false
+          }
+        });
+      }
 
       setAnswer("");
       setImageDataUrl("");
