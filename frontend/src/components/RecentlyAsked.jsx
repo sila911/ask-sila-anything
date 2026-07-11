@@ -226,32 +226,27 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
 
         {designWithAnswer && (designWithAnswer.answerText || designWithAnswer.text) && (
           <div className="glass-subpane w-full p-3 sm:p-4 rounded-xl border-l-2 border-l-cyan-500 flex flex-col gap-1.5 mt-1">
-            <div className="flex items-center gap-2">
-              <img 
-                src="/sila2.jpg" 
-                className="w-6 h-6 rounded-full object-cover border border-cyan-500/30" 
-                alt="Sila" 
-              />
-              <div>
-                <p className="font-semibold text-xs text-cyan-400 leading-tight">
-                  Sila
-                </p>
-                <p className="text-[9px] text-slate-500 dark:text-slate-400 leading-none mt-0.5">
-                  {timeAgo(designWithAnswer.updatedAt || designWithAnswer.createdAt)}
-                </p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <img 
+                  src="/sila2.jpg" 
+                  className="w-6 h-6 rounded-full object-cover border border-cyan-500/30" 
+                  alt="Sila" 
+                />
+                <div>
+                  <p className="font-semibold text-xs text-cyan-400 leading-tight">
+                    Sila
+                  </p>
+                  <p className="text-[9px] text-slate-500 dark:text-slate-400 leading-none mt-0.5">
+                    {timeAgo(designWithAnswer.updatedAt || designWithAnswer.createdAt)}
+                  </p>
+                </div>
               </div>
-            </div>
-            <ExpandableText
-              text={designWithAnswer.answerText || (designWithAnswer.text && designWithAnswer.text.includes('\nA: ') ? designWithAnswer.text.split('\nA: ')[1] : designWithAnswer.text)}
-              className="pl-2 sm:pl-7"
-              innerClassName="text-slate-800 dark:text-zinc-200 text-xs sm:text-sm mali-regular"
-            />
-            
-            {/* Sila Answer Likes Reaction (Idea 4) */}
-            <div className="flex items-center justify-between border-t border-slate-200/10 dark:border-white/5 pt-2 mt-1">
+              
+              {/* Sila Answer Likes Reaction (Idea 2: Top-Right) */}
               <button
                 onClick={() => !isLocked && handleLikeAnswer?.(q.id)}
-                className={`flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold pl-2 sm:pl-7 transition-colors duration-200 group/reply-heart ${
+                className={`flex items-center gap-1 text-[10px] sm:text-xs font-semibold transition-colors duration-200 group/reply-heart ${
                   likedAnswers?.includes(q.id)
                     ? "text-red-500" 
                     : "text-slate-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400"
@@ -270,11 +265,14 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
                     className={`transition-all ${likedAnswers?.includes(q.id) ? "fill-red-500" : "group-reply-heart:fill-rose-400/20"}`} 
                   />
                 </motion.div>
-                <span>
-                  {q.answer_likes_count || 0} {q.answer_likes_count === 1 ? 'like' : 'likes'}
-                </span>
+                <span>{q.answer_likes_count || 0}</span>
               </button>
             </div>
+            <ExpandableText
+              text={designWithAnswer.answerText || (designWithAnswer.text && designWithAnswer.text.includes('\nA: ') ? designWithAnswer.text.split('\nA: ')[1] : designWithAnswer.text)}
+              className="pl-2 sm:pl-7"
+              innerClassName="text-slate-800 dark:text-zinc-200 text-xs sm:text-sm mali-regular"
+            />
           </div>
         )}
 
