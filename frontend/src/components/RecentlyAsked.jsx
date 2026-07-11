@@ -246,7 +246,7 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
               {/* Sila Answer Likes Reaction (Idea 2: Top-Right) */}
               <button
                 onClick={() => !isLocked && handleLikeAnswer?.(q.id)}
-                className={`flex items-center gap-1 text-[10px] sm:text-xs font-semibold transition-colors duration-200 group/reply-heart ${
+                className={`flex items-center gap-1.5 text-xs sm:text-sm font-semibold transition-colors duration-200 group/reply-heart ${
                   likedAnswers?.includes(q.id)
                     ? "text-red-500" 
                     : "text-slate-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400"
@@ -261,7 +261,7 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
                   className="flex items-center justify-center"
                 >
                   <Heart 
-                    size={12} 
+                    size={16} 
                     className={`transition-all ${likedAnswers?.includes(q.id) ? "fill-red-500" : "group-reply-heart:fill-rose-400/20"}`} 
                   />
                 </motion.div>
