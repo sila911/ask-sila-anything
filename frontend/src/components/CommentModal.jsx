@@ -98,7 +98,7 @@ export default function CommentModal({ isOpen, onClose, comments, onAddComment, 
 
         {/* Comments List */}
         <div className="flex-1 overflow-y-auto px-4 pb-4">
-          <div className="flex flex-col gap-4 mt-2">
+          <div className="flex flex-col gap-4 mt-2 !overflow-visible">
             {sortedComments.length > 0 ? sortedComments.map((c) => {
               const userReaction = likedComments && !Array.isArray(likedComments) ? likedComments[c.id] || null : (likedComments?.includes?.(c.id) ? "heart" : null);
               const isLiked = !!userReaction;
@@ -154,7 +154,7 @@ export default function CommentModal({ isOpen, onClose, comments, onAddComment, 
               };
 
               return (
-                <div key={c.id} className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div key={c.id} className={`flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300 relative ${activePickerCommentId === c.id ? "z-20" : "z-10"}`}>
                   <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center shrink-0 overflow-hidden text-slate-500 dark:text-slate-400 text-sm">
                     👻
                   </div>
