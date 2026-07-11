@@ -46,6 +46,8 @@ import {
   unlikeComment,
   likeAnswer,
   unlikeAnswer,
+  reactToAnswer,
+  reactToComment,
 } from "./lib/storage";
 import {
   createEncryptedAdminToken,
@@ -91,7 +93,7 @@ function timeAgo(dateString) {
   return `${diffInYears} ${diffInYears === 1 ? "year" : "years"}`;
 }
 
-function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQuestions, handleLike, handleView, timeAgo, hasAskedQuestion, typingState, likedAnswers, handleLikeAnswer }) {
+function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQuestions, handleLike, likedComments, handleLikeComment, handleView, timeAgo, hasAskedQuestion, typingState, likedAnswers, handleLikeAnswer }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const question = questions.find(q => q.id.toString() === id);
@@ -128,6 +130,8 @@ function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQ
         onAddComment={onAddComment}
         likedQuestions={likedQuestions}
         handleLike={handleLike}
+        likedComments={likedComments}
+        handleLikeComment={handleLikeComment}
         handleView={handleView}
         timeAgo={timeAgo}
         isSingleView={true}
@@ -212,16 +216,36 @@ export default function App() {
   });
   const [likedComments, setLikedComments] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem("likedComments") || "[]");
+      const stored = localStorage.getItem("likedComments");
+      if (!stored) return {};
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        const obj = {};
+        parsed.forEach((id) => {
+          obj[id] = "heart";
+        });
+        return obj;
+      }
+      return parsed || {};
     } catch {
-      return [];
+      return {};
     }
   });
   const [likedAnswers, setLikedAnswers] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem("likedAnswers") || "[]");
+      const stored = localStorage.getItem("likedAnswers");
+      if (!stored) return {};
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        const obj = {};
+        parsed.forEach((id) => {
+          obj[id] = "heart";
+        });
+        return obj;
+      }
+      return parsed || {};
     } catch {
-      return [];
+      return {};
     }
   });
 
@@ -490,97 +514,184 @@ export default function App() {
     }
   };
 
-  const handleLikeComment = async (id) => {
-    const isCurrentlyLiked = likedComments.includes(id);
+  const handleLikeComment = async (id, reactionType = "heart") => {
+    const prevReaction = likedComments[id] || null;
+    const isRemoving = prevReaction === reactionType;
 
-    // Optimistic Update
-    setComments((prev) =>
-      prev.map((c) =>
-        c.id === id
-          ? {
-              ...c,
-              likes_count: isCurrentlyLiked
-                ? Math.max(0, (c.likes_count || 0) - 1)
-                : (c.likes_count || 0) + 1,
-            }
-          : c
-      )
-    );
+    const actualNewReaction = isRemoving ? null : reactionType;
 
-    let nextLiked;
-    if (isCurrentlyLiked) {
-      nextLiked = likedComments.filter((lid) => lid !== id);
+    // Optimistic Update: Update likedComments state object
+    const nextLiked = { ...likedComments };
+    if (isRemoving) {
+      delete nextLiked[id];
     } else {
-      nextLiked = [...likedComments, id];
+      nextLiked[id] = reactionType;
     }
 
     setLikedComments(nextLiked);
     localStorage.setItem("likedComments", JSON.stringify(nextLiked));
 
+    // Optimistic Update: Update comments likes_count and reactions object
+    setComments((prev) =>
+      prev.map((c) => {
+        if (c.id !== id) return c;
+
+        let reactions = c.reactions || { heart: 0, laugh: 0, think: 0, gasp: 0, fire: 0 };
+        reactions = { ...reactions };
+        let likes_count = c.likes_count || 0;
+
+        // Decrement previous
+        if (prevReaction && reactions[prevReaction] !== undefined) {
+          reactions[prevReaction] = Math.max(0, reactions[prevReaction] - 1);
+          likes_count = Math.max(0, likes_count - 1);
+        }
+
+        // Increment new
+        if (actualNewReaction && reactions[actualNewReaction] !== undefined) {
+          reactions[actualNewReaction] = (reactions[actualNewReaction] || 0) + 1;
+          likes_count = likes_count + 1;
+        }
+
+        return {
+          ...c,
+          reactions,
+          likes_count,
+        };
+      })
+    );
+
     try {
-      const data = isCurrentlyLiked ? await unlikeComment(id) : await likeComment(id);
-      // Sync with server count
+      const data = await reactToComment(id, actualNewReaction, prevReaction);
+      // Sync with server count and server reactions object
       setComments((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, likes_count: data.likes_count } : c))
+        prev.map((c) => (c.id === id ? { ...c, likes_count: data.likes_count, reactions: data.reactions } : c))
       );
     } catch (error) {
-      console.error("Failed to toggle comment like:", error);
+      console.error("Failed to toggle comment reaction:", error);
+      // Revert optimistic update
+      setLikedComments(likedComments);
+      localStorage.setItem("likedComments", JSON.stringify(likedComments));
+
+      // Revert comments list
+      setComments((prev) =>
+        prev.map((c) => {
+          if (c.id !== id) return c;
+
+          let reactions = c.reactions || { heart: 0, laugh: 0, think: 0, gasp: 0, fire: 0 };
+          reactions = { ...reactions };
+          let likes_count = c.likes_count || 0;
+
+          // Revert new
+          if (actualNewReaction && reactions[actualNewReaction] !== undefined) {
+            reactions[actualNewReaction] = Math.max(0, reactions[actualNewReaction] - 1);
+            likes_count = Math.max(0, likes_count - 1);
+          }
+
+          // Revert old
+          if (prevReaction && reactions[prevReaction] !== undefined) {
+            reactions[prevReaction] = (reactions[prevReaction] || 0) + 1;
+            likes_count = likes_count + 1;
+          }
+
+          return {
+            ...c,
+            reactions,
+            likes_count,
+          };
+        })
+      );
     }
   };
 
-  const handleLikeAnswer = async (id) => {
+  const handleLikeAnswer = async (id, reactionType = "heart") => {
     if (likingInProgress.current.has(`answer-${id}`)) return;
     likingInProgress.current.add(`answer-${id}`);
 
-    const isCurrentlyLiked = likedAnswers.includes(id);
+    const prevReaction = likedAnswers[id] || null;
+    const isRemoving = prevReaction === reactionType;
 
-    // Optimistic Update
-    setQuestions((prev) =>
-      prev.map((q) =>
-        q.id === id
-          ? {
-              ...q,
-              answer_likes_count: isCurrentlyLiked
-                ? Math.max(0, (q.answer_likes_count || 0) - 1)
-                : (q.answer_likes_count || 0) + 1,
-            }
-          : q
-      )
-    );
+    const actualNewReaction = isRemoving ? null : reactionType;
 
-    let nextLiked;
-    if (isCurrentlyLiked) {
-      nextLiked = likedAnswers.filter((lid) => lid !== id);
+    // Optimistic Update: Update likedAnswers state object
+    const nextLiked = { ...likedAnswers };
+    if (isRemoving) {
+      delete nextLiked[id];
     } else {
-      nextLiked = [...likedAnswers, id];
+      nextLiked[id] = reactionType;
     }
 
     setLikedAnswers(nextLiked);
     localStorage.setItem("likedAnswers", JSON.stringify(nextLiked));
 
+    // Optimistic Update: Update questions answer_likes_count and answer_reactions object
+    setQuestions((prev) =>
+      prev.map((q) => {
+        if (q.id !== id) return q;
+
+        let reactions = q.answer_reactions || { heart: 0, laugh: 0, think: 0, gasp: 0, fire: 0 };
+        reactions = { ...reactions };
+        let answer_likes_count = q.answer_likes_count || 0;
+
+        // Decrement previous
+        if (prevReaction && reactions[prevReaction] !== undefined) {
+          reactions[prevReaction] = Math.max(0, reactions[prevReaction] - 1);
+          answer_likes_count = Math.max(0, answer_likes_count - 1);
+        }
+
+        // Increment new
+        if (actualNewReaction && reactions[actualNewReaction] !== undefined) {
+          reactions[actualNewReaction] = (reactions[actualNewReaction] || 0) + 1;
+          answer_likes_count = answer_likes_count + 1;
+        }
+
+        return {
+          ...q,
+          answer_reactions: reactions,
+          answer_likes_count,
+        };
+      })
+    );
+
     try {
-      const data = isCurrentlyLiked ? await unlikeAnswer(id) : await likeAnswer(id);
+      const data = await reactToAnswer(id, actualNewReaction, prevReaction);
       // Sync with server count
       setQuestions((prev) =>
-        prev.map((q) => (q.id === id ? { ...q, answer_likes_count: data.answer_likes_count } : q))
+        prev.map((q) => (q.id === id ? { ...q, answer_likes_count: data.answer_likes_count, answer_reactions: data.answer_reactions } : q))
       );
     } catch (error) {
-      console.error("Failed to toggle answer like:", error);
+      console.error("Failed to toggle answer reaction:", error);
       // Revert optimistic update
-      setQuestions((prev) =>
-        prev.map((q) =>
-          q.id === id
-            ? {
-                ...q,
-                answer_likes_count: isCurrentlyLiked
-                  ? (q.answer_likes_count || 0) + 1
-                  : Math.max(0, (q.answer_likes_count || 0) - 1),
-              }
-            : q
-        )
-      );
       setLikedAnswers(likedAnswers);
       localStorage.setItem("likedAnswers", JSON.stringify(likedAnswers));
+
+      // Revert questions list
+      setQuestions((prev) =>
+        prev.map((q) => {
+          if (q.id !== id) return q;
+
+          let reactions = q.answer_reactions || { heart: 0, laugh: 0, think: 0, gasp: 0, fire: 0 };
+          reactions = { ...reactions };
+          let answer_likes_count = q.answer_likes_count || 0;
+
+          // Revert new
+          if (actualNewReaction && reactions[actualNewReaction] !== undefined) {
+            reactions[actualNewReaction] = Math.max(0, reactions[actualNewReaction] - 1);
+            answer_likes_count = Math.max(0, answer_likes_count - 1);
+          }
+
+          // Revert old
+          if (prevReaction && reactions[prevReaction] !== undefined) {
+            reactions[prevReaction] = (reactions[prevReaction] || 0) + 1;
+            answer_likes_count = answer_likes_count + 1;
+          }
+
+          return {
+            ...q,
+            answer_reactions: reactions,
+            answer_likes_count,
+          };
+        })
+      );
     } finally {
       likingInProgress.current.delete(`answer-${id}`);
     }

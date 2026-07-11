@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS questions (
     views_count INTEGER DEFAULT 0,
     answer_likes_count INTEGER DEFAULT 0,
     reactions JSONB DEFAULT '{"heart": 0, "laugh": 0, "think": 0, "gasp": 0, "fire": 0}'::jsonb,
+    answer_reactions JSONB DEFAULT '{"heart": 0, "laugh": 0, "think": 0, "gasp": 0, "fire": 0}'::jsonb,
     "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "answeredAt" TIMESTAMP WITH TIME ZONE
 );
@@ -19,6 +20,7 @@ ALTER TABLE questions ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT false;
 ALTER TABLE questions ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT false;
 ALTER TABLE questions ADD COLUMN IF NOT EXISTS answer_likes_count INTEGER DEFAULT 0;
 ALTER TABLE questions ADD COLUMN IF NOT EXISTS reactions JSONB DEFAULT '{"heart": 0, "laugh": 0, "think": 0, "gasp": 0, "fire": 0}'::jsonb;
+ALTER TABLE questions ADD COLUMN IF NOT EXISTS answer_reactions JSONB DEFAULT '{"heart": 0, "laugh": 0, "think": 0, "gasp": 0, "fire": 0}'::jsonb;
 
 CREATE INDEX IF NOT EXISTS questions_status_idx ON questions (status);
 CREATE INDEX IF NOT EXISTS questions_createdAt_idx ON questions ("createdAt");
@@ -55,8 +57,14 @@ CREATE TABLE IF NOT EXISTS comments (
     "questionId" TEXT NOT NULL,
     text TEXT NOT NULL,
     author TEXT DEFAULT 'Anonymous',
+    likes_count INTEGER DEFAULT 0,
+    reactions JSONB DEFAULT '{"heart": 0, "laugh": 0, "think": 0, "gasp": 0, "fire": 0}'::jsonb,
     "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Migration: Add new columns if table already exists
+ALTER TABLE comments ADD COLUMN IF NOT EXISTS likes_count INTEGER DEFAULT 0;
+ALTER TABLE comments ADD COLUMN IF NOT EXISTS reactions JSONB DEFAULT '{"heart": 0, "laugh": 0, "think": 0, "gasp": 0, "fire": 0}'::jsonb;
 
 CREATE INDEX IF NOT EXISTS comments_questionId_idx ON comments ("questionId");
 

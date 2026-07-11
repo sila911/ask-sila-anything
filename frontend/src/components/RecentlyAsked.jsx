@@ -130,7 +130,9 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
+  const [showAnswerPicker, setShowAnswerPicker] = useState(false);
   const timerRef = useRef(null);
+  const answerTimerRef = useRef(null);
 
   const handleTouchStart = () => {
     if (isLocked) return;
@@ -145,9 +147,23 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
     }
   };
 
+  const handleAnswerTouchStart = () => {
+    if (isLocked) return;
+    answerTimerRef.current = setTimeout(() => {
+      setShowAnswerPicker(true);
+    }, 400);
+  };
+
+  const handleAnswerTouchEnd = () => {
+    if (answerTimerRef.current) {
+      clearTimeout(answerTimerRef.current);
+    }
+  };
+
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
+      if (answerTimerRef.current) clearTimeout(answerTimerRef.current);
     };
   }, []);
 
@@ -230,6 +246,59 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
   const getReactionColorClass = () => {
     if (!isLiked) return "text-slate-600 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400";
     switch (userReaction) {
+      case "heart": return "text-red-500";
+      case "laugh": return "text-amber-500";
+      case "think": return "text-indigo-400";
+      case "gasp": return "text-cyan-500";
+      case "fire": return "text-orange-500";
+      default: return "text-red-500";
+    }
+  };
+
+  const userAnswerReaction = likedAnswers && !Array.isArray(likedAnswers) ? likedAnswers[q.id] || null : (likedAnswers?.includes?.(q.id) ? "heart" : null);
+  const isAnswerLiked = !!userAnswerReaction;
+
+  const activeAnswerReactions = useMemo(() => {
+    const counts = q.answer_reactions || { heart: 0, laugh: 0, think: 0, gasp: 0, fire: 0 };
+    return Object.entries(counts)
+      .filter(([type, count]) => (count || 0) > 0)
+      .sort((a, b) => b[1] - a[1])
+      .map(([type]) => {
+        switch (type) {
+          case "heart": return "❤️";
+          case "laugh": return "😂";
+          case "think": return "🤔";
+          case "gasp": return "😮";
+          case "fire": return "🔥";
+          default: return "❤️";
+        }
+      })
+      .slice(0, 3);
+  }, [q.answer_reactions]);
+
+  const renderAnswerReactionIcon = () => {
+    if (!isAnswerLiked) {
+      return <Heart size={16} className="group-reply-heart:fill-rose-400/20" />;
+    }
+    switch (userAnswerReaction) {
+      case "heart":
+        return <Heart size={16} className="fill-red-500 text-red-500" />;
+      case "laugh":
+        return <span className="text-sm leading-none">😂</span>;
+      case "think":
+        return <span className="text-sm leading-none">🤔</span>;
+      case "gasp":
+        return <span className="text-sm leading-none">😮</span>;
+      case "fire":
+        return <span className="text-sm leading-none">🔥</span>;
+      default:
+        return <Heart size={16} className="fill-red-500 text-red-500" />;
+    }
+  };
+
+  const getAnswerReactionColorClass = () => {
+    if (!isAnswerLiked) return "text-slate-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400";
+    switch (userAnswerReaction) {
       case "heart": return "text-red-500";
       case "laugh": return "text-amber-500";
       case "think": return "text-indigo-400";
@@ -325,29 +394,73 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
               </div>
               
               {/* Sila Answer Likes Reaction (Idea 2: Top-Right) */}
-              <button
-                onClick={() => !isLocked && handleLikeAnswer?.(q.id)}
-                className={`flex items-center gap-1.5 text-xs sm:text-sm font-semibold transition-colors duration-200 group/reply-heart ${
-                  likedAnswers?.includes(q.id)
-                    ? "text-red-500" 
-                    : "text-slate-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400"
-                }`}
+              <div 
+                className="relative"
+                onMouseEnter={() => !isLocked && setShowAnswerPicker(true)}
+                onMouseLeave={() => setShowAnswerPicker(false)}
               >
-                <motion.div
-                  key={likedAnswers?.includes(q.id) ? "liked-ans" : "unliked-ans"}
-                  initial={likedAnswers?.includes(q.id) ? { scale: 0.85 } : { scale: 1 }}
-                  animate={likedAnswers?.includes(q.id) ? { scale: [1, 1.4, 0.9, 1], rotate: [0, 15, -15, 0] } : { scale: 1 }}
-                  whileTap={{ scale: 0.8 }}
-                  transition={{ duration: 0.4, ease: "easeInOut" }}
-                  className="flex items-center justify-center"
+                <AnimatePresence>
+                  {showAnswerPicker && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute bottom-full right-0 mb-2 bg-white/30 dark:bg-slate-900/40 backdrop-blur-xl rounded-full px-3 py-2 flex items-center gap-2.5 shadow-xl border border-white/50 dark:border-white/10 z-30 whitespace-nowrap"
+                    >
+                      {REACTION_TYPES.map((react) => (
+                        <motion.button
+                          key={react.type}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleLikeAnswer?.(q.id, react.type);
+                            setShowAnswerPicker(false);
+                          }}
+                          whileHover={{ scale: 1.4, y: -5 }}
+                          whileTap={{ scale: 0.85 }}
+                          className="text-2xl leading-none transition-transform select-none"
+                          title={react.label}
+                        >
+                          {react.emoji}
+                        </motion.button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <button
+                  onClick={() => !isLocked && handleLikeAnswer?.(q.id, userAnswerReaction || "heart")}
+                  onTouchStart={handleAnswerTouchStart}
+                  onTouchEnd={handleAnswerTouchEnd}
+                  className={`flex items-center gap-1.5 text-xs sm:text-sm font-semibold transition-colors duration-200 group/reply-heart ${getAnswerReactionColorClass()}`}
                 >
-                  <Heart 
-                    size={16} 
-                    className={`transition-all ${likedAnswers?.includes(q.id) ? "fill-red-500" : "group-reply-heart:fill-rose-400/20"}`} 
-                  />
-                </motion.div>
-                <span>{q.answer_likes_count || 0}</span>
-              </button>
+                  <motion.div
+                    key={userAnswerReaction || "unliked-ans"}
+                    initial={isAnswerLiked ? { scale: 0.85 } : { scale: 1 }}
+                    animate={isAnswerLiked ? { scale: [1, 1.4, 0.9, 1], rotate: [0, 15, -15, 0] } : { scale: 1 }}
+                    whileTap={{ scale: 0.8 }}
+                    transition={{ duration: 0.4, ease: "easeInOut" }}
+                    className="flex items-center justify-center"
+                  >
+                    {renderAnswerReactionIcon()}
+                  </motion.div>
+                  <div className="flex items-center gap-1">
+                    {activeAnswerReactions.length > 0 && (
+                      <div className="flex -space-x-1.5 items-center mr-0.5 text-[10px] sm:text-xs">
+                        {activeAnswerReactions.map((emoji, idx) => (
+                          <span key={idx} className="z-[2] scale-100 select-none">
+                            {emoji}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <span className={`text-xs sm:text-sm font-semibold ${isAnswerLiked ? getAnswerReactionColorClass() : "text-slate-500 dark:text-slate-400"}`}>
+                      {q.answer_likes_count || 0}
+                    </span>
+                  </div>
+                </button>
+              </div>
             </div>
             <ExpandableText
               text={designWithAnswer.answerText || (designWithAnswer.text && designWithAnswer.text.includes('\nA: ') ? designWithAnswer.text.split('\nA: ')[1] : designWithAnswer.text)}
