@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { FiLoader, FiSend, FiShuffle } from 'react-icons/fi'
+import { useState, useRef, useEffect } from 'react'
+import { Shuffle, Send2, Refresh } from 'iconsax-react'
+import { motion } from 'framer-motion'
 
 const QUESTIONS = [
   // --- Original & Core Prompts ---
@@ -30,10 +31,55 @@ const QUESTIONS = [
 export default function QuestionForm({ onSuccess, onSubmitQuestion }) {
   const [question, setQuestion] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isShuffling, setIsShuffling] = useState(false)
+  const typingRef = useRef(null)
+
+  // Clear typing animation timer on unmount
+  useEffect(() => {
+    return () => {
+      if (typingRef.current) {
+        clearInterval(typingRef.current)
+      }
+    }
+  }, [])
 
   const handleShuffle = () => {
-    const randomQuestion = QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)]
-    setQuestion(randomQuestion)
+    if (typingRef.current) {
+      clearInterval(typingRef.current)
+    }
+    setIsShuffling(true)
+
+    // Select a random question, making sure it's different if possible
+    let randomQuestion = QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)]
+    if (randomQuestion === question && QUESTIONS.length > 1) {
+      randomQuestion = QUESTIONS.find(q => q !== question) || randomQuestion
+    }
+
+    setQuestion('')
+    let currentText = ''
+    let charIndex = 0
+
+    typingRef.current = setInterval(() => {
+      if (charIndex < randomQuestion.length) {
+        currentText += randomQuestion[charIndex]
+        setQuestion(currentText)
+        charIndex++
+      } else {
+        clearInterval(typingRef.current)
+        typingRef.current = null
+        setIsShuffling(false)
+      }
+    }, 18) // 18ms per character (typing speed)
+  }
+
+  const handleTextChange = (e) => {
+    // If the user starts typing manually, stop the auto-typing effect immediately
+    if (typingRef.current) {
+      clearInterval(typingRef.current)
+      typingRef.current = null
+      setIsShuffling(false)
+    }
+    setQuestion(e.target.value)
   }
 
   const handleSubmit = async (e) => {
@@ -107,23 +153,27 @@ export default function QuestionForm({ onSuccess, onSubmitQuestion }) {
           id="question"
           name="question"
           value={question}
-          onChange={(e) => setQuestion(e.target.value)}
+          onChange={handleTextChange}
           rows="6"
           placeholder="Ask Sila anything..."
           className="w-full rounded-3xl p-4 px-14 bg-[color:var(--input-bg)] border border-[color:var(--input-border)] focus:outline-none resize-none text-[color:var(--app-text)] placeholder-[color:var(--app-muted)] focus:ring-2 focus:ring-cyan-300/40 dark:focus:ring-cyan-500/35 transition-all"
         />
 
-        <button
+        <motion.button
           type="button"
           onClick={handleShuffle}
+          animate={isShuffling ? { rotate: 360 } : { rotate: 0 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          transition={{ duration: 0.6, ease: "easeInOut" }}
           className="absolute bottom-3 left-3 w-10 h-10 flex items-center justify-center rounded-full
              bg-white/90 dark:bg-slate-800/95 text-slate-700 dark:text-slate-100 border border-slate-300/85 dark:border-slate-500/70
              shadow-[0_8px_18px_rgba(15,23,42,0.2)] dark:shadow-[0_8px_18px_rgba(0,0,0,0.45)]
-             transition-all duration-200 hover:bg-white dark:hover:bg-slate-700 hover:scale-105"
+             transition-all duration-200"
           title="Random Question"
         >
-          <FiShuffle size={16} />
-        </button>
+          <Shuffle size={16} />
+        </motion.button>
 
         <button
           type="submit"
@@ -133,9 +183,9 @@ export default function QuestionForm({ onSuccess, onSubmitQuestion }) {
              hover:scale-110 active:scale-90 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (
-            <FiLoader size={16} className="animate-spin" />
+            <Refresh size={16} className="animate-spin" />
           ) : (
-            <FiSend size={15} className="translate-x-[-1px] translate-y-[1px]" />
+            <Send2 size={15} className="translate-x-[-1px] translate-y-[1px]" />
           )}
         </button>
       </div>
