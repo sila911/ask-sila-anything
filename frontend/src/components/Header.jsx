@@ -1,28 +1,76 @@
 import { useEffect, useState } from "react";
-import { FiMoon, FiSun } from "react-icons/fi";
+import { flushSync } from "react-dom";
+import { Moon, Sun1, Coffee } from "iconsax-react";
 import BuyMeCoffeeModal from "./BuyMeCoffeeModal";
-import CoffeeIcon from "./icons/CoffeeIcon";
 
 export default function Header() {
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"));
   const [isCoffeeModalOpen, setIsCoffeeModalOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    // Initial check is done in useState initializer
-    // We can also listen for changes if needed, but for now this is enough
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleThemeToggle = () => {
-    const html = document.documentElement;
-    html.classList.toggle("dark");
-    const nextThemeIsDark = html.classList.contains("dark");
-    setIsDark(nextThemeIsDark);
-    localStorage.setItem("theme", nextThemeIsDark ? "dark" : "light");
+  const handleThemeToggle = (e) => {
+    const isAppearanceTransition = document.startViewTransition &&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (!isAppearanceTransition) {
+      const html = document.documentElement;
+      html.classList.toggle("dark");
+      const nextThemeIsDark = html.classList.contains("dark");
+      setIsDark(nextThemeIsDark);
+      localStorage.setItem("theme", nextThemeIsDark ? "dark" : "light");
+      return;
+    }
+
+    const x = e.clientX;
+    const y = e.clientY;
+    const endRadius = Math.hypot(
+      Math.max(x, window.innerWidth - x),
+      Math.max(y, window.innerHeight - y)
+    );
+
+    const transition = document.startViewTransition(async () => {
+      flushSync(() => {
+        const html = document.documentElement;
+        html.classList.toggle("dark");
+        const nextThemeIsDark = html.classList.contains("dark");
+        setIsDark(nextThemeIsDark);
+        localStorage.setItem("theme", nextThemeIsDark ? "dark" : "light");
+      });
+    });
+
+    transition.ready.then(() => {
+      const clipPath = [
+        `circle(0px at ${x}px ${y}px)`,
+        `circle(${endRadius}px at ${x}px ${y}px)`,
+      ];
+      document.documentElement.animate(
+        {
+          clipPath: clipPath,
+        },
+        {
+          duration: 400,
+          easing: "ease-in",
+          pseudoElement: "::view-transition-new(root)",
+        }
+      );
+    });
   };
 
   return (
     <>
-      <header className="flex justify-between items-center p-4">
+      <header className={`sticky top-0 z-[100] w-full flex justify-between items-center px-4 py-3 transition-all duration-300 ${
+        scrolled 
+          ? "border-b border-slate-200/30 dark:border-white/5 shadow-sm bg-transparent" 
+          : "border-b border-transparent bg-transparent"
+      }`}>
         <a
           href="#"
           onClick={(e) => e.preventDefault()}
@@ -45,7 +93,7 @@ export default function Header() {
             className="theme-toggle-btn inline-flex h-10 items-center justify-center gap-2 rounded-full px-3 py-1.5 sm:px-4 bg-[color:var(--icon-chip)] border border-[color:var(--card-border)] text-[color:var(--app-text)] hover:bg-[color:var(--icon-chip-hover)] transition active:scale-95"
             aria-label="Buy me a coffee"
           >
-            <CoffeeIcon className="w-5 h-5" />
+            <Coffee size="20" variant="Linear" />
             <span className="hidden sm:inline text-sm font-semibold tracking-wide">
               Buy me a coffee
             </span>
@@ -59,7 +107,7 @@ export default function Header() {
             <span
               className={`theme-icon ${isDark ? "theme-icon--sun" : "theme-icon--moon"}`}
             >
-              {isDark ? <FiSun size={17} /> : <FiMoon size={18} />}
+              {isDark ? <Sun1 size={17} /> : <Moon size={18} />}
             </span>
           </button>
         </div>

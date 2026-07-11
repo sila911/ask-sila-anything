@@ -1,28 +1,137 @@
+@import url('https://fonts.googleapis.com/css2?family=Mali:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;1,200;1,300;1,400;1,500;1,600;1,700&family=Racing+Sans+One&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cause:wght@100..900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+.mali-extralight {
+  font-family: "Mali", cursive;
+  font-weight: 200;
+  font-style: normal;
+}
+
+.mali-light {
+  font-family: "Mali", cursive;
+  font-weight: 300;
+  font-style: normal;
+}
+
+.mali-regular {
+  font-family: "Mali", cursive;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.mali-medium {
+  font-family: "Mali", cursive;
+  font-weight: 500;
+  font-style: normal;
+}
+
+.mali-semibold {
+  font-family: "Mali", cursive;
+  font-weight: 600;
+  font-style: normal;
+}
+
+.mali-bold {
+  font-family: "Mali", cursive;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.mali-extralight-italic {
+  font-family: "Mali", cursive;
+  font-weight: 200;
+  font-style: italic;
+}
+
+.mali-light-italic {
+  font-family: "Mali", cursive;
+  font-weight: 300;
+  font-style: italic;
+}
+
+.mali-regular-italic {
+  font-family: "Mali", cursive;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.mali-medium-italic {
+  font-family: "Mali", cursive;
+  font-weight: 500;
+  font-style: italic;
+}
+
+.mali-semibold-italic {
+  font-family: "Mali", cursive;
+  font-weight: 600;
+  font-style: italic;
+}
+
+.mali-bold-italic {
+  font-family: "Mali", cursive;
+  font-weight: 700;
+  font-style: italic;
+}
+
+.racing-sans-one-regular {
+  font-family: "Racing Sans One", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.cause-regular {
+  font-family: "Cause", cursive;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.cause-medium {
+  font-family: "Cause", cursive;
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-style: normal;
+}
+
+.cause-semibold {
+  font-family: "Cause", cursive;
+  font-optical-sizing: auto;
+  font-weight: 600;
+  font-style: normal;
+}
+
+.cause-bold {
+  font-family: "Cause", cursive;
+  font-optical-sizing: auto;
+  font-weight: 700;
+  font-style: normal;
+}
+
 @layer base {
   :root {
     --app-text: #0f1c2e;
-    --app-muted: #324a63;
-    --card-bg: rgba(246, 250, 255, 0.68);
-    --card-border: rgba(255, 255, 255, 0.62);
-    --input-bg: rgba(255, 255, 255, 0.76);
-    --input-border: rgba(152, 178, 206, 0.72);
-    --icon-chip: rgba(229, 239, 249, 0.82);
-    --icon-chip-hover: rgba(215, 231, 245, 0.94);
-    --bg-base: #e4edf8;
-    --bg-grad-1: #cbdaf0;
-    --bg-grad-2: #6486e3;
-    --bg-grad-3: #dc96b8;
-    --bg-grid: rgba(255, 255, 255, 0.34);
-    --bg-grid-strong: rgba(255, 255, 255, 0.52);
-    --glass-glow: rgba(126, 161, 255, 0.26);
-    --glass-shadow: 0 28px 75px rgba(32, 58, 106, 0.29);
-    --glass-edge-light: rgba(255, 255, 255, 0.58);
-    --glass-edge-dark: rgba(106, 129, 168, 0.22);
-    --glass-inner-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    --app-muted: #4b627d;
+    --card-bg: rgba(255, 255, 255, 0.28);
+    --card-border: rgba(255, 255, 255, 0.6);
+    --input-bg: rgba(255, 255, 255, 0.45);
+    --input-border: rgba(255, 255, 255, 0.65);
+    --icon-chip: rgba(255, 255, 255, 0.45);
+    --icon-chip-hover: rgba(255, 255, 255, 0.65);
+    --bg-base: #f0f4fa;
+    --bg-grad-1: #d1e2f7;
+    --bg-grad-2: #8aaaff;
+    --bg-grad-3: #fca5a5;
+    --bg-grid: rgba(255, 255, 255, 0.4);
+    --bg-grid-strong: rgba(255, 255, 255, 0.6);
+    --glass-glow: rgba(138, 170, 255, 0.22);
+    --glass-shadow: 0 28px 75px rgba(32, 58, 106, 0.15);
+    --glass-edge-light: rgba(255, 255, 255, 0.65);
+    --glass-edge-dark: rgba(255, 255, 255, 0.25);
+    --glass-inner-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.5), 0 1px 2px rgba(0, 0, 0, 0.03);
   }
 
   .dark {
@@ -51,6 +160,10 @@
     color: var(--app-text);
     background-color: var(--bg-base);
     min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Racing Sans One", sans-serif;
   }
 
   body::before {
@@ -103,13 +216,13 @@
   .glass-shell {
     position: relative;
     background: linear-gradient(
-      160deg,
-      color-mix(in srgb, var(--card-bg) 90%, white 10%),
-      color-mix(in srgb, var(--card-bg) 82%, transparent)
+      165deg,
+      color-mix(in srgb, var(--card-bg) 95%, white 5%),
+      color-mix(in srgb, var(--card-bg) 85%, transparent)
     );
     border: 1px solid var(--card-border);
-    backdrop-filter: blur(24px) saturate(150%);
-    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
     box-shadow: var(--glass-shadow), var(--glass-inner-shadow);
     overflow: hidden;
     transform-style: preserve-3d;
@@ -122,7 +235,15 @@
   }
 
   .glass-shell--3d {
-    transition: transform 0.45s ease, box-shadow 0.45s ease, border-color 0.45s ease;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s ease;
+  }
+
+  .glass-shell--3d:hover {
+    transform: translateY(-4px) scale(1.005);
+    box-shadow: 
+      0 38px 90px rgba(32, 58, 106, 0.22),
+      0 12px 30px rgba(138, 170, 255, 0.15),
+      var(--glass-inner-shadow);
   }
 
   .dark .glass-shell--3d {
@@ -140,24 +261,40 @@
     transform: translateY(-6px);
   }
 
+  .glass-subpane {
+    position: relative;
+    background: rgba(255, 255, 255, 0.32);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4), 0 2px 8px rgba(0, 0, 0, 0.02);
+    border-radius: 1rem;
+    overflow: hidden;
+  }
+
+  .dark .glass-subpane {
+    background: rgba(0, 0, 0, 0.2);
+    border: none;
+    box-shadow: none;
+  }
+
   .glass-shell::before {
     content: "";
     position: absolute;
     inset: 0;
     z-index: 0;
+    border-radius: inherit;
     background: linear-gradient(
       120deg,
-      rgba(255, 255, 255, 0.42),
-      rgba(255, 255, 255, 0.1) 28%,
-      rgba(255, 255, 255, 0.02) 62%
+      rgba(255, 255, 255, 0.35),
+      rgba(255, 255, 255, 0.08) 28%,
+      rgba(255, 255, 255, 0.01) 62%
     );
     pointer-events: none;
   }
 
   .dark .glass-shell::before {
     background:
-      linear-gradient(122deg, rgba(182, 221, 255, 0.14), rgba(177, 212, 255, 0.06) 34%, rgba(165, 199, 255, 0.01) 68%),
-      radial-gradient(circle at 18% 6%, rgba(167, 206, 255, 0.16), transparent 45%);
+      linear-gradient(122deg, rgba(182, 221, 255, 0.12), rgba(177, 212, 255, 0.05) 34%, rgba(165, 199, 255, 0.01) 68%),
+      radial-gradient(circle at 18% 6%, rgba(167, 206, 255, 0.12), transparent 45%);
   }
 
   .glass-shell::after {
@@ -274,5 +411,20 @@
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: rgba(155, 155, 155, 0.4);
+  }
+
+  /* View Transitions for Theme Toggle */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+
+  ::view-transition-old(root) {
+    z-index: 1;
+  }
+
+  ::view-transition-new(root) {
+    z-index: 999;
   }
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FiAlertTriangle, FiX } from 'react-icons/fi';
+import { Danger } from 'iconsax-react';
 
 export default function DeleteConfirmModal({ isOpen, onClose, onConfirm, questionText }) {
   const [isVisible, setIsVisible] = useState(false);
@@ -43,11 +43,11 @@ export default function DeleteConfirmModal({ isOpen, onClose, onConfirm, questio
       onClick={onClose}
     >
       <div 
-        className={`relative w-full max-w-md rounded-3xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl p-6 sm:p-8 shadow-2xl border border-white/20 dark:border-slate-800/50 text-center transition-all duration-300 ease-out transform ${isVisible ? 'scale-100 translate-y-0' : 'scale-95 translate-y-4'}`}
+        className={`glass-shell relative w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl text-center transition-all duration-300 ease-out transform ${isVisible ? 'scale-100 translate-y-0' : 'scale-95 translate-y-4'}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-16 h-16 rounded-full bg-rose-500/10 flex items-center justify-center mx-auto mb-4 border border-rose-500/20">
-          <FiAlertTriangle size={32} className="text-rose-500" />
+          <Danger size={32} className="text-rose-500" />
         </div>
         
         <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Confirm Delete</h2>

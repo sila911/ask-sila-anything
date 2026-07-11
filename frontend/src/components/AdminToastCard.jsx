@@ -1,9 +1,9 @@
-import { FiAlertCircle, FiCheckCircle, FiInfo, FiX } from 'react-icons/fi'
+import { Danger, TickCircle, InfoCircle, CloseCircle } from 'iconsax-react'
 
 const ICON_MAP = {
-  success: FiCheckCircle,
-  error: FiAlertCircle,
-  info: FiInfo,
+  success: TickCircle,
+  error: Danger,
+  info: InfoCircle,
 }
 
 const STYLE_MAP = {
@@ -15,7 +15,7 @@ const STYLE_MAP = {
 export default function AdminToastCard({ toast, onClose }) {
   if (!toast) return null
 
-  const Icon = ICON_MAP[toast.type] || FiInfo
+  const Icon = ICON_MAP[toast.type] || InfoCircle
   const style = STYLE_MAP[toast.type] || STYLE_MAP.info
 
   return (
@@ -37,7 +37,7 @@ export default function AdminToastCard({ toast, onClose }) {
             className="rounded-md p-1 hover:bg-white/45 dark:hover:bg-slate-800/45"
             aria-label="Close popup"
           >
-            <FiX size={16} />
+            <CloseCircle size={16} />
           </button>
         </div>
       </div>

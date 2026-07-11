@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FiEye, FiEyeOff, FiX } from 'react-icons/fi'
+import { Eye, EyeSlash, CloseCircle } from 'iconsax-react'
 import { requestPasswordReset, submitPasswordReset } from '../lib/adminAccess'
 
 export default function AdminAuthModal({
@@ -18,16 +18,13 @@ export default function AdminAuthModal({
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen) {
+      setView('login')
       setPassword('')
-      setShowPassword(false)
       setNewPassword('')
-      setShowNewPassword(false)
       setCode('')
       setError('')
       setMessage('')
-      setIsSubmitting(false)
-      setView('login')
     }
   }, [isOpen])
 
@@ -35,26 +32,28 @@ export default function AdminAuthModal({
 
   const handleLogin = async (e) => {
     e.preventDefault()
-    setError('')
     setIsSubmitting(true)
-    const result = await onSubmit(password)
-    if (!result.ok) {
-      setError(result.message || 'Authentication failed.')
+    setError('')
+    try {
+      await onSubmit(password)
+    } catch (err) {
+      setError(err.message || 'Incorrect password')
+    } finally {
       setIsSubmitting(false)
     }
   }
 
   const handleForgot = async (e) => {
     e.preventDefault()
+    setIsSubmitting(true)
     setError('')
     setMessage('')
-    setIsSubmitting(true)
     try {
-      const res = await requestPasswordReset()
-      setMessage(res.message)
+      await requestPasswordReset()
+      setMessage('Reset request sent to email.')
       setView('reset')
     } catch (err) {
-      setError(err.message)
+      setError(err.message || 'Failed to send reset code')
     } finally {
       setIsSubmitting(false)
     }
@@ -62,14 +61,17 @@ export default function AdminAuthModal({
 
   const handleReset = async (e) => {
     e.preventDefault()
-    setError('')
     setIsSubmitting(true)
+    setError('')
+    setMessage('')
     try {
-      const res = await submitPasswordReset(code, newPassword)
-      setMessage(res.message)
-      setTimeout(() => setView('login'), 2000)
+      await submitPasswordReset(code, newPassword)
+      setMessage('Password updated successfully. Logging in...')
+      setTimeout(async () => {
+        await onSubmit(newPassword)
+      }, 1500)
     } catch (err) {
-      setError(err.message)
+      setError(err.message || 'Reset failed')
     } finally {
       setIsSubmitting(false)
     }
@@ -78,7 +80,7 @@ export default function AdminAuthModal({
   return (
     <div className="fixed inset-0 z-50 bg-black/45 backdrop-blur-[2px] flex items-center justify-center px-4" onClick={onClose}>
       <div
-        className="w-full max-w-md rounded-3xl border border-[color:var(--card-border)] bg-[color:var(--card-bg)] p-6 relative"
+        className="glass-shell w-full max-w-md rounded-3xl p-6 relative"
         onClick={(e) => e.stopPropagation()}
       >
         <button 
@@ -86,7 +88,7 @@ export default function AdminAuthModal({
           className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 text-[color:var(--app-muted)] transition-colors"
           aria-label="Close modal"
         >
-          <FiX size={20} />
+          <CloseCircle size={20} />
         </button>
 
         {view === 'login' && (
@@ -110,7 +112,7 @@ export default function AdminAuthModal({
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
                   >
-                    {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                    {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
               </label>
@@ -190,7 +192,7 @@ export default function AdminAuthModal({
                     onClick={() => setShowNewPassword(!showNewPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
                   >
-                    {showNewPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                    {showNewPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
               </label>

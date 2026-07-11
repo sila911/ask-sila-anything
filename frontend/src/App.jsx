@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { FiLogOut, FiArrowLeft } from "react-icons/fi";
 import { Routes, Route, useParams, useNavigate, Link } from "react-router-dom";
@@ -9,6 +10,7 @@ import CoverBanner from "./components/CoverBanner";
 import Profile from "./components/Profile";
 import QuestionForm from "./components/QuestionForm";
 import NavTabs from "./components/NavTabs";
+import { DockTabs } from "./components/ui/dock-tabs";
 import CreateDesignPage from "./components/CreateDesignPage";
 import LibraryPage from "./components/LibraryPage";
 import AdminDashboardPage from "./components/AdminDashboardPage";
@@ -39,6 +41,8 @@ import {
   deleteDesign,
   getComments,
   addComment,
+  likeComment,
+  unlikeComment,
 } from "./lib/storage";
 import {
   createEncryptedAdminToken,
@@ -59,7 +63,7 @@ function timeAgo(dateString) {
   return `${Math.floor(diffInSeconds / 86400)} days ago`;
 }
 
-function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQuestions, handleLike, handleView, timeAgo, hasAskedQuestion }) {
+function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQuestions, handleLike, handleView, timeAgo, hasAskedQuestion, typingState }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const question = questions.find(q => q.id.toString() === id);
@@ -86,7 +90,7 @@ function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQ
         onClick={() => navigate('/')}
         className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-cyan-500 transition-colors font-medium self-start px-2"
       >
-        <FiArrowLeft /> Back to Feed
+        <ArrowLeft2 size="18" /> Back to Feed
       </button>
       
       <QuestionCard 
@@ -100,6 +104,7 @@ function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQ
         timeAgo={timeAgo}
         isSingleView={true}
         isLocked={!hasAskedQuestion}
+        typingState={typingState}
       />
 
       <div className="mt-8 p-6 rounded-[2rem] bg-cyan-500/10 border border-cyan-500/20 backdrop-blur-md">
@@ -119,6 +124,20 @@ function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQ
 export default function App() {
   const [viewMode, setViewMode] = useState("user");
   const [activeTab, setActiveTab] = useState("create");
+  const [tabDirection, setTabDirection] = useState(0);
+
+  const changeTabWithDirection = (newTab) => {
+    if (newTab === activeTab) return;
+    const TABS_ORDER = ["create", "library", "admin"];
+    const prevIndex = TABS_ORDER.indexOf(activeTab);
+    const newIndex = TABS_ORDER.indexOf(newTab);
+    if (prevIndex !== -1 && newIndex !== -1) {
+      setTabDirection(newIndex > prevIndex ? 1 : -1);
+    } else {
+      setTabDirection(0);
+    }
+    setActiveTab(newTab);
+  };
   const [designs, setDesigns] = useState([]);
   const [events, setEvents] = useState([]);
   const [questions, setQuestions] = useState([]);
@@ -151,6 +170,28 @@ export default function App() {
       return [];
     }
   });
+  const [likedComments, setLikedComments] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("likedComments") || "[]");
+    } catch {
+      return [];
+    }
+  });
+
+  const [typingState, setTypingState] = useState({ questionId: null, text: "", isTyping: false });
+
+  useEffect(() => {
+    const typingChannel = supabase
+      .channel('sila-typing')
+      .on('broadcast', { event: 'typing' }, ({ payload }) => {
+        setTypingState(payload);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(typingChannel);
+    };
+  }, []);
 
   const [listRef] = useAutoAnimate();
   const navigate = useNavigate();
@@ -204,11 +245,20 @@ export default function App() {
       }
     });
 
-    // Subscribe to new questions (Real-time)
+    // Subscribe to changes (Real-time)
     const channel = supabase
-      .channel('public:questions')
+      .channel('public_changes')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'questions' }, () => {
         setHasNewQuestions(true);
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'comments' }, (payload) => {
+        setComments((prev) => prev.map(c => c.id === payload.new.id ? payload.new : c));
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments' }, (payload) => {
+        setComments((prev) => {
+          if (prev.some(c => c.id === payload.new.id)) return prev;
+          return [...prev, payload.new];
+        });
       })
       .subscribe();
 
@@ -351,6 +401,44 @@ export default function App() {
     }
   };
 
+  const handleLikeComment = async (id) => {
+    const isCurrentlyLiked = likedComments.includes(id);
+
+    // Optimistic Update
+    setComments((prev) =>
+      prev.map((c) =>
+        c.id === id
+          ? {
+              ...c,
+              likes_count: isCurrentlyLiked
+                ? Math.max(0, (c.likes_count || 0) - 1)
+                : (c.likes_count || 0) + 1,
+            }
+          : c
+      )
+    );
+
+    let nextLiked;
+    if (isCurrentlyLiked) {
+      nextLiked = likedComments.filter((lid) => lid !== id);
+    } else {
+      nextLiked = [...likedComments, id];
+    }
+
+    setLikedComments(nextLiked);
+    localStorage.setItem("likedComments", JSON.stringify(nextLiked));
+
+    try {
+      const data = isCurrentlyLiked ? await unlikeComment(id) : await likeComment(id);
+      // Sync with server count
+      setComments((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, likes_count: data.likes_count } : c))
+      );
+    } catch (error) {
+      console.error("Failed to toggle comment like:", error);
+    }
+  };
+
   const handleView = async (id) => {
     try {
       const data = await incrementQuestionView(id);
@@ -449,7 +537,7 @@ export default function App() {
 
   const reuseDesign = (design) => {
     setSeedDesign(design);
-    setActiveTab("create");
+    changeTabWithDirection("create");
     trackEvent("design_reused", { id: design.id });
     showAdminToast(
       "Loaded in editor",
@@ -484,7 +572,7 @@ export default function App() {
     setIsAdminUnlocked(true);
     setIsAdminModalOpen(false);
     setViewMode("admin");
-    setActiveTab("admin");
+    changeTabWithDirection("admin");
     setNeedsTokenValidation(false);
     setAdminToken("");
     navigate('/'); // Refresh to clear search params if any
@@ -518,7 +606,7 @@ export default function App() {
         </div>
       )}
 
-      <main className="flex-1 flex items-center justify-center px-2 sm:px-4 pb-6">
+      <main className={`flex-1 flex items-center justify-center px-2 sm:px-4 ${viewMode === "admin" && isAdminUnlocked ? "pb-28" : "pb-6"}`}>
         <Routes>
           <Route path="/" element={
             viewMode === "user" ? (
@@ -531,6 +619,8 @@ export default function App() {
                     onAddComment={handleAddComment}
                     likedQuestions={likedQuestions}
                     handleLike={handleLike}
+                    likedComments={likedComments}
+                    handleLikeComment={handleLikeComment}
                     handleView={handleView}
                     timeAgo={timeAgo}
                     handleSuccess={handleSuccess}
@@ -539,8 +629,8 @@ export default function App() {
                     setFilterMode={setFilterMode}
                     isFilterOpen={isFilterOpen}
                     setIsFilterOpen={setIsFilterOpen}
-                    listRef={listRef}
                     hasAskedQuestion={hasAskedQuestion}
+                    typingState={typingState}
                   />
                   
                   {isLoading && (
@@ -567,33 +657,7 @@ export default function App() {
             ) : (
               isAdminUnlocked && (
                 <div className="glass-shell glass-shell--3d w-[95%] max-w-6xl rounded-[2rem] p-5 sm:p-8">
-                  <div className="mb-4 flex items-center gap-2 flex-nowrap">
-                    <NavTabs
-                      activeTab={activeTab}
-                      onChange={setActiveTab}
-                      showAdminTab={true}
-                      className="flex-1 min-w-0"
-                    />
 
-                    <div className="inline-flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          await logoutAdmin();
-                          setIsAdminUnlocked(false);
-                          setSessionPassword("");
-                          setViewMode("user");
-                          setActiveTab("create");
-                          navigate('/');
-                        }}
-                        className="inline-flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl border border-rose-300 text-rose-700 dark:text-rose-300"
-                        title="Logout admin"
-                        aria-label="Logout admin"
-                      >
-                        <FiLogOut size={16} />
-                      </button>
-                    </div>
-                  </div>
 
                   {linkMessage && (
                     <p className="mb-3 text-sm text-[color:var(--app-muted)]">
@@ -601,35 +665,66 @@ export default function App() {
                     </p>
                   )}
 
-                  {activeTab === "create" && (
-                    <CreateDesignPage
-                      seedDesign={seedDesign}
-                      onSave={addDesign}
-                      onEvent={trackEvent}
-                      onNotify={showAdminToast}
-                      questions={questions}
-                      onQuestionAnswered={markAnswered}
-                    />
-                  )}
+                  <div className="relative overflow-hidden w-full min-h-[500px]">
+                    <AnimatePresence initial={false} custom={tabDirection} mode="wait">
+                      <motion.div
+                        key={activeTab}
+                        custom={tabDirection}
+                        variants={{
+                          enter: (dir) => ({
+                            x: dir > 0 ? 150 : -150,
+                            opacity: 0
+                          }),
+                          center: {
+                            x: 0,
+                            opacity: 1
+                          },
+                          exit: (dir) => ({
+                            x: dir > 0 ? -150 : 150,
+                            opacity: 0
+                          })
+                        }}
+                        initial="enter"
+                        animate="center"
+                        exit="exit"
+                        transition={{
+                          x: { type: "spring", stiffness: 350, damping: 30 },
+                          opacity: { duration: 0.15 }
+                        }}
+                        className="w-full"
+                      >
+                        {activeTab === "create" && (
+                          <CreateDesignPage
+                            seedDesign={seedDesign}
+                            onSave={addDesign}
+                            onEvent={trackEvent}
+                            onNotify={showAdminToast}
+                            questions={questions}
+                            onQuestionAnswered={markAnswered}
+                          />
+                        )}
 
-                  {activeTab === "library" && (
-                    <LibraryPage
-                      designs={orderedDesigns}
-                      onReuse={reuseDesign}
-                      onDelete={removeDesign}
-                    />
-                  )}
+                        {activeTab === "library" && (
+                          <LibraryPage
+                            designs={orderedDesigns}
+                            onReuse={reuseDesign}
+                            onDelete={removeDesign}
+                          />
+                        )}
 
-                  {activeTab === "admin" && (
-                    <AdminDashboardPage
-                      designs={designs}
-                      events={events}
-                      questions={questions}
-                      onToggleVisibility={handleToggleVisibility}
-                      onTogglePin={handleTogglePin}
-                      onSoftDelete={handleSoftDelete}
-                    />
-                  )}
+                        {activeTab === "admin" && (
+                          <AdminDashboardPage
+                            designs={designs}
+                            events={events}
+                            questions={questions}
+                            onToggleVisibility={handleToggleVisibility}
+                            onTogglePin={handleTogglePin}
+                            onSoftDelete={handleSoftDelete}
+                          />
+                        )}
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
                 </div>
               )
             )
@@ -643,15 +738,18 @@ export default function App() {
              onAddComment={handleAddComment}
              likedQuestions={likedQuestions}
              handleLike={handleLike}
+             likedComments={likedComments}
+             handleLikeComment={handleLikeComment}
              handleView={handleView}
              timeAgo={timeAgo}
              hasAskedQuestion={hasAskedQuestion}
+             typingState={typingState}
            />
           } />
         </Routes>
       </main>
 
-      <Footer onSilaClick={openAdminModal} />
+      {!(viewMode === "admin" && isAdminUnlocked) && <Footer onSilaClick={openAdminModal} />}
 
       <ThankYouModal isOpen={showModal} onClose={closeModal} />
 
@@ -665,6 +763,21 @@ export default function App() {
         <AdminToastCard
           toast={adminToast}
           onClose={() => setAdminToast(null)}
+        />
+      )}
+
+      {viewMode === "admin" && isAdminUnlocked && (
+        <DockTabs
+          activeTab={activeTab}
+          onChange={changeTabWithDirection}
+          onLogout={async () => {
+            await logoutAdmin();
+            setIsAdminUnlocked(false);
+            setSessionPassword("");
+            setViewMode("user");
+            changeTabWithDirection("create");
+            navigate('/');
+          }}
         />
       )}
     </div>

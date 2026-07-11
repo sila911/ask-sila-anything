@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiRefreshCw } from 'react-icons/fi';
+import { Refresh } from 'iconsax-react';
 
 export default function PullToRefresh({ onRefresh, children }) {
   const [startY, setStartY] = useState(0);
@@ -92,7 +92,7 @@ export default function PullToRefresh({ onRefresh, children }) {
         <div className={`p-2 bg-white dark:bg-slate-800 rounded-full shadow-xl border border-slate-200 dark:border-slate-700 transition-transform ${isRefreshing ? 'animate-spin' : ''}`}
              style={{ transform: `rotate(${currentY * 3}deg)` }}
         >
-          <FiRefreshCw className="text-cyan-500 w-5 h-5" />
+          <Refresh className="text-cyan-500 w-5 h-5" />
         </div>
       </div>
 
