@@ -116,7 +116,7 @@ function ExpandableText({ text, className = "", innerClassName = "" }) {
   );
 }
 
-export function QuestionCard({ q, designs, comments, onAddComment, likedQuestions, handleLike, likedComments, handleLikeComment, handleView, timeAgo, isSingleView = false, isLocked = false, typingState }) {
+export function QuestionCard({ q, designs, comments, onAddComment, likedQuestions, handleLike, likedComments, handleLikeComment, handleView, timeAgo, isSingleView = false, isLocked = false, typingState, likedAnswers, handleLikeAnswer }) {
   const cardRef = useRef(null);
   const hasViewed = useRef(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -246,6 +246,35 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
               className="pl-2 sm:pl-7"
               innerClassName="text-slate-800 dark:text-zinc-200 text-xs sm:text-sm mali-regular"
             />
+            
+            {/* Sila Answer Likes Reaction (Idea 4) */}
+            <div className="flex items-center justify-between border-t border-slate-200/10 dark:border-white/5 pt-2 mt-1">
+              <button
+                onClick={() => !isLocked && handleLikeAnswer?.(q.id)}
+                className={`flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold pl-2 sm:pl-7 transition-colors duration-200 group/reply-heart ${
+                  likedAnswers?.includes(q.id)
+                    ? "text-red-500" 
+                    : "text-slate-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400"
+                }`}
+              >
+                <motion.div
+                  key={likedAnswers?.includes(q.id) ? "liked-ans" : "unliked-ans"}
+                  initial={likedAnswers?.includes(q.id) ? { scale: 0.85 } : { scale: 1 }}
+                  animate={likedAnswers?.includes(q.id) ? { scale: [1, 1.4, 0.9, 1], rotate: [0, 15, -15, 0] } : { scale: 1 }}
+                  whileTap={{ scale: 0.8 }}
+                  transition={{ duration: 0.4, ease: "easeInOut" }}
+                  className="flex items-center justify-center"
+                >
+                  <Heart 
+                    size={12} 
+                    className={`transition-all ${likedAnswers?.includes(q.id) ? "fill-red-500" : "group-reply-heart:fill-rose-400/20"}`} 
+                  />
+                </motion.div>
+                <span>
+                  {q.answer_likes_count || 0} {q.answer_likes_count === 1 ? 'like' : 'likes'}
+                </span>
+              </button>
+            </div>
           </div>
         )}
 
@@ -364,7 +393,7 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
 export default function RecentlyAsked({ 
   questions, designs, comments, onAddComment, likedQuestions, handleLike, likedComments, handleLikeComment, handleView, timeAgo, 
   handleSuccess, submitUserQuestion, filterMode, setFilterMode, isFilterOpen, setIsFilterOpen, listRef,
-  hasAskedQuestion, typingState 
+  hasAskedQuestion, typingState, likedAnswers, handleLikeAnswer 
 }) {
   return (
     <div className="flex flex-col gap-8 w-full max-w-2xl">
@@ -527,6 +556,8 @@ export default function RecentlyAsked({
                     timeAgo={timeAgo}
                     isLocked={!hasAskedQuestion}
                     typingState={typingState}
+                    likedAnswers={likedAnswers}
+                    handleLikeAnswer={handleLikeAnswer}
                   />
                 </motion.div>
               ))}

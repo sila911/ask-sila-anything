@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS questions (
     is_deleted BOOLEAN DEFAULT false,
     likes_count INTEGER DEFAULT 0,
     views_count INTEGER DEFAULT 0,
+    answer_likes_count INTEGER DEFAULT 0,
     "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "answeredAt" TIMESTAMP WITH TIME ZONE
 );
@@ -15,6 +16,7 @@ CREATE TABLE IF NOT EXISTS questions (
 -- Migration: Add new columns if table already exists
 ALTER TABLE questions ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT false;
 ALTER TABLE questions ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT false;
+ALTER TABLE questions ADD COLUMN IF NOT EXISTS answer_likes_count INTEGER DEFAULT 0;
 
 CREATE INDEX IF NOT EXISTS questions_status_idx ON questions (status);
 CREATE INDEX IF NOT EXISTS questions_createdAt_idx ON questions ("createdAt");

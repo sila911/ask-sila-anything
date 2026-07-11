@@ -43,6 +43,8 @@ import {
   addComment,
   likeComment,
   unlikeComment,
+  likeAnswer,
+  unlikeAnswer,
 } from "./lib/storage";
 import {
   createEncryptedAdminToken,
@@ -63,7 +65,7 @@ function timeAgo(dateString) {
   return `${Math.floor(diffInSeconds / 86400)} days ago`;
 }
 
-function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQuestions, handleLike, handleView, timeAgo, hasAskedQuestion, typingState }) {
+function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQuestions, handleLike, handleView, timeAgo, hasAskedQuestion, typingState, likedAnswers, handleLikeAnswer }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const question = questions.find(q => q.id.toString() === id);
@@ -105,6 +107,8 @@ function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQ
         isSingleView={true}
         isLocked={!hasAskedQuestion}
         typingState={typingState}
+        likedAnswers={likedAnswers}
+        handleLikeAnswer={handleLikeAnswer}
       />
 
       <div className="mt-8 p-6 rounded-[2rem] bg-cyan-500/10 border border-cyan-500/20 backdrop-blur-md">
@@ -173,6 +177,13 @@ export default function App() {
   const [likedComments, setLikedComments] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("likedComments") || "[]");
+    } catch {
+      return [];
+    }
+  });
+  const [likedAnswers, setLikedAnswers] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("likedAnswers") || "[]");
     } catch {
       return [];
     }
@@ -439,6 +450,64 @@ export default function App() {
     }
   };
 
+  const handleLikeAnswer = async (id) => {
+    if (likingInProgress.current.has(`answer-${id}`)) return;
+    likingInProgress.current.add(`answer-${id}`);
+
+    const isCurrentlyLiked = likedAnswers.includes(id);
+
+    // Optimistic Update
+    setQuestions((prev) =>
+      prev.map((q) =>
+        q.id === id
+          ? {
+              ...q,
+              answer_likes_count: isCurrentlyLiked
+                ? Math.max(0, (q.answer_likes_count || 0) - 1)
+                : (q.answer_likes_count || 0) + 1,
+            }
+          : q
+      )
+    );
+
+    let nextLiked;
+    if (isCurrentlyLiked) {
+      nextLiked = likedAnswers.filter((lid) => lid !== id);
+    } else {
+      nextLiked = [...likedAnswers, id];
+    }
+
+    setLikedAnswers(nextLiked);
+    localStorage.setItem("likedAnswers", JSON.stringify(nextLiked));
+
+    try {
+      const data = isCurrentlyLiked ? await unlikeAnswer(id) : await likeAnswer(id);
+      // Sync with server count
+      setQuestions((prev) =>
+        prev.map((q) => (q.id === id ? { ...q, answer_likes_count: data.answer_likes_count } : q))
+      );
+    } catch (error) {
+      console.error("Failed to toggle answer like:", error);
+      // Revert optimistic update
+      setQuestions((prev) =>
+        prev.map((q) =>
+          q.id === id
+            ? {
+                ...q,
+                answer_likes_count: isCurrentlyLiked
+                  ? (q.answer_likes_count || 0) + 1
+                  : Math.max(0, (q.answer_likes_count || 0) - 1),
+              }
+            : q
+        )
+      );
+      setLikedAnswers(likedAnswers);
+      localStorage.setItem("likedAnswers", JSON.stringify(likedAnswers));
+    } finally {
+      likingInProgress.current.delete(`answer-${id}`);
+    }
+  };
+
   const handleView = async (id) => {
     try {
       const data = await incrementQuestionView(id);
@@ -631,6 +700,8 @@ export default function App() {
                     setIsFilterOpen={setIsFilterOpen}
                     hasAskedQuestion={hasAskedQuestion}
                     typingState={typingState}
+                    likedAnswers={likedAnswers}
+                    handleLikeAnswer={handleLikeAnswer}
                   />
                   
                   {isLoading && (
@@ -744,6 +815,8 @@ export default function App() {
              timeAgo={timeAgo}
              hasAskedQuestion={hasAskedQuestion}
              typingState={typingState}
+             likedAnswers={likedAnswers}
+             handleLikeAnswer={handleLikeAnswer}
            />
           } />
         </Routes>

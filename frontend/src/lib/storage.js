@@ -147,6 +147,50 @@ export async function unlikeQuestion(id) {
   return data;
 }
 
+export async function likeAnswer(id) {
+  const { data: question, error: fetchError } = await supabase
+    .from('questions')
+    .select('answer_likes_count')
+    .eq('id', id)
+    .single();
+
+  if (fetchError) throw new Error(fetchError.message);
+
+  const newCount = (question.answer_likes_count || 0) + 1;
+  
+  const { data, error } = await supabase
+    .from('questions')
+    .update({ answer_likes_count: newCount })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function unlikeAnswer(id) {
+  const { data: question, error: fetchError } = await supabase
+    .from('questions')
+    .select('answer_likes_count')
+    .eq('id', id)
+    .single();
+
+  if (fetchError) throw new Error(fetchError.message);
+
+  const newCount = Math.max(0, (question.answer_likes_count || 0) - 1);
+  
+  const { data, error } = await supabase
+    .from('questions')
+    .update({ answer_likes_count: newCount })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 export async function toggleQuestionVisibility(id, isHidden) {
   const { data, error } = await supabase
     .from('questions')
