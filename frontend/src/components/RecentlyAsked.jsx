@@ -402,11 +402,11 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
             <AnimatePresence>
               {showPicker && (
                 <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.9, x: "-50%" }}
-                  animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
-                  exit={{ opacity: 0, y: 10, scale: 0.9, x: "-50%" }}
+                  initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.9 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute bottom-full left-1/2 mb-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-full px-3 py-2 flex items-center gap-2.5 shadow-xl border border-slate-200/50 dark:border-slate-800/50 z-30"
+                  className="absolute bottom-full left-[-12px] mb-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-full px-3 py-2 flex items-center gap-2.5 shadow-xl border border-slate-200/50 dark:border-slate-800/50 z-30 whitespace-nowrap"
                 >
                   {REACTION_TYPES.map((react) => (
                     <motion.button
