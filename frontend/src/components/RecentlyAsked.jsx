@@ -10,6 +10,14 @@ import Profile from "./Profile";
 import QuestionForm from "./QuestionForm";
 import FAQSection from "./FAQSection";
 
+const REACTION_TYPES = [
+  { type: "heart", emoji: "❤️", label: "Love" },
+  { type: "laugh", emoji: "😂", label: "Haha" },
+  { type: "think", emoji: "🤔", label: "Hmm" },
+  { type: "gasp", emoji: "😮", label: "Wow" },
+  { type: "fire", emoji: "🔥", label: "Hot" }
+];
+
 function QuestionSEO({ question, answer }) {
   const title = question ? `"${question}" - Ask Sila` : "Ask Sila Anything";
   const description = answer 
@@ -121,6 +129,27 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
   const hasViewed = useRef(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
+  const timerRef = useRef(null);
+
+  const handleTouchStart = () => {
+    if (isLocked) return;
+    timerRef.current = setTimeout(() => {
+      setShowPicker(true);
+    }, 400);
+  };
+
+  const handleTouchEnd = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (isLocked) return;
@@ -156,7 +185,59 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
   const charCodeSum = q.id.toString().split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const tagIndex = charCodeSum % 4;
   const tags = ["General", "Personal", "Ask Sila", "Curiosity"];
-  const isLiked = likedQuestions.includes(q.id);
+  
+  const userReaction = likedQuestions && !Array.isArray(likedQuestions) ? likedQuestions[q.id] || null : (likedQuestions?.includes?.(q.id) ? "heart" : null);
+  const isLiked = !!userReaction;
+
+  const activeReactions = useMemo(() => {
+    const counts = q.reactions || { heart: 0, laugh: 0, think: 0, gasp: 0, fire: 0 };
+    return Object.entries(counts)
+      .filter(([type, count]) => (count || 0) > 0)
+      .sort((a, b) => b[1] - a[1])
+      .map(([type]) => {
+        switch (type) {
+          case "heart": return "❤️";
+          case "laugh": return "😂";
+          case "think": return "🤔";
+          case "gasp": return "😮";
+          case "fire": return "🔥";
+          default: return "❤️";
+        }
+      })
+      .slice(0, 3);
+  }, [q.reactions]);
+
+  const renderReactionIcon = () => {
+    if (!isLiked) {
+      return <Heart size={18} className="group-heart:fill-rose-400/20" />;
+    }
+    switch (userReaction) {
+      case "heart":
+        return <Heart size={18} className="fill-red-500 text-red-500" />;
+      case "laugh":
+        return <span className="text-lg leading-none">😂</span>;
+      case "think":
+        return <span className="text-lg leading-none">🤔</span>;
+      case "gasp":
+        return <span className="text-lg leading-none">😮</span>;
+      case "fire":
+        return <span className="text-lg leading-none">🔥</span>;
+      default:
+        return <Heart size={18} className="fill-red-500 text-red-500" />;
+    }
+  };
+
+  const getReactionColorClass = () => {
+    if (!isLiked) return "text-slate-600 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400";
+    switch (userReaction) {
+      case "heart": return "text-red-500";
+      case "laugh": return "text-amber-500";
+      case "think": return "text-indigo-400";
+      case "gasp": return "text-cyan-500";
+      case "fire": return "text-orange-500";
+      default: return "text-red-500";
+    }
+  };
 
   const handleShare = (e) => {
     if (isLocked) return;
@@ -313,31 +394,73 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
         )}
 
         <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-around">
-          <button 
-            onClick={() => !isLocked && handleLike(q.id)}
-            className={`flex items-center gap-2 transition-colors duration-200 group/heart ${
-              isLiked 
-                ? "text-red-500" 
-                : "text-slate-600 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400"
-            }`}
+          <div 
+            className="relative"
+            onMouseEnter={() => !isLocked && setShowPicker(true)}
+            onMouseLeave={() => setShowPicker(false)}
           >
-            <motion.div
-              key={isLiked ? "liked" : "unliked"}
-              initial={isLiked ? { scale: 0.85 } : { scale: 1 }}
-              animate={isLiked ? { scale: [1, 1.45, 0.9, 1], rotate: [0, 15, -15, 0] } : { scale: 1 }}
-              whileTap={{ scale: 0.8 }}
-              transition={{ duration: 0.4, ease: "easeInOut" }}
-              className="flex items-center justify-center"
+            <AnimatePresence>
+              {showPicker && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.9, x: "-50%" }}
+                  animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
+                  exit={{ opacity: 0, y: 10, scale: 0.9, x: "-50%" }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute bottom-full left-1/2 mb-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-full px-3 py-2 flex items-center gap-2.5 shadow-xl border border-slate-200/50 dark:border-slate-800/50 z-30"
+                >
+                  {REACTION_TYPES.map((react) => (
+                    <motion.button
+                      key={react.type}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleLike(q.id, react.type);
+                        setShowPicker(false);
+                      }}
+                      whileHover={{ scale: 1.4, y: -5 }}
+                      whileTap={{ scale: 0.85 }}
+                      className="text-2xl leading-none transition-transform select-none"
+                      title={react.label}
+                    >
+                      {react.emoji}
+                    </motion.button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <button 
+              onClick={() => !isLocked && handleLike(q.id, userReaction || "heart")}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              className={`flex items-center gap-2 transition-colors duration-200 group/heart ${getReactionColorClass()}`}
             >
-              <Heart 
-                size={18} 
-                className={`transition-all ${isLiked ? "fill-red-500" : "group-heart:fill-rose-400/20"}`} 
-              />
-            </motion.div>
-            <span className={`text-sm md:text-base font-semibold ${isLiked ? "text-red-500" : "text-slate-700 dark:text-slate-300"}`}>
-              {q.likes_count || 0}
-            </span>
-          </button>
+              <motion.div
+                key={userReaction || "unliked"}
+                initial={isLiked ? { scale: 0.85 } : { scale: 1 }}
+                animate={isLiked ? { scale: [1, 1.45, 0.9, 1], rotate: [0, 15, -15, 0] } : { scale: 1 }}
+                whileTap={{ scale: 0.8 }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
+                className="flex items-center justify-center"
+              >
+                {renderReactionIcon()}
+              </motion.div>
+              <div className="flex items-center gap-1">
+                {activeReactions.length > 0 && (
+                  <div className="flex -space-x-1.5 items-center mr-1 text-[11px] sm:text-xs">
+                    {activeReactions.map((emoji, idx) => (
+                      <span key={idx} className="z-[2] scale-100 select-none">
+                        {emoji}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <span className={`text-sm md:text-base font-semibold ${isLiked ? getReactionColorClass() : "text-slate-700 dark:text-slate-300"}`}>
+                  {q.likes_count || 0}
+                </span>
+              </div>
+            </button>
+          </div>
           
           <button 
             onClick={() => !isLocked && setIsCommentModalOpen(true)}

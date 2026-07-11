@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS `questions` (
     `question` TEXT NOT NULL,
     `status` VARCHAR(191) NOT NULL DEFAULT 'pending',
     `answer_likes_count` INT NOT NULL DEFAULT 0,
+    `reactions` JSON NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `answeredAt` DATETIME(3) NULL,
 

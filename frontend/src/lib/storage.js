@@ -147,6 +147,41 @@ export async function unlikeQuestion(id) {
   return data;
 }
 
+export async function reactToQuestion(id, reactionType, previousReaction) {
+  const { data: question, error: fetchError } = await supabase
+    .from('questions')
+    .select('reactions')
+    .eq('id', id)
+    .single();
+
+  if (fetchError) throw new Error(fetchError.message);
+
+  let reactions = question.reactions || { heart: 0, laugh: 0, think: 0, gasp: 0, fire: 0 };
+
+  // 1. Decrement previous reaction
+  if (previousReaction && reactions[previousReaction] !== undefined) {
+    reactions[previousReaction] = Math.max(0, reactions[previousReaction] - 1);
+  }
+
+  // 2. Increment new reaction
+  if (reactionType && reactions[reactionType] !== undefined) {
+    reactions[reactionType] = (reactions[reactionType] || 0) + 1;
+  }
+
+  // 3. Compute total likes count
+  const totalLikes = Object.values(reactions).reduce((sum, val) => sum + (val || 0), 0);
+
+  const { data, error } = await supabase
+    .from('questions')
+    .update({ reactions, likes_count: totalLikes })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 export async function likeAnswer(id) {
   const { data: question, error: fetchError } = await supabase
     .from('questions')
