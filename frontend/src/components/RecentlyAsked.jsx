@@ -375,7 +375,7 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
         </div>
 
         {designWithAnswer && (designWithAnswer.answerText || designWithAnswer.text) && (
-          <div className="glass-subpane w-full p-3 sm:p-4 rounded-xl border-l-2 border-l-cyan-500 flex flex-col gap-1.5 mt-1">
+          <div className="glass-subpane !overflow-visible w-full p-3 sm:p-4 rounded-xl border-l-2 border-l-cyan-500 flex flex-col gap-1.5 mt-1">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <img 
