@@ -299,7 +299,7 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
                   </div>
                 </div>
                 <p className="text-[9px] text-slate-500 dark:text-slate-400 leading-none mt-0.5">
-                  typing in real-time
+                  typing now
                 </p>
               </div>
             </div>
