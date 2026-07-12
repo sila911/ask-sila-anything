@@ -8,6 +8,9 @@ CREATE TABLE IF NOT EXISTS `questions` (
     `id` VARCHAR(191) NOT NULL,
     `question` TEXT NOT NULL,
     `status` VARCHAR(191) NOT NULL DEFAULT 'pending',
+    `answer_likes_count` INT NOT NULL DEFAULT 0,
+    `reactions` JSON NULL,
+    `answer_reactions` JSON NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `answeredAt` DATETIME(3) NULL,
 
@@ -44,4 +47,19 @@ CREATE TABLE IF NOT EXISTS `events` (
     PRIMARY KEY (`id`),
     INDEX `events_type_idx`(`type`),
     INDEX `events_createdAt_idx`(`createdAt`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Create Comment Table
+CREATE TABLE IF NOT EXISTS `comments` (
+    `id` VARCHAR(191) NOT NULL,
+    `questionId` VARCHAR(191) NOT NULL,
+    `text` TEXT NOT NULL,
+    `author` VARCHAR(191) NOT NULL DEFAULT 'Anonymous',
+    `likes_count` INT NOT NULL DEFAULT 0,
+    `reactions` JSON NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`id`),
+    INDEX `comments_questionId_idx`(`questionId`),
+    INDEX `comments_createdAt_idx`(`createdAt`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

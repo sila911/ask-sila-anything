@@ -1,3 +1,5 @@
+import QRCode from 'qrcode';
+
 function drawRoundedRect(ctx, x, y, width, height, radius) {
   ctx.beginPath()
   ctx.moveTo(x + radius, y)
@@ -6,6 +8,53 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
   ctx.arcTo(x, y + height, x, y, radius)
   ctx.arcTo(x, y, x + width, y, radius)
   ctx.closePath()
+}
+
+async function drawQRCode(ctx, url, x, y, size, style) {
+  try {
+    const qrDataUrl = await QRCode.toDataURL(url, {
+      margin: 1,
+      color: {
+        dark: '#000000',
+        light: '#ffffff'
+      }
+    });
+
+    const img = new Image();
+    img.src = qrDataUrl;
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = reject;
+    });
+
+    const bgPadding = 12;
+    const bgSize = size + bgPadding * 2;
+    const bgX = x - bgPadding;
+    const bgY = y - bgPadding;
+    const bgRadius = 18;
+
+    ctx.save();
+    // Draw rounded background rectangle
+    drawRoundedRect(ctx, bgX, bgY, bgSize, bgSize, bgRadius);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.restore();
+
+    // Draw QR code image
+    ctx.drawImage(img, x, y, size, size);
+
+    // Draw label above QR code
+    ctx.save();
+    ctx.fillStyle = style.textColor || '#ffffff';
+    ctx.font = `600 22px ${style.fontFamily || 'Mali'}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.globalAlpha = 0.8;
+    ctx.fillText('Scan ask Sila', x + size / 2, bgY - 12);
+    ctx.restore();
+  } catch (err) {
+    console.error('Failed to draw QR code:', err);
+  }
 }
 
 function wrapText(ctx, text, maxWidth) {
@@ -56,7 +105,7 @@ function formatAskedAt(value) {
   return `${datePart} | ${timePart}`
 }
 
-export function renderTextToImage(text, style) {
+export async function renderTextToImage(text, style) {
   const aspectRatio = style.aspectRatio || "9:16"
   let width = 1080
   let height = 1920
@@ -184,6 +233,21 @@ export function renderTextToImage(text, style) {
   for (const line of answerLines.slice(0, answerMaxLines)) {
     ctx.fillText(line, contentX, y)
     y += answerLineHeight
+  }
+
+  if (style.showQRCode && text.url) {
+    let qrSize = 130;
+    let offset = 48;
+    if (aspectRatio === "1:1") {
+      qrSize = 110;
+      offset = 36;
+    } else if (aspectRatio === "16:9") {
+      qrSize = 120;
+      offset = 48;
+    }
+    const qrX = panelX + panelWidth - qrSize - offset;
+    const qrY = panelY + panelHeight - qrSize - offset;
+    await drawQRCode(ctx, text.url, qrX, qrY, qrSize, style);
   }
 
   ctx.font = '500 38px Mali'

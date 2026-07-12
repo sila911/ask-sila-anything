@@ -7,14 +7,28 @@ export default function Header() {
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"));
   const [isCoffeeModalOpen, setIsCoffeeModalOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [showHeader, setShowHeader] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
+      const currentScrollY = window.scrollY;
+      setScrolled(currentScrollY > 10);
+
+      if (currentScrollY <= 10) {
+        setShowHeader(true);
+      } else if (currentScrollY > lastScrollY) {
+        setShowHeader(false); // Scrolling down
+      } else {
+        setShowHeader(true); // Scrolling up
+      }
+
+      setLastScrollY(currentScrollY);
     };
+
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [lastScrollY]);
 
   const handleThemeToggle = (e) => {
     const isAppearanceTransition = document.startViewTransition &&
@@ -66,10 +80,8 @@ export default function Header() {
 
   return (
     <>
-      <header className={`sticky top-0 z-[100] w-full flex justify-between items-center px-4 py-3 transition-all duration-300 ${
-        scrolled 
-          ? "border-b border-slate-200/30 dark:border-white/5 shadow-sm bg-transparent" 
-          : "border-b border-transparent bg-transparent"
+      <header className={`sticky top-0 z-[100] w-full flex justify-between items-center px-4 py-3 transition-all duration-300 transform bg-transparent ${
+        showHeader ? "translate-y-0" : "-translate-y-full"
       }`}>
         <a
           href="#"

@@ -22,6 +22,7 @@ import ShareModal from "./components/ShareModal";
 import CommentModal from "./components/CommentModal";
 import PullToRefresh from "./components/PullToRefresh";
 import RecentlyAsked, { QuestionCard } from "./components/RecentlyAsked";
+import ReactionExplosion from "./components/ReactionExplosion";
 import {
   addEvent,
   addQuestion,
@@ -31,6 +32,7 @@ import {
   getQuestions,
   likeQuestion,
   unlikeQuestion,
+  reactToQuestion,
   incrementQuestionView,
   markQuestionAnswered,
   saveDesigns,
@@ -43,6 +45,10 @@ import {
   addComment,
   likeComment,
   unlikeComment,
+  likeAnswer,
+  unlikeAnswer,
+  reactToAnswer,
+  reactToComment,
 } from "./lib/storage";
 import {
   createEncryptedAdminToken,
@@ -57,16 +63,41 @@ function timeAgo(dateString) {
   const now = new Date();
   const diffInSeconds = Math.floor((now - date) / 1000);
 
-  if (diffInSeconds < 60) return "just now";
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} mins ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-  return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  if (diffInSeconds < 60) return "Just now";
+  
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) {
+    return `${diffInMinutes} ${diffInMinutes === 1 ? "minute" : "minutes"}`;
+  }
+
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) {
+    return `${diffInHours} ${diffInHours === 1 ? "hour" : "hours"}`;
+  }
+
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 7) {
+    return `${diffInDays} ${diffInDays === 1 ? "day" : "days"}`;
+  }
+
+  const diffInWeeks = Math.floor(diffInDays / 7);
+  if (diffInDays < 30) {
+    return `${diffInWeeks} ${diffInWeeks === 1 ? "week" : "weeks"}`;
+  }
+
+  const diffInMonths = Math.floor(diffInDays / 30.44);
+  if (diffInMonths < 12) {
+    return `${diffInMonths} ${diffInMonths === 1 ? "month" : "months"}`;
+  }
+
+  const diffInYears = Math.floor(diffInDays / 365.25);
+  return `${diffInYears} ${diffInYears === 1 ? "year" : "years"}`;
 }
 
-function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQuestions, handleLike, handleView, timeAgo, hasAskedQuestion, typingState }) {
+function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQuestions, handleLike, likedComments, handleLikeComment, handleView, timeAgo, hasAskedQuestion, typingState, likedAnswers, handleLikeAnswer }) {
   const { id } = useParams();
   const navigate = useNavigate();
-  const question = questions.find(q => q.id.toString() === id);
+  const question = questions.find(q => q.number?.toString() === id || q.id.toString() === id);
 
   if (!question && questions.length > 0) {
     return (
@@ -85,12 +116,12 @@ function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQ
   if (!question) return <div className="py-20 text-center">Loading...</div>;
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-2xl mx-auto py-8">
+    <div className="flex flex-col gap-6 w-full max-w-2xl mx-auto pt-2 pb-8">
       <button 
         onClick={() => navigate('/')}
-        className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-cyan-500 transition-colors font-medium self-start px-2"
+        className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-cyan-500 transition-colors font-medium self-start"
       >
-        <ArrowLeft2 size="18" /> Back to Feed
+        <FiArrowLeft size="18" /> Back
       </button>
       
       <QuestionCard 
@@ -100,11 +131,15 @@ function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQ
         onAddComment={onAddComment}
         likedQuestions={likedQuestions}
         handleLike={handleLike}
+        likedComments={likedComments}
+        handleLikeComment={handleLikeComment}
         handleView={handleView}
         timeAgo={timeAgo}
         isSingleView={true}
         isLocked={!hasAskedQuestion}
         typingState={typingState}
+        likedAnswers={likedAnswers}
+        handleLikeAnswer={handleLikeAnswer}
       />
 
       <div className="mt-8 p-6 rounded-[2rem] bg-cyan-500/10 border border-cyan-500/20 backdrop-blur-md">
@@ -165,16 +200,53 @@ export default function App() {
   const [hasNewQuestions, setHasNewQuestions] = useState(false);
   const [likedQuestions, setLikedQuestions] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem("likedQuestions") || "[]");
+      const stored = localStorage.getItem("likedQuestions");
+      if (!stored) return {};
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        const obj = {};
+        parsed.forEach((id) => {
+          obj[id] = "heart";
+        });
+        return obj;
+      }
+      return parsed || {};
     } catch {
-      return [];
+      return {};
     }
   });
   const [likedComments, setLikedComments] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem("likedComments") || "[]");
+      const stored = localStorage.getItem("likedComments");
+      if (!stored) return {};
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        const obj = {};
+        parsed.forEach((id) => {
+          obj[id] = "heart";
+        });
+        return obj;
+      }
+      return parsed || {};
     } catch {
-      return [];
+      return {};
+    }
+  });
+  const [likedAnswers, setLikedAnswers] = useState(() => {
+    try {
+      const stored = localStorage.getItem("likedAnswers");
+      if (!stored) return {};
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        const obj = {};
+        parsed.forEach((id) => {
+          obj[id] = "heart";
+        });
+        return obj;
+      }
+      return parsed || {};
+    } catch {
+      return {};
     }
   });
 
@@ -219,8 +291,12 @@ export default function App() {
           .filter((q) => q.is_liked)
           .map((q) => q.id);
         if (serverLikedIds.length > 0) {
-          setLikedQuestions(serverLikedIds);
-          localStorage.setItem("likedQuestions", JSON.stringify(serverLikedIds));
+          const nextLiked = { ...likedQuestions };
+          serverLikedIds.forEach((id) => {
+            if (!nextLiked[id]) nextLiked[id] = "heart";
+          });
+          setLikedQuestions(nextLiked);
+          localStorage.setItem("likedQuestions", JSON.stringify(nextLiked));
         }
       }
     } catch (error) {
@@ -238,6 +314,7 @@ export default function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN') {
         setIsAdminUnlocked(true);
+        setViewMode("admin");
       } else if (event === 'SIGNED_OUT') {
         setIsAdminUnlocked(false);
         setViewMode("user");
@@ -343,99 +420,282 @@ export default function App() {
     }
   };
 
-  const handleLike = async (id) => {
+  const handleLike = async (id, reactionType = "heart") => {
     if (likingInProgress.current.has(id)) return;
     likingInProgress.current.add(id);
 
-    const isCurrentlyLiked = likedQuestions.includes(id);
+    const prevReaction = likedQuestions[id] || null;
+    const isRemoving = prevReaction === reactionType;
 
-    // Optimistic Update
-    setQuestions((prev) =>
-      prev.map((q) =>
-        q.id === id
-          ? {
-              ...q,
-              likes_count: isCurrentlyLiked
-                ? Math.max(0, (q.likes_count || 0) - 1)
-                : (q.likes_count || 0) + 1,
-            }
-          : q
-      )
-    );
+    const actualNewReaction = isRemoving ? null : reactionType;
 
-    let nextLiked;
-    if (isCurrentlyLiked) {
-      nextLiked = likedQuestions.filter((lid) => lid !== id);
+    // Optimistic Update: Update likedQuestions state object
+    const nextLiked = { ...likedQuestions };
+    if (isRemoving) {
+      delete nextLiked[id];
     } else {
-      nextLiked = [...likedQuestions, id];
+      nextLiked[id] = reactionType;
     }
 
     setLikedQuestions(nextLiked);
     localStorage.setItem("likedQuestions", JSON.stringify(nextLiked));
 
+    // Optimistic Update: Update questions likes_count and reactions object
+    setQuestions((prev) =>
+      prev.map((q) => {
+        if (q.id !== id) return q;
+
+        let reactions = q.reactions || { heart: 0, laugh: 0, think: 0, gasp: 0, fire: 0 };
+        // Clone reactions to prevent state mutation
+        reactions = { ...reactions };
+
+        let likes_count = q.likes_count || 0;
+
+        // Decrement previous
+        if (prevReaction && reactions[prevReaction] !== undefined) {
+          reactions[prevReaction] = Math.max(0, reactions[prevReaction] - 1);
+          likes_count = Math.max(0, likes_count - 1);
+        }
+
+        // Increment new
+        if (actualNewReaction && reactions[actualNewReaction] !== undefined) {
+          reactions[actualNewReaction] = (reactions[actualNewReaction] || 0) + 1;
+          likes_count = likes_count + 1;
+        }
+
+        return {
+          ...q,
+          reactions,
+          likes_count,
+        };
+      })
+    );
+
     try {
-      const data = isCurrentlyLiked ? await unlikeQuestion(id) : await likeQuestion(id);
-      // Sync with server count
+      const data = await reactToQuestion(id, actualNewReaction, prevReaction);
+      // Sync with server count and server reactions object
       setQuestions((prev) =>
-        prev.map((q) => (q.id === id ? { ...q, likes_count: data.likes_count } : q))
+        prev.map((q) => (q.id === id ? { ...q, likes_count: data.likes_count, reactions: data.reactions } : q))
       );
     } catch (error) {
-      console.error("Failed to toggle like:", error);
+      console.error("Failed to toggle reaction:", error);
       // Revert optimistic update
-      setQuestions((prev) =>
-        prev.map((q) =>
-          q.id === id
-            ? {
-                ...q,
-                likes_count: isCurrentlyLiked
-                  ? (q.likes_count || 0) + 1
-                  : Math.max(0, (q.likes_count || 0) - 1),
-              }
-            : q
-        )
-      );
       setLikedQuestions(likedQuestions);
       localStorage.setItem("likedQuestions", JSON.stringify(likedQuestions));
+      
+      // Revert questions list
+      setQuestions((prev) =>
+        prev.map((q) => {
+          if (q.id !== id) return q;
+
+          let reactions = q.reactions || { heart: 0, laugh: 0, think: 0, gasp: 0, fire: 0 };
+          reactions = { ...reactions };
+          let likes_count = q.likes_count || 0;
+
+          // Revert new
+          if (actualNewReaction && reactions[actualNewReaction] !== undefined) {
+            reactions[actualNewReaction] = Math.max(0, reactions[actualNewReaction] - 1);
+            likes_count = Math.max(0, likes_count - 1);
+          }
+
+          // Revert old
+          if (prevReaction && reactions[prevReaction] !== undefined) {
+            reactions[prevReaction] = (reactions[prevReaction] || 0) + 1;
+            likes_count = likes_count + 1;
+          }
+
+          return {
+            ...q,
+            reactions,
+            likes_count,
+          };
+        })
+      );
     } finally {
       likingInProgress.current.delete(id);
     }
   };
 
-  const handleLikeComment = async (id) => {
-    const isCurrentlyLiked = likedComments.includes(id);
+  const handleLikeComment = async (id, reactionType = "heart") => {
+    const prevReaction = likedComments[id] || null;
+    const isRemoving = prevReaction === reactionType;
 
-    // Optimistic Update
-    setComments((prev) =>
-      prev.map((c) =>
-        c.id === id
-          ? {
-              ...c,
-              likes_count: isCurrentlyLiked
-                ? Math.max(0, (c.likes_count || 0) - 1)
-                : (c.likes_count || 0) + 1,
-            }
-          : c
-      )
-    );
+    const actualNewReaction = isRemoving ? null : reactionType;
 
-    let nextLiked;
-    if (isCurrentlyLiked) {
-      nextLiked = likedComments.filter((lid) => lid !== id);
+    // Optimistic Update: Update likedComments state object
+    const nextLiked = { ...likedComments };
+    if (isRemoving) {
+      delete nextLiked[id];
     } else {
-      nextLiked = [...likedComments, id];
+      nextLiked[id] = reactionType;
     }
 
     setLikedComments(nextLiked);
     localStorage.setItem("likedComments", JSON.stringify(nextLiked));
 
+    // Optimistic Update: Update comments likes_count and reactions object
+    setComments((prev) =>
+      prev.map((c) => {
+        if (c.id !== id) return c;
+
+        let reactions = c.reactions || { heart: 0, laugh: 0, think: 0, gasp: 0, fire: 0 };
+        reactions = { ...reactions };
+        let likes_count = c.likes_count || 0;
+
+        // Decrement previous
+        if (prevReaction && reactions[prevReaction] !== undefined) {
+          reactions[prevReaction] = Math.max(0, reactions[prevReaction] - 1);
+          likes_count = Math.max(0, likes_count - 1);
+        }
+
+        // Increment new
+        if (actualNewReaction && reactions[actualNewReaction] !== undefined) {
+          reactions[actualNewReaction] = (reactions[actualNewReaction] || 0) + 1;
+          likes_count = likes_count + 1;
+        }
+
+        return {
+          ...c,
+          reactions,
+          likes_count,
+        };
+      })
+    );
+
     try {
-      const data = isCurrentlyLiked ? await unlikeComment(id) : await likeComment(id);
-      // Sync with server count
+      const data = await reactToComment(id, actualNewReaction, prevReaction);
+      // Sync with server count and server reactions object
       setComments((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, likes_count: data.likes_count } : c))
+        prev.map((c) => (c.id === id ? { ...c, likes_count: data.likes_count, reactions: data.reactions } : c))
       );
     } catch (error) {
-      console.error("Failed to toggle comment like:", error);
+      console.error("Failed to toggle comment reaction:", error);
+      // Revert optimistic update
+      setLikedComments(likedComments);
+      localStorage.setItem("likedComments", JSON.stringify(likedComments));
+
+      // Revert comments list
+      setComments((prev) =>
+        prev.map((c) => {
+          if (c.id !== id) return c;
+
+          let reactions = c.reactions || { heart: 0, laugh: 0, think: 0, gasp: 0, fire: 0 };
+          reactions = { ...reactions };
+          let likes_count = c.likes_count || 0;
+
+          // Revert new
+          if (actualNewReaction && reactions[actualNewReaction] !== undefined) {
+            reactions[actualNewReaction] = Math.max(0, reactions[actualNewReaction] - 1);
+            likes_count = Math.max(0, likes_count - 1);
+          }
+
+          // Revert old
+          if (prevReaction && reactions[prevReaction] !== undefined) {
+            reactions[prevReaction] = (reactions[prevReaction] || 0) + 1;
+            likes_count = likes_count + 1;
+          }
+
+          return {
+            ...c,
+            reactions,
+            likes_count,
+          };
+        })
+      );
+    }
+  };
+
+  const handleLikeAnswer = async (id, reactionType = "heart") => {
+    if (likingInProgress.current.has(`answer-${id}`)) return;
+    likingInProgress.current.add(`answer-${id}`);
+
+    const prevReaction = likedAnswers[id] || null;
+    const isRemoving = prevReaction === reactionType;
+
+    const actualNewReaction = isRemoving ? null : reactionType;
+
+    // Optimistic Update: Update likedAnswers state object
+    const nextLiked = { ...likedAnswers };
+    if (isRemoving) {
+      delete nextLiked[id];
+    } else {
+      nextLiked[id] = reactionType;
+    }
+
+    setLikedAnswers(nextLiked);
+    localStorage.setItem("likedAnswers", JSON.stringify(nextLiked));
+
+    // Optimistic Update: Update questions answer_likes_count and answer_reactions object
+    setQuestions((prev) =>
+      prev.map((q) => {
+        if (q.id !== id) return q;
+
+        let reactions = q.answer_reactions || { heart: 0, laugh: 0, think: 0, gasp: 0, fire: 0 };
+        reactions = { ...reactions };
+        let answer_likes_count = q.answer_likes_count || 0;
+
+        // Decrement previous
+        if (prevReaction && reactions[prevReaction] !== undefined) {
+          reactions[prevReaction] = Math.max(0, reactions[prevReaction] - 1);
+          answer_likes_count = Math.max(0, answer_likes_count - 1);
+        }
+
+        // Increment new
+        if (actualNewReaction && reactions[actualNewReaction] !== undefined) {
+          reactions[actualNewReaction] = (reactions[actualNewReaction] || 0) + 1;
+          answer_likes_count = answer_likes_count + 1;
+        }
+
+        return {
+          ...q,
+          answer_reactions: reactions,
+          answer_likes_count,
+        };
+      })
+    );
+
+    try {
+      const data = await reactToAnswer(id, actualNewReaction, prevReaction);
+      // Sync with server count
+      setQuestions((prev) =>
+        prev.map((q) => (q.id === id ? { ...q, answer_likes_count: data.answer_likes_count, answer_reactions: data.answer_reactions } : q))
+      );
+    } catch (error) {
+      console.error("Failed to toggle answer reaction:", error);
+      // Revert optimistic update
+      setLikedAnswers(likedAnswers);
+      localStorage.setItem("likedAnswers", JSON.stringify(likedAnswers));
+
+      // Revert questions list
+      setQuestions((prev) =>
+        prev.map((q) => {
+          if (q.id !== id) return q;
+
+          let reactions = q.answer_reactions || { heart: 0, laugh: 0, think: 0, gasp: 0, fire: 0 };
+          reactions = { ...reactions };
+          let answer_likes_count = q.answer_likes_count || 0;
+
+          // Revert new
+          if (actualNewReaction && reactions[actualNewReaction] !== undefined) {
+            reactions[actualNewReaction] = Math.max(0, reactions[actualNewReaction] - 1);
+            answer_likes_count = Math.max(0, answer_likes_count - 1);
+          }
+
+          // Revert old
+          if (prevReaction && reactions[prevReaction] !== undefined) {
+            reactions[prevReaction] = (reactions[prevReaction] || 0) + 1;
+            answer_likes_count = answer_likes_count + 1;
+          }
+
+          return {
+            ...q,
+            answer_reactions: reactions,
+            answer_likes_count,
+          };
+        })
+      );
+    } finally {
+      likingInProgress.current.delete(`answer-${id}`);
     }
   };
 
@@ -572,7 +832,7 @@ export default function App() {
     setIsAdminUnlocked(true);
     setIsAdminModalOpen(false);
     setViewMode("admin");
-    changeTabWithDirection("admin");
+    changeTabWithDirection("create");
     setNeedsTokenValidation(false);
     setAdminToken("");
     navigate('/'); // Refresh to clear search params if any
@@ -631,6 +891,8 @@ export default function App() {
                     setIsFilterOpen={setIsFilterOpen}
                     hasAskedQuestion={hasAskedQuestion}
                     typingState={typingState}
+                    likedAnswers={likedAnswers}
+                    handleLikeAnswer={handleLikeAnswer}
                   />
                   
                   {isLoading && (
@@ -744,6 +1006,8 @@ export default function App() {
              timeAgo={timeAgo}
              hasAskedQuestion={hasAskedQuestion}
              typingState={typingState}
+             likedAnswers={likedAnswers}
+             handleLikeAnswer={handleLikeAnswer}
            />
           } />
         </Routes>
@@ -780,6 +1044,7 @@ export default function App() {
           }}
         />
       )}
+      <ReactionExplosion />
     </div>
   );
 }

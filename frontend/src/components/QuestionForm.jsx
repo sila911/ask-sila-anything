@@ -1,37 +1,48 @@
-import { useState, useEffect } from 'react'
-import { Refresh, Send2, Shuffle } from 'iconsax-react'
+import { useState, useRef, useEffect } from 'react'
+import { Shuffle, Send2, Refresh } from 'iconsax-react'
+import { motion } from 'framer-motion'
 
 const QUESTIONS = [
-  // --- Original & Core Prompts ---
+  // --- General & Core Prompts ---
   "What motivates you every day?",
-  "Be honest, did you think I was cute the first time you saw me?",
+  "What is the first thing you notice about someone when you meet them? 👁️",
   "What is a 'red flag' in a partner that you secretly like? 🚩",
-  "If we got married, who would win the arguments?",
+  "What is the most important rule for resolving arguments in a relationship?",
   "What's your favorite way to spend a weekend?",
   "What advice would you give your younger self?",
   "What is something people don't know about you?",
 
-  // --- Tailored for Your Crush to Ask You ---
-  "If you could take me anywhere in Phnom Penh for a perfect evening, where are we going? 🗺️",
+  // --- General Relationship & Dating Prompts ---
   "What’s your absolute biggest dealbreaker in a relationship?",
-  "Be honest: do I ever cross your mind when you're listening to music? 🎧",
-  "If I challenged you to a chess match, would you let me win or show no mercy? ♟️",
-  "What is one thing about my personality that caught your attention first?",
-  "If you had to describe our vibe in three words, what would they be?",
-  "Do you think you could keep up with me on a morning run, or would I have to slow down for you? 🏃‍♂️",
-  "What’s a secret talent or hobby you have that you haven't shown me yet?",
-  "If we were trapped in a room together with no internet, how would we pass the time? 🚫",
-  "What is your favorite memory of us or something I said that stuck with you?",
-  "Are you the type to fall fast and hard, or do you calculate every move like a game? 🧠",
-  "If I asked you to build or customize something just for me, what would you make? 🛠️",
-  "What's one question you've been wanting to ask me but were too shy to say out loud? 👀"
+  "What is your idea of a perfect, low-key date night? 🕯️",
+  "Do you believe in love at first sight, or does it take time to build? 💘",
+  "What is the best relationship advice you've ever received?",
+  "How do you usually express affection in a relationship (love languages)? 💬",
+  "Would you rather date someone who is exactly like you, or your complete opposite?",
+  "What is something you think is underrated in a healthy relationship?",
+  "What's a hobby or interest you would love to share with a partner? 🎨",
+  "In your opinion, what is the key to maintaining a strong long-term relationship?",
+  "Are you the type to fall fast and hard, or do you take things slow and steady? 🐢",
+  "What is a green flag in a person that immediately makes them more attractive? 💚"
 ];
 
 export default function QuestionForm({ onSuccess, onSubmitQuestion }) {
   const [question, setQuestion] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [placeholder, setPlaceholder] = useState('')
+  const [isShuffling, setIsShuffling] = useState(false)
+  const typingRef = useRef(null)
 
+  // Clear typing animation timer on unmount
+  useEffect(() => {
+    return () => {
+      if (typingRef.current) {
+        clearInterval(typingRef.current)
+      }
+    }
+  }, [])
+
+  // Auto-cycling placeholder typing animation
   useEffect(() => {
     const texts = [
       "Ask Sila anything...",
@@ -72,8 +83,42 @@ export default function QuestionForm({ onSuccess, onSubmitQuestion }) {
   }, []);
 
   const handleShuffle = () => {
-    const randomQuestion = QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)]
-    setQuestion(randomQuestion)
+    if (typingRef.current) {
+      clearInterval(typingRef.current)
+    }
+    setIsShuffling(true)
+
+    // Select a random question, making sure it's different if possible
+    let randomQuestion = QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)]
+    if (randomQuestion === question && QUESTIONS.length > 1) {
+      randomQuestion = QUESTIONS.find(q => q !== question) || randomQuestion
+    }
+
+    setQuestion('')
+    let currentText = ''
+    let charIndex = 0
+
+    typingRef.current = setInterval(() => {
+      if (charIndex < randomQuestion.length) {
+        currentText += randomQuestion[charIndex]
+        setQuestion(currentText)
+        charIndex++
+      } else {
+        clearInterval(typingRef.current)
+        typingRef.current = null
+        setIsShuffling(false)
+      }
+    }, 18) // 18ms per character (typing speed)
+  }
+
+  const handleTextChange = (e) => {
+    // If the user starts typing manually, stop the auto-typing effect immediately
+    if (typingRef.current) {
+      clearInterval(typingRef.current)
+      typingRef.current = null
+      setIsShuffling(false)
+    }
+    setQuestion(e.target.value)
   }
 
   const handleSubmit = async (e) => {
@@ -147,7 +192,7 @@ export default function QuestionForm({ onSuccess, onSubmitQuestion }) {
           id="question"
           name="question"
           value={question}
-          onChange={(e) => setQuestion(e.target.value)}
+          onChange={handleTextChange}
           rows="6"
           placeholder={placeholder}
           className="w-full rounded-3xl p-4 px-14 bg-[color:var(--input-bg)] border border-[color:var(--input-border)] focus:outline-none resize-none text-[color:var(--app-text)] placeholder-[color:var(--app-muted)] focus:ring-2 focus:ring-cyan-300/40 dark:focus:ring-cyan-500/35 focus:border-cyan-400 dark:focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(34,211,238,0.25)] transition-all cause-medium"
@@ -158,11 +203,16 @@ export default function QuestionForm({ onSuccess, onSubmitQuestion }) {
           onClick={handleShuffle}
           className="absolute bottom-3 left-3 w-10 h-10 flex items-center justify-center rounded-full
              bg-white/90 dark:bg-slate-800/95 text-slate-700 dark:text-slate-100 border border-slate-300/85 dark:border-slate-500/70
-             shadow-[0_8px_18px_rgba(15,23,42,0.2)] dark:shadow-[0_8px_18px_rgba(0,0,0,0.45)]
-             transition-all duration-200 hover:bg-white dark:hover:bg-slate-700 hover:scale-105"
+             hover:scale-105 active:scale-95 transition-all duration-200"
           title="Random Question"
         >
-          <Shuffle size={16} />
+          <motion.div
+            animate={isShuffling ? { rotate: 360 } : { rotate: 0 }}
+            transition={{ duration: 0.6, ease: "easeInOut" }}
+            className="flex items-center justify-center"
+          >
+            <Shuffle size={16} />
+          </motion.div>
         </button>
 
         <button

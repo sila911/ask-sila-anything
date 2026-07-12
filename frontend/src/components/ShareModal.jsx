@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Copy, Check, CloseCircle } from 'iconsax-react';
+import { Copy, Check } from 'iconsax-react';
 
 export default function ShareModal({ isOpen, onClose, url, questionText }) {
   const [copied, setCopied] = useState(false);
@@ -80,13 +80,7 @@ export default function ShareModal({ isOpen, onClose, url, questionText }) {
         className={`glass-shell relative w-full max-w-2xl rounded-t-3xl p-5 sm:p-6 shadow-2xl text-center transition-transform duration-300 ease-out transform ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 p-2 rounded-full text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors"
-          aria-label="Close modal"
-        >
-          <CloseCircle size={20} />
-        </button>
+
         
         <h1 className="text-lg font-bold mb-4 text-slate-800 dark:text-white">Share Question</h1>
         

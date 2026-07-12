@@ -33,6 +33,7 @@ const defaultStyle = {
   fontFamily: "Mali",
   align: "center",
   aspectRatio: "9:16",
+  showQRCode: true,
 };
 
 const ASPECT_RATIOS = [
@@ -254,28 +255,36 @@ export default function CreateDesignPage({
     setStyle((prev) => ({ ...prev, [name]: value }));
   };
 
-  const generateImage = () => {
+  const generateImage = async () => {
     if (!selectedQuestion?.question) {
       setMessage("Select a user question first.");
       return;
     }
 
-    const nextDataUrl = renderTextToImage(
-      {
-        question: selectedQuestion.question,
-        answer,
-        askedAt: selectedQuestion.createdAt,
-      },
-      style,
-    );
-    setImageDataUrl(nextDataUrl);
-    setMessage("Image generated with user question + your answer.");
-    onEvent("image_rendered", { fontFamily: style.fontFamily });
-    onNotify?.(
-      "Image generated",
-      "Question and answer story preview is ready.",
-      "success",
-    );
+    try {
+      const questionUrl = `${window.location.origin}/q/${selectedQuestion.number || selectedQuestion.id}`;
+      const nextDataUrl = await renderTextToImage(
+        {
+          question: selectedQuestion.question,
+          answer,
+          askedAt: selectedQuestion.createdAt,
+          url: questionUrl,
+        },
+        style,
+      );
+      setImageDataUrl(nextDataUrl);
+      setMessage("Image generated with user question + your answer.");
+      onEvent("image_rendered", { fontFamily: style.fontFamily, showQRCode: style.showQRCode });
+      onNotify?.(
+        "Image generated",
+        "Question and answer story preview is ready.",
+        "success",
+      );
+    } catch (err) {
+      console.error(err);
+      setMessage("Failed to generate image.");
+      onNotify?.("Error", "Failed to generate image", "error");
+    }
   };
 
   const saveDesign = async () => {
@@ -593,6 +602,25 @@ export default function CreateDesignPage({
                 ))}
               </div>
             </div>
+
+            {/* QR Code Toggle */}
+            <div className="relative space-y-1 col-span-2 sm:col-span-3">
+              <span className="block text-[10px] text-[color:var(--app-muted)] font-bold ml-1 uppercase">QR Code Stamp</span>
+              <button
+                type="button"
+                onClick={() => setField('showQRCode', !style.showQRCode)}
+                className="flex items-center justify-between w-full h-9 px-3 rounded-xl bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-cyan-500/50 transition-all text-left text-xs font-semibold"
+              >
+                <span className="text-slate-600 dark:text-slate-300">Embed scanable QR code pointing to story page</span>
+                <span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase transition-all ${
+                  style.showQRCode 
+                    ? 'bg-cyan-500/20 text-cyan-600 dark:bg-cyan-500/40 dark:text-cyan-300' 
+                    : 'bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                }`}>
+                  {style.showQRCode ? 'Enabled' : 'Disabled'}
+                </span>
+              </button>
+            </div>
           </div>
 
           <div className="space-y-3 pt-2">
@@ -665,6 +693,24 @@ export default function CreateDesignPage({
                   </p>
                 </div>
               </div>
+
+              {style.showQRCode && (
+                <div 
+                  className="absolute bottom-6 right-6 bg-white p-1 rounded-lg flex items-center justify-center shadow-lg z-10 pointer-events-none scale-75 sm:scale-100 origin-bottom-right"
+                  style={{ width: '42px', height: '42px' }}
+                >
+                  <div className="w-full h-full flex flex-col justify-between">
+                    <div className="flex justify-between h-[45%]">
+                      <div className="w-[45%] h-full bg-slate-950 border border-white rounded-[1px]" />
+                      <div className="w-[45%] h-full bg-slate-950 rounded-[1px] opacity-40" />
+                    </div>
+                    <div className="flex justify-between h-[45%]">
+                      <div className="w-[45%] h-full bg-slate-950 rounded-[1px] opacity-60" />
+                      <div className="w-[45%] h-full bg-slate-950 border border-white rounded-[1px]" />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
