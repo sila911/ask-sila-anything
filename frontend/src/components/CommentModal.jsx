@@ -177,11 +177,11 @@ export default function CommentModal({ isOpen, onClose, comments, onAddComment, 
                         <AnimatePresence>
                           {activePickerCommentId === c.id && (
                             <motion.div
-                              initial={{ opacity: 0, y: 5, scale: 0.9 }}
-                              animate={{ opacity: 1, y: 0, scale: 1 }}
-                              exit={{ opacity: 0, y: 5, scale: 0.9 }}
+                              initial={{ opacity: 0, x: 10, y: "-50%", scale: 0.9 }}
+                              animate={{ opacity: 1, x: 0, y: "-50%", scale: 1 }}
+                              exit={{ opacity: 0, x: 10, y: "-50%", scale: 0.9 }}
                               transition={{ duration: 0.15 }}
-                              className="absolute bottom-full right-0 mb-1.5 bg-white/35 dark:bg-slate-900/40 backdrop-blur-xl rounded-full px-2 py-1 flex items-center gap-2 shadow-xl border border-white/50 dark:border-white/10 z-30 whitespace-nowrap"
+                              className="absolute top-1/2 right-full mr-2.5 bg-white/30 dark:bg-slate-900/40 backdrop-blur-xl rounded-full px-2.5 py-1 flex items-center gap-2 shadow-xl border border-white/50 dark:border-white/10 z-30 whitespace-nowrap"
                             >
                               {REACTION_TYPES.map((react) => (
                                 <motion.button
