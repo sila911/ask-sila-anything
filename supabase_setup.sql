@@ -90,6 +90,8 @@ DROP POLICY IF EXISTS "Public Insert Access" ON events;
 
 DROP POLICY IF EXISTS "Public Read Access" ON comments;
 DROP POLICY IF EXISTS "Public Insert Access" ON comments;
+DROP POLICY IF EXISTS "Public Update Access" ON comments;
+DROP POLICY IF EXISTS "Public Delete Access" ON comments;
 
 -- Create Policies
 CREATE POLICY "Public Read Access" ON questions FOR SELECT USING (true);
@@ -107,4 +109,6 @@ CREATE POLICY "Public Insert Access" ON events FOR INSERT WITH CHECK (true);
 
 CREATE POLICY "Public Read Access" ON comments FOR SELECT USING (true);
 CREATE POLICY "Public Insert Access" ON comments FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public Update Access" ON comments FOR UPDATE USING (true);
+CREATE POLICY "Public Delete Access" ON comments FOR DELETE USING (true);
 

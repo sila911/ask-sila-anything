@@ -406,6 +406,7 @@ export async function addComment(questionId, text) {
     author: 'Anonymous',
     createdAt: new Date().toISOString(),
     likes_count: 0,
+    reactions: { heart: 0, laugh: 0, think: 0, gasp: 0, fire: 0 }
   };
 
   const { error } = await supabase
