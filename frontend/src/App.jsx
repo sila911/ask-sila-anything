@@ -115,12 +115,12 @@ function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQ
   if (!question) return <div className="py-20 text-center">Loading...</div>;
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-2xl mx-auto py-8">
+    <div className="flex flex-col gap-6 w-full max-w-2xl mx-auto pt-2 pb-8">
       <button 
         onClick={() => navigate('/')}
-        className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-cyan-500 transition-colors font-medium self-start px-2"
+        className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-cyan-500 transition-colors font-medium self-start"
       >
-        <ArrowLeft2 size="18" /> Back to Feed
+        <FiArrowLeft size="18" /> Back
       </button>
       
       <QuestionCard 

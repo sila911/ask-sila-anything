@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import qrCode from '../assets/qr-code.jpg';
-import { CloseCircle } from 'iconsax-react';
 
 export default function BuyMeCoffeeModal({ isOpen, onClose }) {
   const [animationState, setAnimationState] = useState('hidden-top'); // 'hidden-top', 'visible', 'hidden-bottom'
@@ -61,22 +60,14 @@ export default function BuyMeCoffeeModal({ isOpen, onClose }) {
         className={`glass-shell relative w-full max-w-sm rounded-[2.5rem] p-8 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] text-center transition-transform duration-500 ease-in-out transform ${transformClass}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <button
-          onClick={onClose}
-          className="absolute right-5 top-5 p-2 rounded-full text-slate-400 hover:text-red-600 dark:hover:text-red-600 hover:bg-white/20 dark:hover:bg-slate-700/50 transition-colors"
-          aria-label="Close modal"
-        >
-          <CloseCircle size={20} />
-        </button>
-        
         <h1 className="text-2xl font-bold mb-6 text-emerald-700 dark:text-emerald-400">Buy me a coffee</h1>
         
-        <div className="mb-8 flex p-1 justify-center">
-          <div className="bg-white dark:bg-white border border-slate-200/60 p-3 rounded-2xl shadow-inner relative">
+        <div className="mb-8 flex justify-center">
+          <div className="bg-white dark:bg-white border border-slate-200/60 p-0 rounded-2xl overflow-hidden shadow-inner relative">
             <img 
               src={qrCode} 
               alt="QR Code" 
-              className="w-42 h-48 p-1 object-cover rounded-xl shadow-sm"
+              className="w-42 h-48 object-cover shadow-sm"
               onError={(e) => {
                 e.target.src = 'https://via.placeholder.com/200?text=QR+Code';
                 e.target.onerror = null;
@@ -99,7 +90,7 @@ export default function BuyMeCoffeeModal({ isOpen, onClose }) {
             href="https://pay.ababank.com/oRF8/37utlwxa"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-red-50/70 dark:bg-[#ec1c24]/15 hover:bg-red-100/70 dark:hover:bg-[#ec1c24]/25 text-[#c5121a] dark:text-red-400 py-3 font-bold transition-all transform active:scale-95 border border-[#ec1c24]/30 dark:border-[#ec1c24]/20 shadow-sm"
+            className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-amber-50/70 dark:bg-amber-500/15 hover:bg-amber-100/70 dark:hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 py-3 font-bold transition-all transform active:scale-95 border border-amber-500/30 dark:border-amber-500/20 shadow-sm"
           >
             <img src="https://informal.digitaleconomy.gov.kh/images/ministry-icon/aba_round.png" alt="" className="w-6 h-6 object-contain" />
             <span>ABA</span>

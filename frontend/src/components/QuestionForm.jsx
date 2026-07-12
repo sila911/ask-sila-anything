@@ -198,21 +198,22 @@ export default function QuestionForm({ onSuccess, onSubmitQuestion }) {
           className="w-full rounded-3xl p-4 px-14 bg-[color:var(--input-bg)] border border-[color:var(--input-border)] focus:outline-none resize-none text-[color:var(--app-text)] placeholder-[color:var(--app-muted)] focus:ring-2 focus:ring-cyan-300/40 dark:focus:ring-cyan-500/35 focus:border-cyan-400 dark:focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(34,211,238,0.25)] transition-all cause-medium"
         />
 
-        <motion.button
+        <button
           type="button"
           onClick={handleShuffle}
-          animate={isShuffling ? { rotate: 360 } : { rotate: 0 }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ duration: 0.6, ease: "easeInOut" }}
           className="absolute bottom-3 left-3 w-10 h-10 flex items-center justify-center rounded-full
              bg-white/90 dark:bg-slate-800/95 text-slate-700 dark:text-slate-100 border border-slate-300/85 dark:border-slate-500/70
-             shadow-[0_8px_18px_rgba(15,23,42,0.2)] dark:shadow-[0_8px_18px_rgba(0,0,0,0.45)]
-             transition-all duration-200"
+             hover:scale-105 active:scale-95 transition-all duration-200"
           title="Random Question"
         >
-          <Shuffle size={16} />
-        </motion.button>
+          <motion.div
+            animate={isShuffling ? { rotate: 360 } : { rotate: 0 }}
+            transition={{ duration: 0.6, ease: "easeInOut" }}
+            className="flex items-center justify-center"
+          >
+            <Shuffle size={16} />
+          </motion.div>
+        </button>
 
         <button
           type="submit"
