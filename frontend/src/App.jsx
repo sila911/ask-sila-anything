@@ -96,7 +96,7 @@ function timeAgo(dateString) {
 function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQuestions, handleLike, likedComments, handleLikeComment, handleView, timeAgo, hasAskedQuestion, typingState, likedAnswers, handleLikeAnswer }) {
   const { id } = useParams();
   const navigate = useNavigate();
-  const question = questions.find(q => q.id.toString() === id);
+  const question = questions.find(q => q.number?.toString() === id || q.id.toString() === id);
 
   if (!question && questions.length > 0) {
     return (

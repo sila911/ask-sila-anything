@@ -344,7 +344,7 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
         
         <div className="flex items-center justify-between mb-3">
           <Link 
-            to={isLocked ? "#" : `/q/${q.id}`}
+            to={isLocked ? "#" : `/q/${q.number || q.id}`}
             className={`flex items-center gap-3 ${!isSingleView ? "hover:opacity-80 transition-opacity cursor-pointer" : "cursor-default"}`}
             title={!isSingleView ? "View detail page" : ""}
           >
@@ -607,7 +607,7 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
       <ShareModal 
         isOpen={isShareModalOpen} 
         onClose={() => setIsShareModalOpen(false)} 
-        url={`${window.location.origin}/q/${q.id}`} 
+        url={`${window.location.origin}/q/${q.number || q.id}`} 
         questionText={q.question} 
       />
       <CommentModal 
