@@ -260,8 +260,9 @@ export default function CommentModal({ isOpen, onClose, comments, onAddComment, 
               disabled={isSubmittingComment}
               rows="1"
               onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.stopPropagation();
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  submitComment(e);
                 }
               }}
               className="flex-1 min-h-[40px] max-h-[120px] rounded-2xl px-4 py-2.5 text-sm bg-[color:var(--input-bg)] border border-[color:var(--input-border)] focus:outline-none focus:ring-2 focus:ring-cyan-500/30 text-slate-900 dark:text-white placeholder:text-slate-500 transition-all resize-none overflow-y-auto"
