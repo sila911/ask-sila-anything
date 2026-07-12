@@ -11,6 +11,29 @@ const REACTION_TYPES = [
   { type: "fire", emoji: "🔥", label: "Hot" }
 ];
 
+const getEmojiForType = (type) => {
+  const found = REACTION_TYPES.find(r => r.type === type);
+  return found ? found.emoji : "❤️";
+};
+
+const triggerEmojiBurst = (e, emoji) => {
+  let x = e.clientX;
+  let y = e.clientY;
+
+  // Touch fallback or keyboard trigger: use center coordinates of the target
+  if (!x && !y && e.currentTarget) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    x = rect.left + rect.width / 2;
+    y = rect.top + rect.height / 2;
+  }
+
+  if (x !== undefined && y !== undefined) {
+    window.dispatchEvent(new CustomEvent("trigger-emoji-burst", {
+      detail: { x, y, emoji }
+    }));
+  }
+};
+
 export default function CommentModal({ isOpen, onClose, comments, onAddComment, likedComments = {}, handleLikeComment, qId, timeAgo }) {
   const [commentText, setCommentText] = useState("");
   const [activePickerCommentId, setActivePickerCommentId] = useState(null);
@@ -189,6 +212,7 @@ export default function CommentModal({ isOpen, onClose, comments, onAddComment, 
                                   onClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
+                                    triggerEmojiBurst(e, react.emoji);
                                     handleLikeComment?.(c.id, react.type);
                                     setActivePickerCommentId(null);
                                   }}
@@ -205,7 +229,10 @@ export default function CommentModal({ isOpen, onClose, comments, onAddComment, 
                         </AnimatePresence>
 
                         <button 
-                          onClick={() => handleLikeComment?.(c.id, userReaction || "heart")}
+                          onClick={(e) => {
+                            triggerEmojiBurst(e, getEmojiForType(userReaction || "heart"));
+                            handleLikeComment?.(c.id, userReaction || "heart");
+                          }}
                           onTouchStart={() => handleCommentTouchStart(c.id)}
                           onTouchEnd={handleCommentTouchEnd}
                           className={`flex items-center gap-1.5 transition-colors duration-200 group/heart ${getReactionColorClass()}`}

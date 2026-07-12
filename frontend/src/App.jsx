@@ -22,6 +22,7 @@ import ShareModal from "./components/ShareModal";
 import CommentModal from "./components/CommentModal";
 import PullToRefresh from "./components/PullToRefresh";
 import RecentlyAsked, { QuestionCard } from "./components/RecentlyAsked";
+import ReactionExplosion from "./components/ReactionExplosion";
 import {
   addEvent,
   addQuestion,
@@ -313,6 +314,7 @@ export default function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN') {
         setIsAdminUnlocked(true);
+        setViewMode("admin");
       } else if (event === 'SIGNED_OUT') {
         setIsAdminUnlocked(false);
         setViewMode("user");
@@ -830,7 +832,7 @@ export default function App() {
     setIsAdminUnlocked(true);
     setIsAdminModalOpen(false);
     setViewMode("admin");
-    changeTabWithDirection("admin");
+    changeTabWithDirection("create");
     setNeedsTokenValidation(false);
     setAdminToken("");
     navigate('/'); // Refresh to clear search params if any
@@ -1042,6 +1044,7 @@ export default function App() {
           }}
         />
       )}
+      <ReactionExplosion />
     </div>
   );
 }

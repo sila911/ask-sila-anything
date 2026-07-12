@@ -18,6 +18,29 @@ const REACTION_TYPES = [
   { type: "fire", emoji: "🔥", label: "Hot" }
 ];
 
+const getEmojiForType = (type) => {
+  const found = REACTION_TYPES.find(r => r.type === type);
+  return found ? found.emoji : "❤️";
+};
+
+const triggerEmojiBurst = (e, emoji) => {
+  let x = e.clientX;
+  let y = e.clientY;
+
+  // Touch fallback or keyboard trigger: use center coordinates of the target
+  if (!x && !y && e.currentTarget) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    x = rect.left + rect.width / 2;
+    y = rect.top + rect.height / 2;
+  }
+
+  if (x !== undefined && y !== undefined) {
+    window.dispatchEvent(new CustomEvent("trigger-emoji-burst", {
+      detail: { x, y, emoji }
+    }));
+  }
+};
+
 function QuestionSEO({ question, answer }) {
   const title = question ? `"${question}" - Ask Sila` : "Ask Sila Anything";
   const description = answer 
@@ -414,6 +437,7 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
+                            triggerEmojiBurst(e, react.emoji);
                             handleLikeAnswer?.(q.id, react.type);
                             setShowAnswerPicker(false);
                           }}
@@ -430,7 +454,11 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
                 </AnimatePresence>
 
                 <button
-                  onClick={() => !isLocked && handleLikeAnswer?.(q.id, userAnswerReaction || "heart")}
+                  onClick={(e) => {
+                    if (isLocked) return;
+                    triggerEmojiBurst(e, getEmojiForType(userAnswerReaction || "heart"));
+                    handleLikeAnswer?.(q.id, userAnswerReaction || "heart");
+                  }}
                   onTouchStart={handleAnswerTouchStart}
                   onTouchEnd={handleAnswerTouchEnd}
                   className={`flex items-center gap-1.5 text-xs sm:text-sm font-semibold transition-colors duration-200 group/reply-heart ${getAnswerReactionColorClass()}`}
@@ -527,6 +555,7 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
+                        triggerEmojiBurst(e, react.emoji);
                         handleLike(q.id, react.type);
                         setShowPicker(false);
                       }}
@@ -543,7 +572,11 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
             </AnimatePresence>
 
             <button 
-              onClick={() => !isLocked && handleLike(q.id, userReaction || "heart")}
+              onClick={(e) => {
+                if (isLocked) return;
+                triggerEmojiBurst(e, getEmojiForType(userReaction || "heart"));
+                handleLike(q.id, userReaction || "heart");
+              }}
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
               className={`flex items-center gap-2 transition-colors duration-200 group/heart ${getReactionColorClass()}`}
