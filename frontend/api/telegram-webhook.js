@@ -24,7 +24,16 @@ export default async function handler(req, res) {
   }
 
   try {
-    const message = req.body?.message || req.body?.edited_message || req.body?.channel_post;
+    let body = req.body;
+    if (typeof body === 'string') {
+      try {
+        body = JSON.parse(body);
+      } catch (e) {
+        body = {};
+      }
+    }
+
+    const message = body?.message || body?.edited_message || body?.channel_post;
 
     if (!message || (!message.text && !message.caption)) {
       return res.status(200).json({ message: 'Ignored: No text or caption in message' });
@@ -47,8 +56,13 @@ export default async function handler(req, res) {
       if (match) {
         questionId = match[1].trim();
         if (text.startsWith('/reply') || text.startsWith('/answer')) {
-          const parts = text.split(/\s+/);
-          answerText = parts.length >= 3 ? parts.slice(2).join(' ') : text;
+          const rest = text.replace(/^\/(reply|answer)\s*/i, '').trim();
+          const firstWord = rest.split(/\s+/)[0];
+          if (firstWord === questionId || firstWord === `#id_${questionId}` || firstWord === `id_${questionId}`) {
+            answerText = rest.slice(firstWord.length).trim();
+          } else {
+            answerText = rest;
+          }
         } else {
           answerText = text;
         }
@@ -57,10 +71,11 @@ export default async function handler(req, res) {
 
     // Mode B: Slash command format: /reply <id> <answer> or /answer <id> <answer>
     if (!questionId && (text.startsWith('/reply') || text.startsWith('/answer'))) {
-      const parts = text.split(/\s+/);
-      if (parts.length >= 3) {
-        questionId = parts[1].replace(/^(#?id_)/, '').trim();
-        answerText = parts.slice(2).join(' ');
+      const rest = text.replace(/^\/(reply|answer)\s*/i, '').trim();
+      const parts = rest.split(/\s+/);
+      if (parts.length >= 2) {
+        questionId = parts[0].replace(/^(#?id_)/, '').trim();
+        answerText = parts.slice(1).join(' ');
       }
     }
 
@@ -68,13 +83,13 @@ export default async function handler(req, res) {
       return res.status(200).json({ message: 'Ignored: Not a recognized reply or command' });
     }
 
-    // Initialize Supabase
-    const supabaseUrl = process.env.VITE_SUPABASE_URL;
-    const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+    // Initialize Supabase (support SERVICE_ROLE_KEY if available for full permissions)
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
       console.error('Missing Supabase environment variables');
-      return res.status(500).json({ message: 'Server configuration error' });
+      return res.status(500).json({ message: 'Server configuration error: missing Supabase credentials' });
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -104,12 +119,13 @@ export default async function handler(req, res) {
 
     if (updateError) {
       console.error('Failed to update question:', updateError);
-      return res.status(500).json({ message: 'Failed to update question' });
+      return res.status(500).json({ message: 'Failed to update question: ' + updateError.message });
     }
 
     // 3. Create or Update Design Entry
+    const designId = typeof randomUUID === 'function' ? randomUUID() : `design-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
     const designData = {
-      id: randomUUID(),
+      id: designId,
       questionId: question.id,
       questionText: question.question,
       answerText: answerText,
@@ -127,7 +143,8 @@ export default async function handler(req, res) {
 
     if (designError) {
       console.error('Failed to save design:', designError);
-      return res.status(500).json({ message: 'Failed to save design' });
+      // If RLS blocks design insert, log it clearly
+      return res.status(500).json({ message: 'Failed to save design: ' + designError.message });
     }
 
     // 4. Send Confirmation back to Telegram with Notify Handle reminder
@@ -168,6 +185,6 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Webhook error:', error);
-    return res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error: ' + (error?.message || error) });
   }
 }

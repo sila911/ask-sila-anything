@@ -76,16 +76,20 @@ ALTER TABLE designs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
 
--- Drop existing policies if they exist to prevent "already exists" errors
+-- Clean up old open policies
 DROP POLICY IF EXISTS "Public Read Access" ON questions;
 DROP POLICY IF EXISTS "Public Insert Access" ON questions;
 DROP POLICY IF EXISTS "Public Update Access" ON questions;
 DROP POLICY IF EXISTS "Public Delete Access" ON questions;
+DROP POLICY IF EXISTS "Admin Delete Access" ON questions;
 
 DROP POLICY IF EXISTS "Public Read Access" ON designs;
 DROP POLICY IF EXISTS "Public Insert Access" ON designs;
 DROP POLICY IF EXISTS "Public Update Access" ON designs;
 DROP POLICY IF EXISTS "Public Delete Access" ON designs;
+DROP POLICY IF EXISTS "Admin Insert Access" ON designs;
+DROP POLICY IF EXISTS "Admin Update Access" ON designs;
+DROP POLICY IF EXISTS "Admin Delete Access" ON designs;
 
 DROP POLICY IF EXISTS "Public Read Access" ON events;
 DROP POLICY IF EXISTS "Public Insert Access" ON events;
@@ -94,23 +98,82 @@ DROP POLICY IF EXISTS "Public Read Access" ON comments;
 DROP POLICY IF EXISTS "Public Insert Access" ON comments;
 DROP POLICY IF EXISTS "Public Update Access" ON comments;
 DROP POLICY IF EXISTS "Public Delete Access" ON comments;
+DROP POLICY IF EXISTS "Admin Delete Access" ON comments;
 
--- Create Policies
-CREATE POLICY "Public Read Access" ON questions FOR SELECT USING (true);
-CREATE POLICY "Public Insert Access" ON questions FOR INSERT WITH CHECK (true);
-CREATE POLICY "Public Update Access" ON questions FOR UPDATE USING (true);
-CREATE POLICY "Public Delete Access" ON questions FOR DELETE USING (true);
+-- =================================================================
+-- 1. DESIGNS (Published Answers / Cards)
+-- Public can ONLY view. Only Admin (or Telegram Bot service_role) can create/edit/delete.
+-- =================================================================
+CREATE POLICY "Public Read Access" ON designs 
+    FOR SELECT 
+    USING (true);
 
-CREATE POLICY "Public Read Access" ON designs FOR SELECT USING (true);
-CREATE POLICY "Public Insert Access" ON designs FOR INSERT WITH CHECK (true);
-CREATE POLICY "Public Update Access" ON designs FOR UPDATE USING (true);
-CREATE POLICY "Public Delete Access" ON designs FOR DELETE USING (true);
+CREATE POLICY "Admin Insert Access" ON designs 
+    FOR INSERT 
+    TO authenticated 
+    WITH CHECK (true);
 
-CREATE POLICY "Public Read Access" ON events FOR SELECT USING (true);
-CREATE POLICY "Public Insert Access" ON events FOR INSERT WITH CHECK (true);
+CREATE POLICY "Admin Update Access" ON designs 
+    FOR UPDATE 
+    TO authenticated 
+    USING (true);
 
-CREATE POLICY "Public Read Access" ON comments FOR SELECT USING (true);
-CREATE POLICY "Public Insert Access" ON comments FOR INSERT WITH CHECK (true);
-CREATE POLICY "Public Update Access" ON comments FOR UPDATE USING (true);
-CREATE POLICY "Public Delete Access" ON comments FOR DELETE USING (true);
+CREATE POLICY "Admin Delete Access" ON designs 
+    FOR DELETE 
+    TO authenticated 
+    USING (true);
+
+-- =================================================================
+-- 2. QUESTIONS (Questions Feed)
+-- Public can submit questions, view questions, and react/like.
+-- Only Admin can permanently delete questions.
+-- =================================================================
+CREATE POLICY "Public Read Access" ON questions 
+    FOR SELECT 
+    USING (true);
+
+CREATE POLICY "Public Insert Access" ON questions 
+    FOR INSERT 
+    WITH CHECK (true);
+
+CREATE POLICY "Public Update Access" ON questions 
+    FOR UPDATE 
+    USING (true);
+
+CREATE POLICY "Admin Delete Access" ON questions 
+    FOR DELETE 
+    TO authenticated 
+    USING (true);
+
+-- =================================================================
+-- 3. COMMENTS
+-- Public can read and post comments; only Admin can delete comments.
+-- =================================================================
+CREATE POLICY "Public Read Access" ON comments 
+    FOR SELECT 
+    USING (true);
+
+CREATE POLICY "Public Insert Access" ON comments 
+    FOR INSERT 
+    WITH CHECK (true);
+
+CREATE POLICY "Public Update Access" ON comments 
+    FOR UPDATE 
+    USING (true);
+
+CREATE POLICY "Admin Delete Access" ON comments 
+    FOR DELETE 
+    TO authenticated 
+    USING (true);
+
+-- =================================================================
+-- 4. EVENTS (Analytics / Logging)
+-- =================================================================
+CREATE POLICY "Public Read Access" ON events 
+    FOR SELECT 
+    USING (true);
+
+CREATE POLICY "Public Insert Access" ON events 
+    FOR INSERT 
+    WITH CHECK (true);
 
