@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { FiLogOut, FiArrowLeft } from "react-icons/fi";
-import { Routes, Route, useParams, useNavigate, Link } from "react-router-dom";
+import { Routes, Route, useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import { Eye, EyeSlash, Lock } from "iconsax-react";
 import { supabase } from "./lib/supabase";
 import Header from "./components/Header";
 import CoverBanner from "./components/CoverBanner";
@@ -156,7 +157,191 @@ function SingleQuestionPage({ questions, designs, comments, onAddComment, likedQ
   );
 }
 
+function FuckoffAdminPage({
+  isAdminUnlocked,
+  isAuthChecking,
+  handleAdminAuth,
+  activeTab,
+  tabDirection,
+  changeTabWithDirection,
+  seedDesign,
+  addDesign,
+  trackEvent,
+  showAdminToast,
+  questions,
+  markAnswered,
+  designs,
+  orderedDesigns,
+  reuseDesign,
+  removeDesign,
+  events,
+  handleToggleVisibility,
+  handleTogglePin,
+  handleSoftDelete,
+  linkMessage,
+}) {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!password) return;
+    setIsLoading(true);
+    setError("");
+    const res = await handleAdminAuth(password);
+    if (!res.ok) {
+      setError(res.message || "Invalid admin password.");
+    }
+    setIsLoading(false);
+  };
+
+  if (isAuthChecking) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-3 animate-in fade-in">
+        <div className="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-slate-400 text-sm font-medium">Verifying admin session...</p>
+      </div>
+    );
+  }
+
+  if (!isAdminUnlocked) {
+    return (
+      <div className="w-full max-w-md mx-auto p-4 animate-in fade-in zoom-in duration-300">
+        <div className="glass-shell rounded-3xl p-6 sm:p-8 border border-white/20 shadow-2xl">
+          {/* Header icon with title to the right */}
+          <div className="flex items-center gap-3.5 mb-6">
+            <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-500 flex items-center justify-center border border-cyan-500/30 shrink-0 shadow-inner">
+              <Lock size={24} variant="Bold" />
+            </div>
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold font-['Racing_Sans_One',sans-serif] tracking-wide leading-tight">
+                ADMIN ACCESS
+              </h2>
+              <p className="text-xs text-[color:var(--app-muted)] mt-0.5">
+                Enter password to unlock studio & dashboard
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (error) setError("");
+                }}
+                placeholder="Enter admin password..."
+                className="w-full h-12 pl-4 pr-12 rounded-2xl bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/40"
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 p-1"
+                aria-label="Toggle password visibility"
+              >
+                {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+
+            {error && (
+              <p className="text-xs text-rose-500 font-medium px-1 animate-in fade-in">
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={isLoading || !password}
+              className="w-full h-12 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-sm shadow-lg shadow-cyan-600/30 active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
+            >
+              {isLoading ? "Authenticating..." : "Unlock Admin Workspace"}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="glass-shell glass-shell--3d w-[95%] max-w-6xl rounded-[2rem] p-5 sm:p-8">
+      {linkMessage && (
+        <p className="mb-3 text-sm text-[color:var(--app-muted)]">
+          {linkMessage}
+        </p>
+      )}
+
+      <div className="relative overflow-hidden w-full min-h-[500px]">
+        <AnimatePresence initial={false} custom={tabDirection} mode="wait">
+          <motion.div
+            key={activeTab}
+            custom={tabDirection}
+            variants={{
+              enter: (dir) => ({
+                x: dir > 0 ? 150 : -150,
+                opacity: 0,
+              }),
+              center: {
+                x: 0,
+                opacity: 1,
+              },
+              exit: (dir) => ({
+                x: dir > 0 ? -150 : 150,
+                opacity: 0,
+              }),
+            }}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{
+              x: { type: "spring", stiffness: 350, damping: 30 },
+              opacity: { duration: 0.15 },
+            }}
+            className="w-full"
+          >
+            {activeTab === "create" && (
+              <CreateDesignPage
+                seedDesign={seedDesign}
+                onSave={addDesign}
+                onEvent={trackEvent}
+                onNotify={showAdminToast}
+                questions={questions}
+                onQuestionAnswered={markAnswered}
+              />
+            )}
+
+            {activeTab === "library" && (
+              <LibraryPage
+                designs={orderedDesigns}
+                onReuse={reuseDesign}
+                onDelete={removeDesign}
+              />
+            )}
+
+            {activeTab === "admin" && (
+              <AdminDashboardPage
+                designs={designs}
+                events={events}
+                questions={questions}
+                onToggleVisibility={handleToggleVisibility}
+                onTogglePin={handleTogglePin}
+                onSoftDelete={handleSoftDelete}
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [viewMode, setViewMode] = useState("user");
   const [activeTab, setActiveTab] = useState("create");
   const [tabDirection, setTabDirection] = useState(0);
@@ -180,6 +365,7 @@ export default function App() {
   const [seedDesign, setSeedDesign] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [needsTokenValidation, setNeedsTokenValidation] = useState(false);
   const [adminToken, setAdminToken] = useState("");
@@ -266,7 +452,6 @@ export default function App() {
   }, []);
 
   const [listRef] = useAutoAnimate();
-  const navigate = useNavigate();
   const likingInProgress = useRef(new Set());
 
   const loadData = async (silent = false) => {
@@ -310,16 +495,24 @@ export default function App() {
   useEffect(() => {
     loadData();
 
-    // Listen for auth state changes
+    // Check existing session immediately on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setIsAdminUnlocked(true);
+      }
+      setIsAuthChecking(false);
+    }).catch(() => {
+      setIsAuthChecking(false);
+    });
+
+    // Listen for auth state changes without modifying public route views
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN') {
         setIsAdminUnlocked(true);
-        setViewMode("admin");
       } else if (event === 'SIGNED_OUT') {
         setIsAdminUnlocked(false);
-        setViewMode("user");
-        navigate('/');
       }
+      setIsAuthChecking(false);
     });
 
     // Subscribe to changes (Real-time)
@@ -387,9 +580,9 @@ export default function App() {
     }
   };
 
-  const submitUserQuestion = async (questionText) => {
+  const submitUserQuestion = async (questionText, notifyHandle = null) => {
     try {
-      const persisted = await addQuestion(questionText);
+      const persisted = await addQuestion(questionText, notifyHandle);
       setQuestions(persisted);
       trackEvent("question_submitted");
       
@@ -397,11 +590,15 @@ export default function App() {
       setHasAskedQuestion(true);
       localStorage.setItem("hasAskedQuestion", "true");
 
+      // Find the newly created question ID (most recent matching text)
+      const newQuestion = persisted.find(q => q.question === questionText && q.status === 'pending');
+      const questionId = newQuestion ? newQuestion.id : null;
+
       // Send Telegram notification
       fetch('/api/telegram-send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: questionText })
+        body: JSON.stringify({ question: questionText, questionId, notifyHandle })
       }).catch(err => console.error("Failed to send Telegram notification:", err));
 
     } catch (error) {
@@ -835,7 +1032,9 @@ export default function App() {
     changeTabWithDirection("create");
     setNeedsTokenValidation(false);
     setAdminToken("");
-    navigate('/'); // Refresh to clear search params if any
+    if (location.pathname !== "/fuckoff") {
+      navigate('/');
+    }
     trackEvent("admin_login", { fromToken: needsTokenValidation });
     showAdminToast(
       "Admin unlocked",
@@ -848,6 +1047,8 @@ export default function App() {
   const publicQuestions = useMemo(() => {
     return questions.filter((q) => !q.is_hidden);
   }, [questions]);
+
+  const isCurrentlyAdmin = location.pathname === "/fuckoff" && isAdminUnlocked;
 
   return (
     <div className="min-h-screen flex flex-col text-[color:var(--app-text)] relative">
@@ -866,171 +1067,116 @@ export default function App() {
         </div>
       )}
 
-      <main className={`flex-1 flex items-center justify-center px-2 sm:px-4 ${viewMode === "admin" && isAdminUnlocked ? "pb-28" : "pb-6"}`}>
+      <main className={`flex-1 flex items-center justify-center px-2 sm:px-4 ${isCurrentlyAdmin ? "pb-28" : "pb-6"}`}>
         <Routes>
           <Route path="/" element={
-            viewMode === "user" ? (
-              <PullToRefresh onRefresh={() => loadData(true)}>
-                <div className="flex flex-col items-center gap-8 w-full max-w-2xl mx-auto">
-                  <RecentlyAsked
-                    questions={publicQuestions}
-                    designs={designs}
-                    comments={comments}
-                    onAddComment={handleAddComment}
-                    likedQuestions={likedQuestions}
-                    handleLike={handleLike}
-                    likedComments={likedComments}
-                    handleLikeComment={handleLikeComment}
-                    handleView={handleView}
-                    timeAgo={timeAgo}
-                    handleSuccess={handleSuccess}
-                    submitUserQuestion={submitUserQuestion}
-                    filterMode={filterMode}
-                    setFilterMode={setFilterMode}
-                    isFilterOpen={isFilterOpen}
-                    setIsFilterOpen={setIsFilterOpen}
-                    hasAskedQuestion={hasAskedQuestion}
-                    typingState={typingState}
-                    likedAnswers={likedAnswers}
-                    handleLikeAnswer={handleLikeAnswer}
-                  />
-                  
-                  {isLoading && (
-                    <div className="flex flex-col items-center justify-center py-10 gap-3">
-                      <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
-                      <p className="text-slate-500 text-sm font-medium">Loading feed...</p>
-                    </div>
-                  )}
-
-                  {fetchError && !isLoading && (
-                    <div className="p-6 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-center animate-in fade-in zoom-in duration-300">
-                      <p className="text-rose-500 font-bold mb-1">Connection Error</p>
-                      <p className="text-rose-400 text-sm mb-4">{fetchError}</p>
-                      <button 
-                        onClick={() => window.location.reload()}
-                        className="px-6 py-2 bg-rose-500 text-white rounded-xl font-bold hover:bg-rose-600 transition-colors shadow-lg shadow-rose-500/20"
-                      >
-                        Retry Connection
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </PullToRefresh>
-            ) : (
-              isAdminUnlocked && (
-                <div className="glass-shell glass-shell--3d w-[95%] max-w-6xl rounded-[2rem] p-5 sm:p-8">
-
-
-                  {linkMessage && (
-                    <p className="mb-3 text-sm text-[color:var(--app-muted)]">
-                      {linkMessage}
-                    </p>
-                  )}
-
-                  <div className="relative overflow-hidden w-full min-h-[500px]">
-                    <AnimatePresence initial={false} custom={tabDirection} mode="wait">
-                      <motion.div
-                        key={activeTab}
-                        custom={tabDirection}
-                        variants={{
-                          enter: (dir) => ({
-                            x: dir > 0 ? 150 : -150,
-                            opacity: 0
-                          }),
-                          center: {
-                            x: 0,
-                            opacity: 1
-                          },
-                          exit: (dir) => ({
-                            x: dir > 0 ? -150 : 150,
-                            opacity: 0
-                          })
-                        }}
-                        initial="enter"
-                        animate="center"
-                        exit="exit"
-                        transition={{
-                          x: { type: "spring", stiffness: 350, damping: 30 },
-                          opacity: { duration: 0.15 }
-                        }}
-                        className="w-full"
-                      >
-                        {activeTab === "create" && (
-                          <CreateDesignPage
-                            seedDesign={seedDesign}
-                            onSave={addDesign}
-                            onEvent={trackEvent}
-                            onNotify={showAdminToast}
-                            questions={questions}
-                            onQuestionAnswered={markAnswered}
-                          />
-                        )}
-
-                        {activeTab === "library" && (
-                          <LibraryPage
-                            designs={orderedDesigns}
-                            onReuse={reuseDesign}
-                            onDelete={removeDesign}
-                          />
-                        )}
-
-                        {activeTab === "admin" && (
-                          <AdminDashboardPage
-                            designs={designs}
-                            events={events}
-                            questions={questions}
-                            onToggleVisibility={handleToggleVisibility}
-                            onTogglePin={handleTogglePin}
-                            onSoftDelete={handleSoftDelete}
-                          />
-                        )}
-                      </motion.div>
-                    </AnimatePresence>
+            <PullToRefresh onRefresh={() => loadData(true)}>
+              <div className="flex flex-col items-center gap-8 w-full max-w-2xl mx-auto">
+                <RecentlyAsked
+                  questions={publicQuestions}
+                  designs={designs}
+                  comments={comments}
+                  onAddComment={handleAddComment}
+                  likedQuestions={likedQuestions}
+                  handleLike={handleLike}
+                  likedComments={likedComments}
+                  handleLikeComment={handleLikeComment}
+                  handleView={handleView}
+                  timeAgo={timeAgo}
+                  handleSuccess={handleSuccess}
+                  submitUserQuestion={submitUserQuestion}
+                  filterMode={filterMode}
+                  setFilterMode={setFilterMode}
+                  isFilterOpen={isFilterOpen}
+                  setIsFilterOpen={setIsFilterOpen}
+                  hasAskedQuestion={hasAskedQuestion}
+                  typingState={typingState}
+                  likedAnswers={likedAnswers}
+                  handleLikeAnswer={handleLikeAnswer}
+                />
+                
+                {isLoading && (
+                  <div className="flex flex-col items-center justify-center py-10 gap-3">
+                    <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-slate-500 text-sm font-medium">Loading feed...</p>
                   </div>
-                </div>
-              )
-            )
+                )}
+
+                {fetchError && !isLoading && (
+                  <div className="p-6 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-center animate-in fade-in zoom-in duration-300">
+                    <p className="text-rose-500 font-bold mb-1">Connection Error</p>
+                    <p className="text-rose-400 text-sm mb-4">{fetchError}</p>
+                    <button 
+                      onClick={() => window.location.reload()}
+                      className="px-6 py-2 bg-rose-500 text-white rounded-xl font-bold hover:bg-rose-600 transition-colors shadow-lg shadow-rose-500/20"
+                    >
+                      Retry Connection
+                    </button>
+                  </div>
+                )}
+              </div>
+            </PullToRefresh>
           } />
           
+          <Route path="/fuckoff" element={
+            <FuckoffAdminPage
+              isAdminUnlocked={isAdminUnlocked}
+              isAuthChecking={isAuthChecking}
+              handleAdminAuth={handleAdminAuth}
+              activeTab={activeTab}
+              tabDirection={tabDirection}
+              changeTabWithDirection={changeTabWithDirection}
+              seedDesign={seedDesign}
+              addDesign={addDesign}
+              trackEvent={trackEvent}
+              showAdminToast={showAdminToast}
+              questions={questions}
+              markAnswered={markAnswered}
+              designs={designs}
+              orderedDesigns={orderedDesigns}
+              reuseDesign={reuseDesign}
+              removeDesign={removeDesign}
+              events={events}
+              handleToggleVisibility={handleToggleVisibility}
+              handleTogglePin={handleTogglePin}
+              handleSoftDelete={handleSoftDelete}
+              linkMessage={linkMessage}
+            />
+          } />
+
           <Route path="/q/:id" element={
-           <SingleQuestionPage
-             questions={publicQuestions}
-             designs={designs}
-             comments={comments}
-             onAddComment={handleAddComment}
-             likedQuestions={likedQuestions}
-             handleLike={handleLike}
-             likedComments={likedComments}
-             handleLikeComment={handleLikeComment}
-             handleView={handleView}
-             timeAgo={timeAgo}
-             hasAskedQuestion={hasAskedQuestion}
-             typingState={typingState}
-             likedAnswers={likedAnswers}
-             handleLikeAnswer={handleLikeAnswer}
-           />
+            <SingleQuestionPage
+              questions={publicQuestions}
+              designs={designs}
+              comments={comments}
+              onAddComment={handleAddComment}
+              likedQuestions={likedQuestions}
+              handleLike={handleLike}
+              likedComments={likedComments}
+              handleLikeComment={handleLikeComment}
+              handleView={handleView}
+              timeAgo={timeAgo}
+              hasAskedQuestion={hasAskedQuestion}
+              typingState={typingState}
+              likedAnswers={likedAnswers}
+              handleLikeAnswer={handleLikeAnswer}
+            />
           } />
         </Routes>
       </main>
 
-      {!(viewMode === "admin" && isAdminUnlocked) && <Footer onSilaClick={openAdminModal} />}
+      {location.pathname !== "/fuckoff" && <Footer />}
 
       <ThankYouModal isOpen={showModal} onClose={closeModal} />
 
-      <AdminAuthModal
-        isOpen={isAdminModalOpen}
-        onClose={() => setIsAdminModalOpen(false)}
-        onSubmit={handleAdminAuth}
-      />
-
-      {viewMode === "admin" && isAdminUnlocked && (
+      {isCurrentlyAdmin && (
         <AdminToastCard
           toast={adminToast}
           onClose={() => setAdminToast(null)}
         />
       )}
 
-      {viewMode === "admin" && isAdminUnlocked && (
+      {isCurrentlyAdmin && (
         <DockTabs
           activeTab={activeTab}
           onChange={changeTabWithDirection}

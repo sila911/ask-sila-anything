@@ -1,6 +1,9 @@
-import { useState, useRef, useEffect } from 'react'
-import { Shuffle, Send2, Refresh } from 'iconsax-react'
-import { motion } from 'framer-motion'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { Shuffle, Send2, Refresh, Notification, CloseCircle, Warning2 } from 'iconsax-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { checkRateLimit, recordSubmission, validateQuestionText } from '../lib/spamFilter'
+import Toast from './ui/Toast'
+import NotifySheetModal from './NotifySheetModal'
 
 const QUESTIONS = [
   // --- General & Core Prompts ---
@@ -28,10 +31,18 @@ const QUESTIONS = [
 
 export default function QuestionForm({ onSuccess, onSubmitQuestion }) {
   const [question, setQuestion] = useState('')
+  const [notifyHandle, setNotifyHandle] = useState('')
+  const [showNotifyModal, setShowNotifyModal] = useState(false)
+  const [formError, setFormError] = useState('')
+  const [toast, setToast] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [placeholder, setPlaceholder] = useState('')
   const [isShuffling, setIsShuffling] = useState(false)
   const typingRef = useRef(null)
+
+  const handleCloseToast = useCallback(() => {
+    setToast(null)
+  }, [])
 
   // Clear typing animation timer on unmount
   useEffect(() => {
@@ -87,8 +98,8 @@ export default function QuestionForm({ onSuccess, onSubmitQuestion }) {
       clearInterval(typingRef.current)
     }
     setIsShuffling(true)
+    setFormError('')
 
-    // Select a random question, making sure it's different if possible
     let randomQuestion = QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)]
     if (randomQuestion === question && QUESTIONS.length > 1) {
       randomQuestion = QUESTIONS.find(q => q !== question) || randomQuestion
@@ -108,34 +119,72 @@ export default function QuestionForm({ onSuccess, onSubmitQuestion }) {
         typingRef.current = null
         setIsShuffling(false)
       }
-    }, 18) // 18ms per character (typing speed)
+    }, 18)
   }
 
   const handleTextChange = (e) => {
-    // If the user starts typing manually, stop the auto-typing effect immediately
     if (typingRef.current) {
       clearInterval(typingRef.current)
       typingRef.current = null
       setIsShuffling(false)
     }
+    if (formError) setFormError('')
     setQuestion(e.target.value)
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setFormError('')
 
     const nextQuestion = question.trim()
     if (!nextQuestion) return
 
+    // 1. Rate Limiting Check
+    const rateCheck = checkRateLimit()
+    if (!rateCheck.allowed) {
+      const msg = rateCheck.message || "You've asked 3 questions recently. Please slow down and try again in ~10 min."
+      setFormError(msg)
+      setToast({
+        type: 'warning',
+        message: msg,
+      })
+      return
+    }
+
+    // 2. Anti-Spam & Toxicity Validation
+    const textCheck = validateQuestionText(nextQuestion)
+    if (!textCheck.isValid) {
+      const errorMsg = textCheck.error || 'Please enter a valid question.'
+      setFormError(errorMsg)
+      setToast({
+        type: 'error',
+        message: errorMsg,
+      })
+      return
+    }
+
+    const rawHandle = notifyHandle.replace(/\s+/g, '').replace(/^@+/, '').trim()
+    const cleanNotifyHandle = rawHandle ? `@${rawHandle}` : null
+
     if (onSubmitQuestion) {
       setIsLoading(true)
       try {
-        await onSubmitQuestion(nextQuestion)
+        await onSubmitQuestion(nextQuestion, cleanNotifyHandle)
+        recordSubmission()
         setQuestion('')
+        setNotifyHandle('')
+        setShowNotifyModal(false)
+        setToast(null)
         onSuccess()
       } catch (error) {
         console.error(error)
-        alert('Cannot save question now. Please try again.')
+        const errMsg = 'Cannot save question right now. Please try again.'
+        setFormError(errMsg)
+        setToast({
+          type: 'error',
+          title: 'Error',
+          detail: errMsg,
+        })
       } finally {
         setIsLoading(false)
       }
@@ -148,11 +197,15 @@ export default function QuestionForm({ onSuccess, onSubmitQuestion }) {
       const res = await fetch('/api/telegram-send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: nextQuestion })
+        body: JSON.stringify({ question: nextQuestion, notifyHandle: cleanNotifyHandle })
       })
 
       if (res.ok) {
+        recordSubmission()
         setQuestion('')
+        setNotifyHandle('')
+        setShowNotifyInput(false)
+        setToast(null)
         onSuccess()
       } else {
         const contentType = res.headers.get('content-type') || ''
@@ -172,39 +225,54 @@ export default function QuestionForm({ onSuccess, onSubmitQuestion }) {
         if (serverMessage) {
           message = serverMessage
         } else if (res.status === 500) {
-          message = 'API server error (500). For local development, run npm run dev to start backend + frontend.'
+          message = 'API server error (500). Please try again in a moment.'
         }
 
-        alert(message)
+        setFormError(message)
+        setToast({
+          type: 'error',
+          title: 'Server Error',
+          detail: message,
+        })
       }
     } catch (error) {
       console.error(error)
-      alert('Cannot reach API server. Run npm run dev (it now starts backend + frontend).')
+      const errDetail = 'Cannot reach server. Please check your connection and try again.'
+      setFormError(errDetail)
+      setToast({
+        type: 'error',
+        title: 'Connection Error',
+        detail: errDetail,
+      })
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4">
-      <div className="relative group">
+    <>
+      <Toast toast={toast} onClose={handleCloseToast} duration={6000} />
+      <form onSubmit={handleSubmit} className="mt-4 flex flex-col">
+        {/* Question Text Area */}
+        <div className="relative group mb-2">
         <textarea
           id="question"
           name="question"
           value={question}
           onChange={handleTextChange}
-          rows="6"
+          rows="5"
           placeholder={placeholder}
           className="w-full rounded-3xl p-4 px-14 bg-[color:var(--input-bg)] border border-[color:var(--input-border)] focus:outline-none resize-none text-[color:var(--app-text)] placeholder-[color:var(--app-muted)] focus:ring-2 focus:ring-cyan-300/40 dark:focus:ring-cyan-500/35 focus:border-cyan-400 dark:focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(34,211,238,0.25)] transition-all cause-medium"
         />
 
+        {/* Shuffle Random Prompt Button */}
         <button
           type="button"
           onClick={handleShuffle}
           className="absolute bottom-3 left-3 w-10 h-10 flex items-center justify-center rounded-full
              bg-white/90 dark:bg-slate-800/95 text-slate-700 dark:text-slate-100 border border-slate-300/85 dark:border-slate-500/70
-             hover:scale-105 active:scale-95 transition-all duration-200"
-          title="Random Question"
+             hover:scale-105 active:scale-95 transition-all duration-200 shadow-sm"
+          title="Random Question Inspiration"
         >
           <motion.div
             animate={isShuffling ? { rotate: 360 } : { rotate: 0 }}
@@ -215,12 +283,13 @@ export default function QuestionForm({ onSuccess, onSubmitQuestion }) {
           </motion.div>
         </button>
 
+        {/* Submit Button */}
         <button
           type="submit"
-          disabled={isLoading}
+          disabled={isLoading || !question.trim()}
           className="absolute bottom-3 right-3 w-10 h-10 flex items-center justify-center rounded-full
              bg-cyan-700 dark:bg-cyan-500 text-white dark:text-slate-950
-             hover:scale-110 active:scale-90 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+             hover:scale-110 active:scale-90 transition-all duration-200 shadow-lg disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           {isLoading ? (
             <Refresh size={16} className="animate-spin" />
@@ -229,6 +298,49 @@ export default function QuestionForm({ onSuccess, onSubmitQuestion }) {
           )}
         </button>
       </div>
+
+      {/* Centered "Notify me" Button Container (Zero margin-top) */}
+      <div className="w-full flex items-center justify-center m-0 p-0">
+        {!notifyHandle ? (
+          <button
+            type="button"
+            onClick={() => setShowNotifyModal(true)}
+            className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 bg-white/40 dark:bg-white/5 hover:bg-white/60 dark:hover:bg-white/10 border border-slate-200/60 dark:border-white/10 rounded-full px-3.5 py-1.5 transition-all duration-200 shadow-sm cursor-pointer font-medium active:scale-95"
+          >
+            <Notification size={14} className="text-cyan-600 dark:text-cyan-400" />
+            <span>Notify me</span>
+          </button>
+        ) : (
+          <div className="inline-flex items-center gap-2 bg-cyan-500/10 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 rounded-full pl-3 pr-1.5 py-1 text-xs shadow-sm">
+            <Notification size={13} variant="Bold" className="text-cyan-500" />
+            <button
+              type="button"
+              onClick={() => setShowNotifyModal(true)}
+              className="hover:underline cursor-pointer font-semibold"
+            >
+              {notifyHandle}
+            </button>
+            <button
+              type="button"
+              onClick={() => setNotifyHandle("")}
+              className="text-slate-400 hover:text-rose-500 p-0.5 rounded-full transition-colors"
+              title="Remove notification"
+            >
+              <CloseCircle size={14} />
+            </button>
+          </div>
+        )}
+      </div>
+
+      <NotifySheetModal
+        isOpen={showNotifyModal}
+        onClose={() => setShowNotifyModal(false)}
+        initialHandle={notifyHandle}
+        onSaveHandle={(handle) => setNotifyHandle(handle)}
+        onShowToast={(msg, type) => setToast({ message: msg, type: type || 'error' })}
+      />
     </form>
+    </>
   )
 }
+

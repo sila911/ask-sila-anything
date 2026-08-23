@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:bot": "node scripts/telegram-local-poller.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "sitemap": "node scripts/generate-sitemap.js"

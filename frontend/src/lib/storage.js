@@ -65,12 +65,15 @@ export async function getQuestions() {
   );
 }
 
-export async function addQuestion(questionText) {
+export async function addQuestion(questionText, notifyHandle = null) {
+  // Generate a clean 4-digit random number (1000 - 9999)
+  const newId = Math.floor(1000 + Math.random() * 9000).toString();
   const newQuestion = {
-    id: crypto.randomUUID(),
+    id: newId,
     question: questionText,
     status: 'pending',
     createdAt: new Date().toISOString(),
+    notify_handle: notifyHandle ? notifyHandle.trim() : null,
   };
 
   const { error } = await supabase
