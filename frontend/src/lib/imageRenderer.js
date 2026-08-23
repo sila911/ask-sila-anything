@@ -105,6 +105,37 @@ function formatAskedAt(value) {
   return `${datePart} | ${timePart}`
 }
 
+async function loadBackgroundImage(url) {
+  return new Promise((resolve) => {
+    if (!url) return resolve(null);
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
+function drawCoverImage(ctx, img, canvasWidth, canvasHeight) {
+  const imgRatio = img.width / img.height;
+  const canvasRatio = canvasWidth / canvasHeight;
+  let renderWidth, renderHeight, offsetX, offsetY;
+
+  if (imgRatio > canvasRatio) {
+    renderHeight = canvasHeight;
+    renderWidth = canvasHeight * imgRatio;
+    offsetX = (canvasWidth - renderWidth) / 2;
+    offsetY = 0;
+  } else {
+    renderWidth = canvasWidth;
+    renderHeight = canvasWidth / imgRatio;
+    offsetX = 0;
+    offsetY = (canvasHeight - renderHeight) / 2;
+  }
+
+  ctx.drawImage(img, offsetX, offsetY, renderWidth, renderHeight);
+}
+
 export async function renderTextToImage(text, style) {
   const aspectRatio = style.aspectRatio || "9:16"
   let width = 1080
@@ -150,6 +181,7 @@ export async function renderTextToImage(text, style) {
   canvas.height = height
   const ctx = canvas.getContext('2d')
 
+  const preset = style.preset || 'classic'
   const bgColor = style.bgColor || '#102a43'
   const accentColor = style.accentColor || '#2cb1bc'
   const panelColor = style.panelColor || 'rgba(255,255,255,0.12)'
@@ -161,31 +193,80 @@ export async function renderTextToImage(text, style) {
   const answerFontSize = Number(style.answerFontSize || 62)
   const fontFamily = style.fontFamily || 'Mali'
   const align = style.align || 'center'
+  const bgImageUrl = style.bgImageUrl || null
 
   const questionText = typeof text === 'object' ? text.question || '' : String(text || '')
   const answerText = typeof text === 'object' ? text.answer || '' : ''
   const askedAt = typeof text === 'object' ? text.askedAt || '' : ''
 
-  const gradient = ctx.createLinearGradient(0, 0, width, height)
-  gradient.addColorStop(0, bgColor)
-  gradient.addColorStop(1, accentColor)
-  ctx.fillStyle = gradient
-  ctx.fillRect(0, 0, width, height)
+  // 1. Draw Background (Custom Image or Preset Gradient)
+  const customBgImg = bgImageUrl ? await loadBackgroundImage(bgImageUrl) : null
+
+  if (customBgImg) {
+    drawCoverImage(ctx, customBgImg, width, height)
+    // Dark blur tint overlay for photo readability
+    ctx.fillStyle = 'rgba(10, 15, 29, 0.65)'
+    ctx.fillRect(0, 0, width, height)
+  } else if (preset === 'aurora') {
+    const auroraGrad = ctx.createLinearGradient(0, 0, width, height)
+    auroraGrad.addColorStop(0, '#0f172a')
+    auroraGrad.addColorStop(0.4, '#1e1b4b')
+    auroraGrad.addColorStop(0.7, '#0284c7')
+    auroraGrad.addColorStop(1, '#06b6d4')
+    ctx.fillStyle = auroraGrad
+    ctx.fillRect(0, 0, width, height)
+  } else if (preset === 'cyberpunk') {
+    const cyberGrad = ctx.createLinearGradient(0, 0, width, height)
+    cyberGrad.addColorStop(0, '#0a0618')
+    cyberGrad.addColorStop(0.5, '#190a36')
+    cyberGrad.addColorStop(1, '#001a2e')
+    ctx.fillStyle = cyberGrad
+    ctx.fillRect(0, 0, width, height)
+  } else if (preset === 'receipt') {
+    const receiptGrad = ctx.createLinearGradient(0, 0, width, height)
+    receiptGrad.addColorStop(0, '#18181b')
+    receiptGrad.addColorStop(1, '#27272a')
+    ctx.fillStyle = receiptGrad
+    ctx.fillRect(0, 0, width, height)
+  } else {
+    const gradient = ctx.createLinearGradient(0, 0, width, height)
+    gradient.addColorStop(0, bgColor)
+    gradient.addColorStop(1, accentColor)
+    ctx.fillStyle = gradient
+    ctx.fillRect(0, 0, width, height)
+  }
 
   const panelX = panelMarginX
   const panelY = panelMarginY
   const panelWidth = width - (panelMarginX * 2)
   const panelHeight = height - (panelMarginY * 2)
 
+  // 2. Draw Panel
+  ctx.save()
+  if (preset === 'cyberpunk') {
+    ctx.shadowColor = '#00f0ff'
+    ctx.shadowBlur = 30
+  } else if (preset === 'aurora') {
+    ctx.shadowColor = 'rgba(56, 189, 248, 0.4)'
+    ctx.shadowBlur = 25
+  }
+
   drawRoundedRect(ctx, panelX, panelY, panelWidth, panelHeight, frameRadius)
   ctx.fillStyle = panelColor
   ctx.fill()
+  ctx.restore()
 
   if (frameWidth > 0) {
+    ctx.save()
+    if (preset === 'cyberpunk') {
+      ctx.shadowColor = '#ff007f'
+      ctx.shadowBlur = 20
+    }
     drawRoundedRect(ctx, panelX, panelY, panelWidth, panelHeight, frameRadius)
     ctx.lineWidth = frameWidth
     ctx.strokeStyle = frameColor
     ctx.stroke()
+    ctx.restore()
   }
 
   const contentX = align === 'left' ? panelX + 72 : align === 'right' ? panelX + panelWidth - 72 : width / 2
@@ -200,7 +281,7 @@ export async function renderTextToImage(text, style) {
     ctx.font = `500 28px ${fontFamily}`
     ctx.textBaseline = 'top'
     ctx.textAlign = 'right'
-    ctx.fillStyle = 'rgba(255,255,255,0.9)'
+    ctx.fillStyle = preset === 'receipt' ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.9)'
     ctx.fillText(dateLabel, panelX + panelWidth - 70, panelY + dateYOffset)
     ctx.fillStyle = textColor
     ctx.textAlign = align
@@ -219,12 +300,24 @@ export async function renderTextToImage(text, style) {
   y += dividerPaddingTop
   const dividerLeft = panelX + 70
   const dividerRight = panelX + panelWidth - 70
-  ctx.strokeStyle = 'rgba(255,255,255,0.45)'
+
+  ctx.save()
+  if (preset === 'receipt') {
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)'
+    ctx.setLineDash([16, 12])
+  } else if (preset === 'cyberpunk') {
+    ctx.strokeStyle = '#00f0ff'
+    ctx.shadowColor = '#00f0ff'
+    ctx.shadowBlur = 10
+  } else {
+    ctx.strokeStyle = 'rgba(255,255,255,0.45)'
+  }
   ctx.lineWidth = 2
   ctx.beginPath()
   ctx.moveTo(dividerLeft, y)
   ctx.lineTo(dividerRight, y)
   ctx.stroke()
+  ctx.restore()
 
   y += dividerPaddingBottom
   ctx.font = `700 ${answerFontSize}px ${fontFamily}`
@@ -251,7 +344,7 @@ export async function renderTextToImage(text, style) {
   }
 
   ctx.font = '500 38px Mali'
-  ctx.fillStyle = 'rgba(255,255,255,0.8)'
+  ctx.fillStyle = preset === 'receipt' ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.8)'
   ctx.textAlign = 'center'
   ctx.fillText('Created with Ask Sila Story Studio', width / 2, height - footerOffset)
 

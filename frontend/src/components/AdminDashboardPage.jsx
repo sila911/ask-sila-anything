@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Clock, Copy, DocumentDownload, InfoCircle, Image, Category, Share, Eye, EyeSlash, Trash } from 'iconsax-react'
+import { Clock, Copy, DocumentDownload, InfoCircle, Image, Category, Share, Eye, EyeSlash, Trash, Notification } from 'iconsax-react'
 import DeleteConfirmModal from './DeleteConfirmModal'
 
 function groupEventsByDay(events) {
@@ -96,6 +96,18 @@ export default function AdminDashboardPage({ designs, events, questions = [], on
                     <span className="text-[10px] text-[color:var(--app-muted)] font-medium">
                       {new Date(q.createdAt).toLocaleDateString()}
                     </span>
+                    {q.notify_handle && (
+                      <a
+                        href={`https://t.me/${q.notify_handle.replace(/^@/, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 hover:underline"
+                        title="Click to open Telegram profile"
+                      >
+                        <Notification size={11} className="shrink-0" />
+                        <span className="truncate max-w-[120px]">{q.notify_handle}</span>
+                      </a>
+                    )}
                   </div>
                 </div>
                 
@@ -169,6 +181,18 @@ export default function AdminDashboardPage({ designs, events, questions = [], on
                         <span className="text-[10px] text-[color:var(--app-muted)] font-medium">
                           {new Date(q.createdAt).toLocaleString()}
                         </span>
+                        {q.notify_handle && (
+                          <a
+                            href={`https://t.me/${q.notify_handle.replace(/^@/, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 hover:underline"
+                            title="Click to open Telegram profile"
+                          >
+                            <Notification size={11} className="shrink-0" />
+                            <span>{q.notify_handle}</span>
+                          </a>
+                        )}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-center">

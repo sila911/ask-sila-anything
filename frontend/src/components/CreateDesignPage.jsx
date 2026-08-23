@@ -10,6 +10,10 @@ import {
   SearchNormal1,
   Check,
   Facebook,
+  GalleryAdd,
+  CloseCircle,
+  Magicpen,
+  Notification,
 } from "iconsax-react";
 import { dataUrlToBlob, renderTextToImage } from "../lib/imageRenderer";
 import { supabase } from "../lib/supabase";
@@ -20,7 +24,91 @@ const FONT_OPTIONS = [
   "Cause",
 ];
 
+const PRESETS = [
+  {
+    id: "classic",
+    name: "Classic",
+    badge: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
+    style: {
+      preset: "classic",
+      bgColor: "#102a43",
+      accentColor: "#2cb1bc",
+      panelColor: "rgba(255,255,255,0.13)",
+      textColor: "#f0f4f8",
+      frameColor: "#ffffff",
+      frameWidth: 16,
+      frameRadius: 48,
+      fontFamily: "Mali",
+    }
+  },
+  {
+    id: "cyberpunk",
+    name: "Cyberpunk",
+    badge: "bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/30",
+    style: {
+      preset: "cyberpunk",
+      bgColor: "#0a0618",
+      accentColor: "#00f0ff",
+      panelColor: "rgba(18, 14, 38, 0.85)",
+      textColor: "#ffffff",
+      frameColor: "#ff007f",
+      frameWidth: 12,
+      frameRadius: 32,
+      fontFamily: "Racing Sans One",
+    }
+  },
+  {
+    id: "polaroid",
+    name: "Polaroid",
+    badge: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+    style: {
+      preset: "polaroid",
+      bgColor: "#3d2b1f",
+      accentColor: "#d4a373",
+      panelColor: "#fefae0",
+      textColor: "#283618",
+      frameColor: "#faedcd",
+      frameWidth: 20,
+      frameRadius: 18,
+      fontFamily: "Mali",
+    }
+  },
+  {
+    id: "receipt",
+    name: "Receipt",
+    badge: "bg-slate-200/20 text-slate-200 border-slate-400/30",
+    style: {
+      preset: "receipt",
+      bgColor: "#18181b",
+      accentColor: "#27272a",
+      panelColor: "#ffffff",
+      textColor: "#09090b",
+      frameColor: "#e4e4e7",
+      frameWidth: 8,
+      frameRadius: 24,
+      fontFamily: "Mali",
+    }
+  },
+  {
+    id: "aurora",
+    name: "Aurora",
+    badge: "bg-sky-500/20 text-sky-300 border-sky-500/30",
+    style: {
+      preset: "aurora",
+      bgColor: "#0f172a",
+      accentColor: "#38bdf8",
+      panelColor: "rgba(255, 255, 255, 0.18)",
+      textColor: "#ffffff",
+      frameColor: "rgba(255, 255, 255, 0.7)",
+      frameWidth: 10,
+      frameRadius: 44,
+      fontFamily: "Mali",
+    }
+  }
+];
+
 const defaultStyle = {
+  preset: "classic",
   bgColor: "#102a43",
   accentColor: "#2cb1bc",
   panelColor: "rgba(255,255,255,0.13)",
@@ -34,6 +122,7 @@ const defaultStyle = {
   align: "center",
   aspectRatio: "9:16",
   showQRCode: true,
+  bgImageUrl: null,
 };
 
 const ASPECT_RATIOS = [
@@ -241,7 +330,17 @@ export default function CreateDesignPage({
 
   const previewStyle = useMemo(
     () => ({
-      background: `linear-gradient(160deg, ${style.bgColor}, ${style.accentColor})`,
+      backgroundImage: style.bgImageUrl
+        ? `linear-gradient(rgba(10, 15, 29, 0.65), rgba(10, 15, 29, 0.65)), url(${style.bgImageUrl})`
+        : style.preset === "aurora"
+        ? "linear-gradient(135deg, #0f172a 0%, #1e1b4b 40%, #0284c7 70%, #06b6d4 100%)"
+        : style.preset === "cyberpunk"
+        ? "linear-gradient(135deg, #0a0618 0%, #190a36 50%, #001a2e 100%)"
+        : style.preset === "receipt"
+        ? "linear-gradient(135deg, #18181b 0%, #27272a 100%)"
+        : `linear-gradient(160deg, ${style.bgColor}, ${style.accentColor})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
       color: style.textColor,
       fontFamily: style.fontFamily,
       textAlign: style.align,
@@ -253,6 +352,32 @@ export default function CreateDesignPage({
 
   const setField = (name, value) => {
     setStyle((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const applyPreset = (presetObj) => {
+    setStyle((prev) => ({
+      ...prev,
+      ...presetObj.style,
+      bgImageUrl: prev.bgImageUrl, // retain custom background if uploaded
+    }));
+  };
+
+  const handleBgImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size should be less than 5MB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setField("bgImageUrl", event.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeBgImage = () => {
+    setField("bgImageUrl", null);
   };
 
   const generateImage = async () => {
@@ -470,9 +595,22 @@ export default function CreateDesignPage({
           </div>
 
           <div className="space-y-1.5">
-            <span className="block text-[10px] sm:text-xs uppercase tracking-wider font-bold text-[color:var(--app-muted)] ml-1">
-              Admin Answer
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="block text-[10px] sm:text-xs uppercase tracking-wider font-bold text-[color:var(--app-muted)] ml-1">
+                Admin Answer
+              </span>
+              {selectedQuestion?.notify_handle && (
+                <a
+                  href={`https://t.me/${selectedQuestion.notify_handle.replace(/^@/, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-cyan-600 dark:text-cyan-400 hover:underline"
+                >
+                  <Notification size={12} />
+                  <span>Notify: {selectedQuestion.notify_handle} ↗</span>
+                </a>
+              )}
+            </div>
             <textarea
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
@@ -489,6 +627,70 @@ export default function CreateDesignPage({
                 <Save2 className="inline-block mr-2" size={14} /> Submit Reply
               </button>
             </div>
+          </div>
+
+          {/* Preset Themes Selector */}
+          <div className="space-y-1.5">
+            <span className="block text-[10px] sm:text-xs uppercase tracking-wider font-bold text-[color:var(--app-muted)] ml-1">
+              ✨ Story Theme Presets
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {PRESETS.map((p) => {
+                const isActive = (style.preset || "classic") === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => applyPreset(p)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+                      isActive
+                        ? `${p.badge} ring-2 ring-cyan-400 font-bold scale-105 shadow-sm`
+                        : "bg-white/40 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-cyan-400/50"
+                    }`}
+                  >
+                    {p.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Custom Background Photo Upload */}
+          <div className="p-3 rounded-2xl bg-white/40 dark:bg-white/5 border border-slate-200 dark:border-white/10 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] sm:text-xs uppercase tracking-wider font-bold text-[color:var(--app-muted)] flex items-center gap-1.5">
+                <GalleryAdd size={14} className="text-cyan-500" /> Custom Photo Background
+              </span>
+              {style.bgImageUrl && (
+                <button
+                  type="button"
+                  onClick={removeBgImage}
+                  className="text-xs text-rose-500 hover:text-rose-600 inline-flex items-center gap-1"
+                >
+                  <CloseCircle size={13} /> Remove
+                </button>
+              )}
+            </div>
+
+            {style.bgImageUrl ? (
+              <div className="relative h-14 w-full rounded-xl overflow-hidden border border-cyan-500/40">
+                <img src={style.bgImageUrl} alt="Background preview" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                  <span className="text-[10px] text-white font-semibold">Custom Photo Active</span>
+                </div>
+              </div>
+            ) : (
+              <label className="flex items-center justify-center gap-2 h-10 w-full rounded-xl border border-dashed border-slate-300 dark:border-white/15 bg-white/30 dark:bg-white/5 hover:border-cyan-500 cursor-pointer transition-all text-xs text-slate-500 dark:text-slate-400">
+                <GalleryAdd size={16} />
+                <span>Upload background image (PNG, JPG)</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleBgImageUpload}
+                  className="hidden"
+                />
+              </label>
+            )}
           </div>
 
           {/* Styling Grid */}
