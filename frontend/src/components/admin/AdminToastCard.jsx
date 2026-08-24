@@ -1,4 +1,4 @@
-import Toast from './ui/Toast'
+import Toast from '../ui/Toast'
 
 export default function AdminToastCard({ toast, onClose }) {
   if (!toast) return null

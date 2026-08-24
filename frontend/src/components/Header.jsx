@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { flushSync } from "react-dom";
 import { Moon, Sun1, Coffee } from "iconsax-react";
-import BuyMeCoffeeModal from "./BuyMeCoffeeModal";
+import BuyMeCoffeeModal from "./modals/BuyMeCoffeeModal";
 
 export default function Header() {
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"));

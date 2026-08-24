@@ -13,6 +13,7 @@
   "dependencies": {
     "@formkit/auto-animate": "^0.8.4",
     "@supabase/supabase-js": "^2.106.1",
+    "developer-icons": "^7.1.0",
     "framer-motion": "^12.40.0",
     "iconsax-react": "^0.0.8",
     "lucide-react": "^1.21.0",

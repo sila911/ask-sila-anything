@@ -3,7 +3,7 @@ import { Shuffle, Send2, Refresh, Notification, CloseCircle, Warning2 } from 'ic
 import { motion, AnimatePresence } from 'framer-motion'
 import { checkRateLimit, recordSubmission, validateQuestionText } from '../lib/spamFilter'
 import Toast from './ui/Toast'
-import NotifySheetModal from './NotifySheetModal'
+import NotifySheetModal from './modals/NotifySheetModal'
 
 const QUESTIONS = [
   // --- General & Core Prompts ---

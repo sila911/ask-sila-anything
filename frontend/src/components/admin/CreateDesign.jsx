@@ -15,8 +15,8 @@ import {
   Magicpen,
   Notification,
 } from "iconsax-react";
-import { dataUrlToBlob, renderTextToImage } from "../lib/imageRenderer";
-import { supabase } from "../lib/supabase";
+import { dataUrlToBlob, renderTextToImage } from "../../lib/imageRenderer";
+import { supabase } from "../../lib/supabase";
 
 const FONT_OPTIONS = [
   "Mali",

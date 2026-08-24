@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Clock, Copy, DocumentDownload, InfoCircle, Image, Category, Share, Eye, EyeSlash, Trash, Notification } from 'iconsax-react'
-import DeleteConfirmModal from './DeleteConfirmModal'
+import DeleteConfirmModal from '../modals/DeleteConfirmModal'
 
 function groupEventsByDay(events) {
   const map = new Map()
@@ -26,7 +26,7 @@ function getTopFonts(designs) {
     .slice(0, 4)
 }
 
-export default function AdminDashboardPage({ designs, events, questions = [], onToggleVisibility, onTogglePin, onSoftDelete }) {
+export default function AdminDashboard({ designs, events, questions = [], onToggleVisibility, onTogglePin, onSoftDelete }) {
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, questionId: null, questionText: "" });
   const total = designs.length
   const rendered = designs.filter((d) => Boolean(d.imageDataUrl)).length

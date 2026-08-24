@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import qrCode from '../assets/qr-code.jpg';
+import qrCode from '../../assets/qr-code.jpg';
 
 export default function BuyMeCoffeeModal({ isOpen, onClose }) {
   const [animationState, setAnimationState] = useState('hidden-top'); // 'hidden-top', 'visible', 'hidden-bottom'

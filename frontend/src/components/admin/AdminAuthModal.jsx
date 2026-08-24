@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Eye, EyeSlash, CloseCircle } from 'iconsax-react'
-import { requestPasswordReset, submitPasswordReset } from '../lib/adminAccess'
+import { requestPasswordReset, submitPasswordReset } from '../../lib/adminAccess'
 
 export default function AdminAuthModal({
   isOpen,
