@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { checkRateLimit, recordSubmission, validateQuestionText } from '../lib/spamFilter'
 import Toast from './ui/Toast'
 import NotifySheetModal from './modals/NotifySheetModal'
+import { sounds } from '../utils/soundEffects'
 
 const QUESTIONS = [
   // --- General & Core Prompts ---
@@ -94,6 +95,7 @@ export default function QuestionForm({ onSuccess, onSubmitQuestion }) {
   }, []);
 
   const handleShuffle = () => {
+    sounds.playClick();
     if (typingRef.current) {
       clearInterval(typingRef.current)
     }
@@ -171,6 +173,7 @@ export default function QuestionForm({ onSuccess, onSubmitQuestion }) {
       try {
         await onSubmitQuestion(nextQuestion, cleanNotifyHandle)
         recordSubmission()
+        sounds.playSuccess()
         setQuestion('')
         setNotifyHandle('')
         setShowNotifyModal(false)

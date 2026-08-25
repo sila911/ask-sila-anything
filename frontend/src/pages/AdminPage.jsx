@@ -4,6 +4,7 @@ import { Eye, EyeSlash, Lock } from "iconsax-react";
 import CreateDesign from "../components/admin/CreateDesign";
 import Library from "../components/admin/Library";
 import AdminDashboard from "../components/admin/AdminDashboard";
+import AnalyticsDashboard from "../components/admin/AnalyticsDashboard";
 
 const TAB_VARIANTS = {
   enter: (dir) => ({ x: dir > 0 ? 150 : -150, opacity: 0 }),
@@ -28,6 +29,7 @@ export default function AdminPage({
   trackEvent,
   showAdminToast,
   questions,
+  comments = [],
   markAnswered,
   designs,
   orderedDesigns,
@@ -37,6 +39,8 @@ export default function AdminPage({
   handleToggleVisibility,
   handleTogglePin,
   handleSoftDelete,
+  handleUpdateQuestion,
+  setSeedDesign,
   linkMessage,
 }) {
   const [password, setPassword] = useState("");
@@ -162,14 +166,33 @@ export default function AdminPage({
               />
             )}
 
+            {activeTab === "analytics" && (
+              <AnalyticsDashboard
+                questions={questions}
+                designs={designs}
+                comments={comments}
+                events={events}
+              />
+            )}
+
             {activeTab === "admin" && (
               <AdminDashboard
                 designs={designs}
                 events={events}
                 questions={questions}
+                comments={comments}
                 onToggleVisibility={handleToggleVisibility}
                 onTogglePin={handleTogglePin}
                 onSoftDelete={handleSoftDelete}
+                onUpdateQuestion={handleUpdateQuestion}
+                onAnswerQuestion={(q) => {
+                  if (setSeedDesign) setSeedDesign({ questionId: q.id });
+                  changeTabWithDirection("create");
+                  if (showAdminToast) {
+                    showAdminToast("Question Loaded", "Opened in studio to answer.", "info");
+                  }
+                }}
+                showAdminToast={showAdminToast}
               />
             )}
           </motion.div>

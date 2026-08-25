@@ -1,0 +1,24 @@
+{
+  "name": "Ask Sila Anything",
+  "short_name": "AskSila",
+  "description": "Ask Sila anything anonymously, get styled personal answers, and interact with reactions!",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#090d16",
+  "theme_color": "#06b6d4",
+  "icons": [
+    {
+      "src": "/silaNav.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/sila2.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "maskable any"
+    }
+  ]
+}

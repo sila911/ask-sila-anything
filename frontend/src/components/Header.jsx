@@ -114,7 +114,7 @@ export default function Header() {
           <button
             onClick={handleThemeToggle}
             aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-            className="theme-toggle-btn inline-flex h-10 w-10 items-center justify-center rounded-full bg-[color:var(--icon-chip)] border border-[color:var(--card-border)] text-[color:var(--app-text)] hover:bg-[color:var(--icon-chip-hover)] transition active:scale-95"
+            className="theme-toggle-btn inline-flex h-10 w-10 items-center justify-center rounded-full bg-[color:var(--icon-chip)] border border-[color:var(--card-border)] text-[color:var(--app-text)] hover:bg-[color:var(--icon-chip-hover)] transition active:scale-95 cursor-pointer"
           >
             <span
               className={`theme-icon ${isDark ? "theme-icon--sun" : "theme-icon--moon"}`}

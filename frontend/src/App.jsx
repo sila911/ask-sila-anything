@@ -11,6 +11,7 @@ import Footer from "./components/Footer";
 import ThankYouModal from "./components/ThankYouModal";
 import ReactionExplosion from "./components/ReactionExplosion";
 import AdminToastCard from "./components/admin/AdminToastCard";
+import PWAInstallBanner from "./components/PWAInstallBanner";
 import { DockTabs } from "./components/ui/dock-tabs";
 import HomePage from "./pages/HomePage";
 import AdminPage from "./pages/AdminPage";
@@ -25,7 +26,7 @@ export default function App() {
   const [tabDirection, setTabDirection] = useState(0);
   const changeTabWithDirection = (newTab) => {
     if (newTab === activeTab) return;
-    const ORDER = ["create", "library", "admin"];
+    const ORDER = ["create", "library", "analytics", "admin"];
     const prev = ORDER.indexOf(activeTab);
     const next = ORDER.indexOf(newTab);
     setTabDirection(prev !== -1 && next !== -1 ? (next > prev ? 1 : -1) : 0);
@@ -60,6 +61,7 @@ export default function App() {
     orderedDesigns, publicQuestions, loadData, trackEvent,
     submitUserQuestion, handleAddComment, handleView, markAnswered,
     handleToggleVisibility, handleTogglePin, handleSoftDelete,
+    handleUpdateQuestion,
     addDesign, removeDesign,
   } = useAppData(showAdminToast);
 
@@ -159,6 +161,7 @@ export default function App() {
                 trackEvent={trackEvent}
                 showAdminToast={showAdminToast}
                 questions={questions}
+                comments={comments}
                 markAnswered={markAnswered}
                 designs={designs}
                 orderedDesigns={orderedDesigns}
@@ -168,6 +171,8 @@ export default function App() {
                 handleToggleVisibility={handleToggleVisibility}
                 handleTogglePin={handleTogglePin}
                 handleSoftDelete={handleSoftDelete}
+                handleUpdateQuestion={handleUpdateQuestion}
+                setSeedDesign={setSeedDesign}
                 linkMessage={linkMessage}
               />
             }
@@ -222,6 +227,7 @@ export default function App() {
       )}
 
       <ReactionExplosion />
+      <PWAInstallBanner />
     </div>
   );
 }

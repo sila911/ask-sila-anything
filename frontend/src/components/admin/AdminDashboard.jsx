@@ -1,5 +1,29 @@
-import { useState } from 'react'
-import { Clock, Copy, DocumentDownload, InfoCircle, Image, Category, Share, Eye, EyeSlash, Trash, Notification } from 'iconsax-react'
+import { useState, useMemo } from 'react'
+import {
+  Clock,
+  Copy,
+  DocumentDownload,
+  InfoCircle,
+  Image,
+  Category,
+  Share,
+  Eye,
+  EyeSlash,
+  Trash,
+  Notification,
+  SearchNormal1,
+  Filter,
+  TickCircle,
+  Heart,
+  MessageText,
+  AttachSquare,
+  CloseCircle,
+  Edit2,
+  Magicpen,
+} from 'iconsax-react'
+import QuestionActionMenu from './QuestionActionMenu'
+import QuestionDetailsModal from './QuestionDetailsModal'
+import EditQuestionModal from './EditQuestionModal'
 import DeleteConfirmModal from '../modals/DeleteConfirmModal'
 
 function groupEventsByDay(events) {
@@ -26,8 +50,28 @@ function getTopFonts(designs) {
     .slice(0, 4)
 }
 
-export default function AdminDashboard({ designs, events, questions = [], onToggleVisibility, onTogglePin, onSoftDelete }) {
-  const [deleteModal, setDeleteModal] = useState({ isOpen: false, questionId: null, questionText: "" });
+export default function AdminDashboard({
+  designs = [],
+  events = [],
+  questions = [],
+  comments = [],
+  onToggleVisibility,
+  onTogglePin,
+  onSoftDelete,
+  onUpdateQuestion,
+  onAnswerQuestion,
+  showAdminToast,
+}) {
+  // Modal states
+  const [detailsModal, setDetailsModal] = useState({ isOpen: false, question: null })
+  const [editModal, setEditModal] = useState({ isOpen: false, question: null })
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, questionId: null, questionText: "" })
+
+  // Search & Filter state
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all") // 'all' | 'pending' | 'answered' | 'pinned' | 'hidden'
+  const [sortBy, setSortBy] = useState("newest") // 'newest' | 'oldest' | 'views' | 'likes'
+
   const total = designs.length
   const rendered = designs.filter((d) => Boolean(d.imageDataUrl)).length
   const totalQuestions = questions.length
@@ -41,12 +85,65 @@ export default function AdminDashboard({ designs, events, questions = [], onTogg
   const topFonts = getTopFonts(designs)
   const recentEvents = [...events].slice(-8).reverse()
 
-  const sortedQuestions = [...questions].sort((a, b) => 
-    new Date(b.createdAt) - new Date(a.createdAt)
-  )
+  // Filter & sort questions
+  const filteredQuestions = useMemo(() => {
+    let result = [...questions]
+
+    // Filter by tab
+    if (statusFilter === 'pending') {
+      result = result.filter((q) => q.status !== 'answered')
+    } else if (statusFilter === 'answered') {
+      result = result.filter((q) => q.status === 'answered')
+    } else if (statusFilter === 'pinned') {
+      result = result.filter((q) => Boolean(q.is_pinned))
+    } else if (statusFilter === 'hidden') {
+      result = result.filter((q) => Boolean(q.is_hidden))
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const qLower = searchQuery.toLowerCase().trim()
+      result = result.filter(
+        (q) =>
+          q.question?.toLowerCase().includes(qLower) ||
+          q.notify_handle?.toLowerCase().includes(qLower) ||
+          q.id?.toString().includes(qLower)
+      )
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      // Pinned items stay at top when sorting by newest
+      if (sortBy === 'newest') {
+        if (a.is_pinned && !b.is_pinned) return -1
+        if (!a.is_pinned && b.is_pinned) return 1
+        return new Date(b.createdAt) - new Date(a.createdAt)
+      }
+      if (sortBy === 'oldest') {
+        return new Date(a.createdAt) - new Date(b.createdAt)
+      }
+      if (sortBy === 'views') {
+        return (b.views_count || 0) - (a.views_count || 0)
+      }
+      if (sortBy === 'likes') {
+        return (b.likes_count || 0) - (a.likes_count || 0)
+      }
+      return 0
+    })
+
+    return result
+  }, [questions, statusFilter, searchQuery, sortBy])
+
+  const handleCopyText = (question) => {
+    navigator.clipboard.writeText(question.question)
+    if (showAdminToast) {
+      showAdminToast("Copied to clipboard", "Question text copied.", "success")
+    }
+  }
 
   return (
     <section className="space-y-6">
+      {/* Top Metrics */}
       <div>
         <h2 className="text-xl font-bold">Admin Dashboard</h2>
         <p className="text-sm text-[color:var(--app-muted)] mt-1 mb-4">
@@ -69,183 +166,299 @@ export default function AdminDashboard({ designs, events, questions = [], onTogg
         </div>
       </div>
 
-      <div className="rounded-2xl border border-[color:var(--card-border)] p-3 sm:p-5 bg-white/45 dark:bg-slate-900/30">
-        <h3 className="font-semibold mb-4 flex items-center gap-2">
-          <InfoCircle className="text-cyan-500" />
-          Manage Questions
-        </h3>
-        
-        <div className="overflow-hidden rounded-xl border border-[color:var(--card-border)] bg-white/50 dark:bg-black/20">
-          
-          {/* Mobile View: Card Layout */}
-          <div className="sm:hidden flex flex-col divide-y divide-[color:var(--card-border)]">
-            {sortedQuestions.length > 0 ? sortedQuestions.map((q) => (
-              <div key={`mobile-${q.id}`} className="p-4 flex flex-col gap-3 hover:bg-slate-50/30 dark:hover:bg-white/5 transition-colors">
-                <div>
-                  <p className="line-clamp-3 text-slate-700 dark:text-slate-200 text-sm cause-medium mb-2" title={q.question}>
-                    {q.question}
-                  </p>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                      q.status === 'answered' 
-                        ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400' 
-                        : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
-                    }`}>
-                      {q.status}
-                    </span>
-                    <span className="text-[10px] text-[color:var(--app-muted)] font-medium">
-                      {new Date(q.createdAt).toLocaleDateString()}
-                    </span>
-                    {q.notify_handle && (
-                      <a
-                        href={`https://t.me/${q.notify_handle.replace(/^@/, '')}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 hover:underline"
-                        title="Click to open Telegram profile"
-                      >
-                        <Notification size={11} className="shrink-0" />
-                        <span className="truncate max-w-[120px]">{q.notify_handle}</span>
-                      </a>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between mt-1 pt-3 border-t border-[color:var(--card-border)]">
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => onTogglePin && onTogglePin(q.id, !q.is_pinned)}
-                      className={`flex items-center justify-center h-8 w-8 rounded-lg transition-colors ${
-                        q.is_pinned 
-                          ? 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400' 
-                          : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                      }`}
-                      title={q.is_pinned ? "Unpin" : "Pin"}
-                    >
-                      <img src="https://img.icons8.com/ios-filled/50/pin--v1.png" alt="Pin" className={`w-4 h-4 ${q.is_pinned ? 'invert-[0.3] sepia-[1] saturate-[5] hue-rotate-[10deg]' : 'opacity-50 dark:invert'}`} />
-                    </button>
-
-                    <button
-                      onClick={() => onToggleVisibility(q.id, !q.is_hidden)}
-                      className={`flex items-center justify-center h-8 px-3 gap-1.5 rounded-lg text-xs font-bold transition-colors ${
-                        !q.is_hidden 
-                          ? 'bg-cyan-100 text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-400' 
-                          : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                      }`}
-                    >
-                      {!q.is_hidden ? <><Eye size={14} /> Visible</> : <><EyeSlash size={14} /> Hidden</>}
-                    </button>
-                  </div>
-
-                  <button
-                    onClick={() => setDeleteModal({ isOpen: true, questionId: q.id, questionText: q.question })}
-                    className="flex items-center justify-center h-8 w-8 rounded-lg text-rose-500 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition-colors"
-                  >
-                    <Trash size={14} />
-                  </button>
-                </div>
-              </div>
-            )) : (
-              <div className="p-10 text-center text-sm text-[color:var(--app-muted)]">
-                No questions found.
-              </div>
-            )}
+      {/* Redesigned Manage Questions Section */}
+      <div className="rounded-3xl border border-[color:var(--card-border)] p-4 sm:p-6 bg-white/45 dark:bg-slate-900/40 backdrop-blur-md shadow-xl">
+        {/* Header with Title & Quick Counts */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[color:var(--card-border)] mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-cyan-500/15 text-cyan-500 flex items-center justify-center border border-cyan-500/30 shrink-0 shadow-inner">
+              <InfoCircle size={22} variant="Bold" />
+            </div>
+            <div>
+              <h3 className="font-bold text-lg font-['Racing_Sans_One',sans-serif] tracking-wide flex items-center gap-2">
+                Manage Questions
+                <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border border-cyan-500/25 font-sans font-semibold">
+                  {filteredQuestions.length} of {totalQuestions}
+                </span>
+              </h3>
+              <p className="text-xs text-[color:var(--app-muted)]">
+                Moderation, answer shortcuts, details &amp; action menu
+              </p>
+            </div>
           </div>
 
-          {/* Desktop View: Table Layout */}
-          <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full text-sm">
+          {/* Search Box */}
+          <div className="relative min-w-[240px] sm:w-72">
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+              <SearchNormal1 size={15} />
+            </span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search questions or @telegram..."
+              className="w-full h-10 pl-9 pr-8 rounded-xl bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs focus:outline-none focus:ring-2 focus:ring-cyan-500/40 text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 p-0.5 cursor-pointer"
+              >
+                <CloseCircle size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Filter Tabs & Sort Controls */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          {/* Status Filters */}
+          <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-2xl bg-white/40 dark:bg-black/25 border border-[color:var(--card-border)]">
+            {[
+              { id: 'all', label: 'All', count: totalQuestions },
+              { id: 'pending', label: 'Pending', count: pendingQuestions },
+              {
+                id: 'answered',
+                label: 'Answered',
+                count: questions.filter((q) => q.status === 'answered').length,
+              },
+              {
+                id: 'pinned',
+                label: 'Pinned',
+                count: questions.filter((q) => q.is_pinned).length,
+              },
+              {
+                id: 'hidden',
+                label: 'Private',
+                count: questions.filter((q) => q.is_hidden).length,
+              },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setStatusFilter(tab.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  statusFilter === tab.id
+                    ? 'bg-cyan-600 text-white shadow-md shadow-cyan-600/25'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/40 dark:hover:bg-white/5'
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    statusFilter === tab.id
+                      ? 'bg-white/20 text-white'
+                      : 'bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-slate-400'
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Sort Selector */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-[color:var(--app-muted)] font-medium hidden sm:inline">
+              Sort by:
+            </span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="h-9 px-3 rounded-xl bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 cursor-pointer"
+            >
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="views">Most Views</option>
+              <option value="likes">Most Likes</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Questions Data Table */}
+        <div className="overflow-hidden rounded-2xl border border-[color:var(--card-border)] bg-white/60 dark:bg-black/25 shadow-inner">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left border-collapse">
               <thead>
-                <tr className="text-left text-[color:var(--app-muted)] border-b border-[color:var(--card-border)] bg-slate-50/50 dark:bg-white/5">
-                  <th className="px-4 py-3 font-medium">Question</th>
-                  <th className="px-4 py-3 font-medium w-20 text-center">Pin</th>
-                  <th className="px-4 py-3 font-medium w-32 text-center">Visibility</th>
-                  <th className="px-4 py-3 font-medium w-16 text-center">Del</th>
+                <tr className="text-xs uppercase tracking-wider text-[color:var(--app-muted)] border-b border-[color:var(--card-border)] bg-slate-50/60 dark:bg-white/5 font-semibold">
+                  <th className="px-4 py-3.5 min-w-[280px]">Question &amp; Metadata</th>
+                  <th className="px-3 py-3.5 w-28 text-center">Status</th>
+                  <th className="px-3 py-3.5 w-28 text-center">Visibility</th>
+                  <th className="px-3 py-3.5 w-28 text-center hidden md:table-cell">Engagement</th>
+                  <th className="px-3 py-3.5 w-20 text-center">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[color:var(--card-border)]">
-                {sortedQuestions.length > 0 ? sortedQuestions.map((q) => (
-                  <tr key={`desktop-${q.id}`} className="hover:bg-slate-50/30 dark:hover:bg-white/5 transition-colors">
-                    <td className="px-4 py-3">
-                      <p className="line-clamp-2 text-slate-700 dark:text-slate-200 cause-regular" title={q.question}>
-                        {q.question}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
-                          q.status === 'answered' 
-                            ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400' 
-                            : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
-                        }`}>
-                          {q.status}
-                        </span>
-                        <span className="text-[10px] text-[color:var(--app-muted)] font-medium">
-                          {new Date(q.createdAt).toLocaleString()}
-                        </span>
-                        {q.notify_handle && (
-                          <a
-                            href={`https://t.me/${q.notify_handle.replace(/^@/, '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 hover:underline"
-                            title="Click to open Telegram profile"
-                          >
-                            <Notification size={11} className="shrink-0" />
-                            <span>{q.notify_handle}</span>
-                          </a>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <button
-                        onClick={() => onTogglePin && onTogglePin(q.id, !q.is_pinned)}
-                        className={`p-2 rounded-xl transition-colors ${
-                          q.is_pinned 
-                            ? 'bg-amber-100 text-amber-600 hover:bg-amber-200 dark:bg-amber-500/20 dark:text-amber-400 dark:hover:bg-amber-500/30' 
-                            : 'bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600 dark:bg-slate-800 dark:hover:bg-slate-700 dark:hover:text-slate-300'
+                {filteredQuestions.length > 0 ? (
+                  filteredQuestions.map((q) => {
+                    const questionComments = comments.filter((c) => c.questionId === q.id)
+                    return (
+                      <tr
+                        key={q.id}
+                        className={`transition-colors group hover:bg-slate-50/50 dark:hover:bg-white/5 ${
+                          q.is_pinned ? 'bg-amber-500/[0.03] dark:bg-amber-500/[0.05]' : ''
                         }`}
-                        title={q.is_pinned ? "Unpin Question" : "Pin Question"}
                       >
-                        <img src="https://img.icons8.com/ios-filled/50/pin--v1.png" alt="Pin" className={`w-4 h-4 ${q.is_pinned ? 'invert-[0.3] sepia-[1] saturate-[5] hue-rotate-[10deg]' : 'opacity-50 dark:invert'}`} />
-                      </button>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex justify-center">
-                        <button
-                          onClick={() => onToggleVisibility(q.id, !q.is_hidden)}
-                          className={`relative inline-flex h-7 w-14 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${
-                            !q.is_hidden ? 'bg-cyan-600' : 'bg-slate-300 dark:bg-slate-700'
-                          }`}
-                          title={q.is_hidden ? "Show Question" : "Hide Question"}
-                        >
-                          <span className="sr-only">Toggle Visibility</span>
+                        {/* Question Content & Meta */}
+                        <td className="px-4 py-3.5">
+                          <div className="flex items-start gap-2.5">
+                            {q.is_pinned && (
+                              <span
+                                className="mt-0.5 p-1 rounded-lg bg-amber-500/15 text-amber-500 border border-amber-500/25 shrink-0"
+                                title="Pinned Question"
+                              >
+                                <AttachSquare size={13} variant="Bold" />
+                              </span>
+                            )}
+
+                            <div className="min-w-0 flex-1">
+                              <p
+                                className="text-sm font-medium text-slate-800 dark:text-slate-100 cause-regular line-clamp-2 leading-relaxed cursor-pointer hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
+                                onClick={() => setDetailsModal({ isOpen: true, question: q })}
+                                title={q.question}
+                              >
+                                {q.question}
+                              </p>
+
+                              {/* Metadata Badges */}
+                              <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                                <span className="text-[10px] text-[color:var(--app-muted)] font-medium flex items-center gap-1">
+                                  <Clock size={11} className="text-cyan-500 shrink-0" />
+                                  {new Date(q.createdAt).toLocaleDateString()} at{' '}
+                                  {new Date(q.createdAt).toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </span>
+
+                                {q.notify_handle && (
+                                  <a
+                                    href={`https://t.me/${q.notify_handle.replace(/^@/, '')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 transition-colors"
+                                    title="Open Telegram handle"
+                                  >
+                                    <Notification size={11} className="shrink-0" />
+                                    <span className="truncate max-w-[120px]">{q.notify_handle}</span>
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Status */}
+                        <td className="px-3 py-3.5 text-center">
                           <span
-                            className={`pointer-events-none flex h-5 w-5 transform items-center justify-center rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                              !q.is_hidden ? 'translate-x-8' : 'translate-x-1'
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${
+                              q.status === 'answered'
+                                ? 'bg-green-500/15 text-green-600 dark:text-green-400 border border-green-500/25'
+                                : 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25'
+                            }`}
+                          >
+                            <TickCircle size={12} variant="Bold" />
+                            {q.status}
+                          </span>
+                        </td>
+
+                        {/* Visibility */}
+                        <td className="px-3 py-3.5 text-center">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold ${
+                              !q.is_hidden
+                                ? 'bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border border-cyan-500/25'
+                                : 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25'
                             }`}
                           >
                             {!q.is_hidden ? (
-                              <Eye size={12} className="text-cyan-700" />
+                              <>
+                                <Eye size={12} />
+                                Public
+                              </>
                             ) : (
-                              <EyeSlash size={12} className="text-slate-400" />
+                              <>
+                                <EyeSlash size={12} />
+                                Private
+                              </>
                             )}
                           </span>
-                        </button>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <button
-                        onClick={() => setDeleteModal({ isOpen: true, questionId: q.id, questionText: q.question })}
-                        className="p-2 rounded-xl text-rose-500 bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition-colors"
-                        title="Delete Question"
-                      >
-                        <Trash size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                )) : (
+                        </td>
+
+                        {/* Engagement Stats */}
+                        <td className="px-3 py-3.5 text-center hidden md:table-cell">
+                          <div className="flex items-center justify-center gap-2.5 text-xs text-[color:var(--app-muted)]">
+                            <span className="inline-flex items-center gap-1" title="Views">
+                              <Eye size={13} className="text-cyan-500" />
+                              {q.views_count || 0}
+                            </span>
+                            <span className="inline-flex items-center gap-1" title="Likes">
+                              <Heart size={13} className="text-rose-500" />
+                              {q.likes_count || 0}
+                            </span>
+                            <span className="inline-flex items-center gap-1" title="Comments">
+                              <MessageText size={13} className="text-slate-400" />
+                              {questionComments.length}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Actions (3-dot Menu) */}
+                        <td className="px-3 py-3.5 text-center">
+                          <div className="flex justify-center">
+                            <QuestionActionMenu
+                              question={q}
+                              onViewDetails={(question) =>
+                                setDetailsModal({ isOpen: true, question })
+                              }
+                              onToggleVisibility={onToggleVisibility}
+                              onTogglePin={onTogglePin}
+                              onEdit={(question) =>
+                                setEditModal({ isOpen: true, question })
+                              }
+                              onAnswer={onAnswerQuestion}
+                              onDelete={(question) =>
+                                setDeleteModal({
+                                  isOpen: true,
+                                  questionId: question.id,
+                                  questionText: question.question,
+                                })
+                              }
+                              onCopy={handleCopyText}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })
+                ) : (
                   <tr>
-                    <td colSpan={4} className="px-4 py-10 text-center text-[color:var(--app-muted)]">
-                      No questions found.
+                    <td colSpan={5} className="px-4 py-12 text-center">
+                      <div className="max-w-xs mx-auto flex flex-col items-center gap-2">
+                        <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
+                          <SearchNormal1 size={22} />
+                        </div>
+                        <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                          No questions match criteria
+                        </p>
+                        <p className="text-xs text-[color:var(--app-muted)]">
+                          Try adjusting search query or selecting a different filter tab.
+                        </p>
+                        {(searchQuery || statusFilter !== 'all') && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSearchQuery("")
+                              setStatusFilter("all")
+                            }}
+                            className="mt-2 text-xs font-bold text-cyan-600 dark:text-cyan-400 hover:underline cursor-pointer"
+                          >
+                            Reset filters
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )}
@@ -255,6 +468,42 @@ export default function AdminDashboard({ designs, events, questions = [], onTogg
         </div>
       </div>
 
+      {/* Full-Screen Question Details View: [< Question Details] */}
+      <QuestionDetailsModal
+        isOpen={detailsModal.isOpen}
+        onClose={() => setDetailsModal({ isOpen: false, question: null })}
+        question={detailsModal.question}
+        comments={comments}
+        onToggleVisibility={onToggleVisibility}
+        onTogglePin={onTogglePin}
+        onEdit={(question) => {
+          setDetailsModal({ isOpen: false, question: null })
+          setEditModal({ isOpen: true, question })
+        }}
+        onAnswer={(question) => {
+          setDetailsModal({ isOpen: false, question: null })
+          if (onAnswerQuestion) onAnswerQuestion(question)
+        }}
+        onDelete={(question) => {
+          setDetailsModal({ isOpen: false, question: null })
+          setDeleteModal({
+            isOpen: true,
+            questionId: question.id,
+            questionText: question.question,
+          })
+        }}
+        showAdminToast={showAdminToast}
+      />
+
+      {/* Edit Question Modal */}
+      <EditQuestionModal
+        isOpen={editModal.isOpen}
+        onClose={() => setEditModal({ isOpen: false, question: null })}
+        question={editModal.question}
+        onSave={onUpdateQuestion}
+      />
+
+      {/* Delete Confirmation Modal */}
       <DeleteConfirmModal
         isOpen={deleteModal.isOpen}
         onClose={() => setDeleteModal({ ...deleteModal, isOpen: false })}
@@ -262,22 +511,28 @@ export default function AdminDashboard({ designs, events, questions = [], onTogg
         onConfirm={() => onSoftDelete && onSoftDelete(deleteModal.questionId)}
       />
 
+      {/* Analytics Sections */}
       <div className="grid lg:grid-cols-2 gap-3 sm:gap-4">
         <div className="rounded-2xl border border-[color:var(--card-border)] p-3 sm:p-4 bg-white/45 dark:bg-slate-900/30">
           <h3 className="font-semibold mb-3">Events Last 7 Days</h3>
           <div className="space-y-2">
-            {days.length ? days.map(([day, count]) => (
-              <div key={day} className="grid grid-cols-[52px_1fr_28px] sm:grid-cols-[90px_1fr_40px] items-center gap-2 text-xs sm:text-sm">
-                <span className="text-[color:var(--app-muted)]">{day.slice(5)}</span>
-                <div className="h-2.5 rounded-full bg-slate-300/40 dark:bg-slate-700/60 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-cyan-600"
-                    style={{ width: `${(count / maxDayCount) * 100}%` }}
-                  />
+            {days.length ? (
+              days.map(([day, count]) => (
+                <div
+                  key={day}
+                  className="grid grid-cols-[52px_1fr_28px] sm:grid-cols-[90px_1fr_40px] items-center gap-2 text-xs sm:text-sm"
+                >
+                  <span className="text-[color:var(--app-muted)]">{day.slice(5)}</span>
+                  <div className="h-2.5 rounded-full bg-slate-300/40 dark:bg-slate-700/60 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-cyan-600"
+                      style={{ width: `${(count / maxDayCount) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-right">{count}</span>
                 </div>
-                <span className="text-right">{count}</span>
-              </div>
-            )) : (
+              ))
+            ) : (
               <p className="text-sm text-[color:var(--app-muted)]">No event data yet.</p>
             )}
           </div>
@@ -286,12 +541,17 @@ export default function AdminDashboard({ designs, events, questions = [], onTogg
         <div className="rounded-2xl border border-[color:var(--card-border)] p-3 sm:p-4 bg-white/45 dark:bg-slate-900/30">
           <h3 className="font-semibold mb-3">Top Fonts</h3>
           <ul className="space-y-2 text-sm">
-            {topFonts.length ? topFonts.map(([font, count]) => (
-              <li key={font} className="flex items-center justify-between rounded-lg bg-white/65 dark:bg-slate-800/70 px-3 py-2 min-w-0">
-                <span style={{ fontFamily: font }}>{font}</span>
-                <strong>{count}</strong>
-              </li>
-            )) : (
+            {topFonts.length ? (
+              topFonts.map(([font, count]) => (
+                <li
+                  key={font}
+                  className="flex items-center justify-between rounded-lg bg-white/65 dark:bg-slate-800/70 px-3 py-2 min-w-0"
+                >
+                  <span style={{ fontFamily: font }}>{font}</span>
+                  <strong>{count}</strong>
+                </li>
+              ))
+            ) : (
               <li className="text-[color:var(--app-muted)]">No style data yet.</li>
             )}
           </ul>
@@ -301,15 +561,22 @@ export default function AdminDashboard({ designs, events, questions = [], onTogg
           <h3 className="font-semibold mb-3">Recent Events</h3>
 
           <div className="sm:hidden space-y-2">
-            {recentEvents.length ? recentEvents.map((event) => (
-              <article key={event.id} className="rounded-lg border border-[color:var(--card-border)] bg-white/60 dark:bg-slate-800/55 p-2.5">
-                <p className="text-xs text-[color:var(--app-muted)] truncate">{new Date(event.createdAt).toLocaleString()}</p>
-                <p className="text-sm font-semibold mt-1 break-words">{event.type}</p>
-                <p className="text-xs mt-1 text-[color:var(--app-muted)] break-words">
-                  {Object.keys(event.meta || {}).length ? JSON.stringify(event.meta) : '-'}
-                </p>
-              </article>
-            )) : (
+            {recentEvents.length ? (
+              recentEvents.map((event) => (
+                <article
+                  key={event.id}
+                  className="rounded-lg border border-[color:var(--card-border)] bg-white/60 dark:bg-slate-800/55 p-2.5"
+                >
+                  <p className="text-xs text-[color:var(--app-muted)] truncate">
+                    {new Date(event.createdAt).toLocaleString()}
+                  </p>
+                  <p className="text-sm font-semibold mt-1 break-words">{event.type}</p>
+                  <p className="text-xs mt-1 text-[color:var(--app-muted)] break-words">
+                    {Object.keys(event.meta || {}).length ? JSON.stringify(event.meta) : '-'}
+                  </p>
+                </article>
+              ))
+            ) : (
               <p className="py-3 text-sm text-[color:var(--app-muted)]">No analytics events yet.</p>
             )}
           </div>
@@ -324,15 +591,23 @@ export default function AdminDashboard({ designs, events, questions = [], onTogg
                 </tr>
               </thead>
               <tbody>
-                {recentEvents.length ? recentEvents.map((event) => (
-                  <tr key={event.id} className="border-t border-[color:var(--card-border)]">
-                    <td className="py-2 pr-2 whitespace-nowrap overflow-hidden text-ellipsis">{new Date(event.createdAt).toLocaleString()}</td>
-                    <td className="py-2 pr-2 break-words">{event.type}</td>
-                    <td className="py-2 break-words">{Object.keys(event.meta || {}).length ? JSON.stringify(event.meta) : '-'}</td>
-                  </tr>
-                )) : (
+                {recentEvents.length ? (
+                  recentEvents.map((event) => (
+                    <tr key={event.id} className="border-t border-[color:var(--card-border)]">
+                      <td className="py-2 pr-2 whitespace-nowrap overflow-hidden text-ellipsis">
+                        {new Date(event.createdAt).toLocaleString()}
+                      </td>
+                      <td className="py-2 pr-2 break-words">{event.type}</td>
+                      <td className="py-2 break-words">
+                        {Object.keys(event.meta || {}).length ? JSON.stringify(event.meta) : '-'}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
                   <tr>
-                    <td className="py-3 text-[color:var(--app-muted)]" colSpan={3}>No analytics events yet.</td>
+                    <td className="py-3 text-[color:var(--app-muted)]" colSpan={3}>
+                      No analytics events yet.
+                    </td>
                   </tr>
                 )}
               </tbody>
@@ -357,13 +632,19 @@ function Metric({ title, value, className = '', centered = false }) {
   const Icon = iconMap[title] || Category
 
   return (
-    <article className={`relative overflow-hidden rounded-xl border border-[color:var(--card-border)] bg-white/50 dark:bg-slate-900/35 p-3 ${centered ? 'text-center' : ''} ${className}`}>
+    <article
+      className={`relative overflow-hidden rounded-xl border border-[color:var(--card-border)] bg-white/50 dark:bg-slate-900/35 p-3 ${
+        centered ? 'text-center' : ''
+      } ${className}`}
+    >
       <Icon
         size={42}
         className="pointer-events-none absolute right-2 top-2 text-slate-400/20 dark:text-slate-100/12"
         aria-hidden="true"
       />
-      <p className="text-xs uppercase tracking-wide text-[color:var(--app-muted)] whitespace-nowrap">{title}</p>
+      <p className="text-xs uppercase tracking-wide text-[color:var(--app-muted)] whitespace-nowrap">
+        {title}
+      </p>
       <p className="text-2xl font-bold mt-1 text-center">{value}</p>
     </article>
   )

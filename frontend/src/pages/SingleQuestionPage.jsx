@@ -4,49 +4,21 @@ import { FiArrowLeft, FiShare2 } from "react-icons/fi";
 import { Heart, Send2, Refresh, Message } from "iconsax-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QuestionCard } from "../components/RecentlyAsked";
-
-// ─── Reaction helpers ─────────────────────────────────────────────────────────
-const REACTION_TYPES = [
-  { type: "heart", emoji: "❤️", label: "Love" },
-  { type: "laugh", emoji: "😂", label: "Haha" },
-  { type: "think", emoji: "🤔", label: "Hmm" },
-  { type: "gasp", emoji: "😮", label: "Wow" },
-  { type: "fire", emoji: "🔥", label: "Hot" },
-];
-
-const triggerEmojiBurst = (e, emoji) => {
-  const x = e.clientX || (e.currentTarget?.getBoundingClientRect().left ?? 0);
-  const y = e.clientY || (e.currentTarget?.getBoundingClientRect().top ?? 0);
-  window.dispatchEvent(new CustomEvent("trigger-emoji-burst", { detail: { x, y, emoji } }));
-};
+import ReactionButton from "../components/ReactionButton";
+import { sounds } from "../utils/soundEffects";
 
 // ─── Inline Comment Item ──────────────────────────────────────────────────────
 function CommentItem({ c, timeAgo, likedComments, handleLikeComment }) {
-  const [pickerOpen, setPickerOpen] = useState(false);
   const userReaction =
     likedComments && !Array.isArray(likedComments)
       ? likedComments[c.id] || null
       : likedComments?.includes?.(c.id) ? "heart" : null;
-  const isLiked = !!userReaction;
 
-  const totalReactions = Object.values(c.reactions || {}).reduce((a, b) => a + (b || 0), 0);
   const topEmojis = Object.entries(c.reactions || {})
     .filter(([, v]) => v > 0)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
     .map(([type]) => ({ heart: "❤️", laugh: "😂", think: "🤔", gasp: "😮", fire: "🔥" }[type] ?? "❤️"));
-
-  const reactionIcon = () => {
-    if (!isLiked) return <Heart size={14} />;
-    const map = { heart: <Heart size={14} className="fill-red-500 text-red-500" />, laugh: <span className="text-xs">😂</span>, think: <span className="text-xs">🤔</span>, gasp: <span className="text-xs">😮</span>, fire: <span className="text-xs">🔥</span> };
-    return map[userReaction] ?? <Heart size={14} className="fill-red-500 text-red-500" />;
-  };
-
-  const reactionColor = () => {
-    if (!isLiked) return "text-slate-400 hover:text-rose-500";
-    const map = { heart: "text-rose-500", laugh: "text-amber-500", think: "text-indigo-400", gasp: "text-cyan-500", fire: "text-orange-500" };
-    return map[userReaction] ?? "text-rose-500";
-  };
 
   return (
     <motion.div
@@ -68,62 +40,18 @@ function CommentItem({ c, timeAgo, likedComments, handleLikeComment }) {
             <span className="text-[10px] text-slate-400">{timeAgo(c.createdAt)}</span>
           </div>
 
-          {/* Reaction button + picker */}
-          <div
-            className="relative"
-            onMouseEnter={() => setPickerOpen(true)}
-            onMouseLeave={() => setPickerOpen(false)}
-          >
-            <AnimatePresence>
-              {pickerOpen && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.85, x: 10 }}
-                  animate={{ opacity: 1, scale: 1, x: 0 }}
-                  exit={{ opacity: 0, scale: 0.85, x: 10 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute top-1/2 -translate-y-1/2 right-full mr-2 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-lg z-20 whitespace-nowrap"
-                >
-                  {REACTION_TYPES.map((r) => (
-                    <motion.button
-                      key={r.type}
-                      whileHover={{ scale: 1.4, y: -3 }}
-                      whileTap={{ scale: 0.8 }}
-                      onClick={(e) => {
-                        triggerEmojiBurst(e, r.emoji);
-                        handleLikeComment?.(c.id, r.type);
-                        setPickerOpen(false);
-                      }}
-                      className="text-lg leading-none select-none"
-                      title={r.label}
-                    >
-                      {r.emoji}
-                    </motion.button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <button
-              onClick={(e) => {
-                triggerEmojiBurst(e, userReaction ? ({ heart: "❤️", laugh: "😂", think: "🤔", gasp: "😮", fire: "🔥" }[userReaction]) : "❤️");
-                handleLikeComment?.(c.id, userReaction || "heart");
-              }}
-              className={`flex items-center gap-1 transition-colors duration-200 ${reactionColor()}`}
-            >
-              <motion.span
-                key={userReaction ?? "none"}
-                animate={isLiked ? { scale: [1, 1.5, 0.9, 1] } : { scale: 1 }}
-                transition={{ duration: 0.35 }}
-                className="flex items-center"
-              >
-                {reactionIcon()}
-              </motion.span>
-              {topEmojis.length > 0 && (
-                <span className="text-[9px] leading-none flex gap-px">{topEmojis.join("")}</span>
-              )}
-              <span className="text-[10px] font-bold">{totalReactions || 0}</span>
-            </button>
-          </div>
+          {/* Reaction button */}
+          <ReactionButton
+            targetId={c.id}
+            userReaction={userReaction}
+            reactions={c.reactions}
+            likesCount={c.likes_count}
+            onReact={handleLikeComment}
+            size="sm"
+            showCount={true}
+            pickerPlacement="right"
+            activeEmojis={topEmojis}
+          />
         </div>
 
         <p className="text-sm text-slate-800 dark:text-zinc-200 break-words whitespace-pre-wrap leading-relaxed">
@@ -148,6 +76,7 @@ function InlineComments({ qId, comments, onAddComment, likedComments, handleLike
     if (!text.trim()) return;
     setSubmitting(true);
     await onAddComment(qId, text.trim());
+    sounds.playSuccess();
     setText("");
     setSubmitting(false);
   };

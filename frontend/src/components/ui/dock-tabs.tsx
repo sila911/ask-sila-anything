@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, cloneElement, Fragment } from "react"
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion"
-import { AddSquare, FolderOpen, Setting2, Logout } from "iconsax-react"
+import { AddSquare, FolderOpen, Setting2, Logout, Chart } from "iconsax-react"
 
 interface DockItem {
   id: string
@@ -12,6 +12,7 @@ interface DockItem {
 const dockItems: DockItem[] = [
   { id: "create", name: "Create Reply", icon: <AddSquare size="22" variant="Bulk" />, color: "bg-cyan-500 hover:bg-cyan-600" },
   { id: "library", name: "Library", icon: <FolderOpen size="22" variant="Bulk" />, color: "bg-amber-500 hover:bg-amber-600" },
+  { id: "analytics", name: "Analytics", icon: <Chart size="22" variant="Bulk" />, color: "bg-emerald-500 hover:bg-emerald-600" },
   { id: "admin", name: "Admin Dashboard", icon: <Setting2 size="22" variant="Bulk" />, color: "bg-indigo-500 hover:bg-indigo-600" },
   { id: "logout", name: "Logout", icon: <Logout size="22" variant="Bulk" />, color: "bg-rose-500 hover:bg-rose-600" },
 ]

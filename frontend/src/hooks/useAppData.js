@@ -15,6 +15,7 @@ import {
   toggleQuestionVisibility,
   toggleQuestionPin,
   softDeleteQuestion,
+  updateQuestionDetails,
   deleteDesign,
 } from "../lib/storage";
 
@@ -217,6 +218,21 @@ export function useAppData(showAdminToast) {
     }
   };
 
+  const handleUpdateQuestion = async (id, fields) => {
+    try {
+      const updated = await updateQuestionDetails(id, fields);
+      setQuestions((prev) =>
+        prev.map((q) => (q.id === id ? { ...q, ...updated } : q))
+      );
+      showAdminToast("Question Updated", "Question details saved successfully.", "success");
+      return { ok: true, data: updated };
+    } catch (error) {
+      console.error("Failed to update question:", error);
+      showAdminToast("Update failed", error.message, "error");
+      return { ok: false, error };
+    }
+  };
+
   // ─── Designs ─────────────────────────────────────────────────────────────────
 
   const addDesign = async (design) => {
@@ -253,6 +269,7 @@ export function useAppData(showAdminToast) {
     comments,
     setComments,
     seedDesign,
+    setSeedDesign,
     isLoading,
     fetchError,
     hasNewQuestions,
@@ -269,6 +286,7 @@ export function useAppData(showAdminToast) {
     handleToggleVisibility,
     handleTogglePin,
     handleSoftDelete,
+    handleUpdateQuestion,
     addDesign,
     removeDesign,
     reuseDesign,

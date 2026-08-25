@@ -335,6 +335,18 @@ export async function softDeleteQuestion(id) {
   return data;
 }
 
+export async function updateQuestionDetails(id, fields) {
+  const { data, error } = await supabase
+    .from('questions')
+    .update(fields)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 export async function saveQuestions(questions) {
   const { error } = await supabase
     .from('questions')

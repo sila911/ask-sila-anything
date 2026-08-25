@@ -1,61 +1,11 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Heart, Send2, Refresh } from "iconsax-react";
-import { motion, AnimatePresence } from "framer-motion";
-
-const REACTION_TYPES = [
-  { type: "heart", emoji: "❤️", label: "Love" },
-  { type: "laugh", emoji: "😂", label: "Haha" },
-  { type: "think", emoji: "🤔", label: "Hmm" },
-  { type: "gasp", emoji: "😮", label: "Wow" },
-  { type: "fire", emoji: "🔥", label: "Hot" }
-];
-
-const getEmojiForType = (type) => {
-  const found = REACTION_TYPES.find(r => r.type === type);
-  return found ? found.emoji : "❤️";
-};
-
-const triggerEmojiBurst = (e, emoji) => {
-  let x = e.clientX;
-  let y = e.clientY;
-
-  // Touch fallback or keyboard trigger: use center coordinates of the target
-  if (!x && !y && e.currentTarget) {
-    const rect = e.currentTarget.getBoundingClientRect();
-    x = rect.left + rect.width / 2;
-    y = rect.top + rect.height / 2;
-  }
-
-  if (x !== undefined && y !== undefined) {
-    window.dispatchEvent(new CustomEvent("trigger-emoji-burst", {
-      detail: { x, y, emoji }
-    }));
-  }
-};
+import { Send2, Refresh } from "iconsax-react";
+import ReactionButton from "./ReactionButton";
+import { sounds } from "../utils/soundEffects";
 
 export default function CommentModal({ isOpen, onClose, comments, onAddComment, likedComments = {}, handleLikeComment, qId, timeAgo }) {
   const [commentText, setCommentText] = useState("");
-  const [activePickerCommentId, setActivePickerCommentId] = useState(null);
-  const touchTimerRef = useRef(null);
-
-  const handleCommentTouchStart = (commentId) => {
-    touchTimerRef.current = setTimeout(() => {
-      setActivePickerCommentId(commentId);
-    }, 400);
-  };
-
-  const handleCommentTouchEnd = () => {
-    if (touchTimerRef.current) {
-      clearTimeout(touchTimerRef.current);
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      if (touchTimerRef.current) clearTimeout(touchTimerRef.current);
-    };
-  }, []);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
@@ -96,6 +46,7 @@ export default function CommentModal({ isOpen, onClose, comments, onAddComment, 
     if (!commentText.trim()) return;
     setIsSubmittingComment(true);
     await onAddComment(qId, commentText.trim());
+    sounds.playSuccess();
     setCommentText("");
     setIsSubmittingComment(false);
   };
@@ -122,153 +73,72 @@ export default function CommentModal({ isOpen, onClose, comments, onAddComment, 
         {/* Comments List */}
         <div className="flex-1 overflow-y-auto px-4 pb-4">
           <div className="flex flex-col gap-4 mt-2 !overflow-visible">
-            {sortedComments.length > 0 ? sortedComments.map((c) => {
-              const userReaction = likedComments && !Array.isArray(likedComments) ? likedComments[c.id] || null : (likedComments?.includes?.(c.id) ? "heart" : null);
-              const isLiked = !!userReaction;
+            {sortedComments.length > 0 ? (
+              sortedComments.map((c) => {
+                const userReaction =
+                  likedComments && !Array.isArray(likedComments)
+                    ? likedComments[c.id] || null
+                    : likedComments?.includes?.(c.id)
+                    ? "heart"
+                    : null;
 
-              const activeReactions = (() => {
-                const counts = c.reactions || { heart: 0, laugh: 0, think: 0, gasp: 0, fire: 0 };
-                return Object.entries(counts)
-                  .filter(([type, count]) => (count || 0) > 0)
-                  .sort((a, b) => b[1] - a[1])
-                  .map(([type]) => {
-                    switch (type) {
-                      case "heart": return "❤️";
-                      case "laugh": return "😂";
-                      case "think": return "🤔";
-                      case "gasp": return "😮";
-                      case "fire": return "🔥";
-                      default: return "❤️";
-                    }
-                  })
-                  .slice(0, 3);
-              })();
+                const activeReactions = (() => {
+                  const counts = c.reactions || { heart: 0, laugh: 0, think: 0, gasp: 0, fire: 0 };
+                  return Object.entries(counts)
+                    .filter(([, count]) => (count || 0) > 0)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([type]) => {
+                      switch (type) {
+                        case "heart": return "❤️";
+                        case "laugh": return "😂";
+                        case "think": return "🤔";
+                        case "gasp": return "😮";
+                        case "fire": return "🔥";
+                        default: return "❤️";
+                      }
+                    })
+                    .slice(0, 3);
+                })();
 
-              const renderReactionIcon = () => {
-                if (!isLiked) {
-                  return <Heart size={14} className="group-hover:fill-rose-400/20" />;
-                }
-                switch (userReaction) {
-                  case "heart":
-                    return <Heart size={14} className="fill-red-500 text-red-500" />;
-                  case "laugh":
-                    return <span className="text-xs leading-none">😂</span>;
-                  case "think":
-                    return <span className="text-xs leading-none">🤔</span>;
-                  case "gasp":
-                    return <span className="text-xs leading-none">😮</span>;
-                  case "fire":
-                    return <span className="text-xs leading-none">🔥</span>;
-                  default:
-                    return <Heart size={14} className="fill-red-500 text-red-500" />;
-                }
-              };
-
-              const getReactionColorClass = () => {
-                if (!isLiked) return "text-slate-400 hover:text-red-500 dark:hover:text-red-400";
-                switch (userReaction) {
-                  case "heart": return "text-red-500";
-                  case "laugh": return "text-amber-500";
-                  case "think": return "text-indigo-400";
-                  case "gasp": return "text-cyan-500";
-                  case "fire": return "text-orange-500";
-                  default: return "text-red-500";
-                }
-              };
-
-              return (
-                <div key={c.id} className={`flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300 relative ${activePickerCommentId === c.id ? "z-20" : "z-10"}`}>
-                  <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center shrink-0 overflow-hidden text-slate-500 dark:text-slate-400 text-sm">
-                    👻
-                  </div>
-                  <div className="flex flex-col flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold text-xs text-slate-700 dark:text-slate-300">
-                          Anonymous
-                        </p>
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                          {timeAgo(c.createdAt)}
-                        </span>
-                      </div>
-                      
-                      <div 
-                        className="relative"
-                        onMouseEnter={() => setActivePickerCommentId(c.id)}
-                        onMouseLeave={() => setActivePickerCommentId(null)}
-                      >
-                        <AnimatePresence>
-                          {activePickerCommentId === c.id && (
-                            <motion.div
-                              initial={{ opacity: 0, x: 10, y: "-50%", scale: 0.9 }}
-                              animate={{ opacity: 1, x: 0, y: "-50%", scale: 1 }}
-                              exit={{ opacity: 0, x: 10, y: "-50%", scale: 0.9 }}
-                              transition={{ duration: 0.15 }}
-                              className="absolute top-1/2 right-full mr-2.5 bg-white/30 dark:bg-slate-900/40 backdrop-blur-xl rounded-full px-2.5 py-1 flex items-center gap-2 shadow-xl border border-white/50 dark:border-white/10 z-30 whitespace-nowrap"
-                            >
-                              {REACTION_TYPES.map((react) => (
-                                <motion.button
-                                  key={react.type}
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    triggerEmojiBurst(e, react.emoji);
-                                    handleLikeComment?.(c.id, react.type);
-                                    setActivePickerCommentId(null);
-                                  }}
-                                  whileHover={{ scale: 1.35, y: -3 }}
-                                  whileTap={{ scale: 0.85 }}
-                                  className="text-xl leading-none transition-transform select-none"
-                                  title={react.label}
-                                >
-                                  {react.emoji}
-                                </motion.button>
-                              ))}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-
-                        <button 
-                          onClick={(e) => {
-                            triggerEmojiBurst(e, getEmojiForType(userReaction || "heart"));
-                            handleLikeComment?.(c.id, userReaction || "heart");
-                          }}
-                          onTouchStart={() => handleCommentTouchStart(c.id)}
-                          onTouchEnd={handleCommentTouchEnd}
-                          className={`flex items-center gap-1.5 transition-colors duration-200 group/heart ${getReactionColorClass()}`}
-                        >
-                          <motion.div
-                            key={userReaction || "unliked-cmt"}
-                            initial={isLiked ? { scale: 0.85 } : { scale: 1 }}
-                            animate={isLiked ? { scale: [1, 1.45, 0.9, 1], rotate: [0, 15, -15, 0] } : { scale: 1 }}
-                            whileTap={{ scale: 0.8 }}
-                            transition={{ duration: 0.4, ease: "easeInOut" }}
-                            className="flex items-center justify-center"
-                          >
-                            {renderReactionIcon()}
-                          </motion.div>
-                          <div className="flex items-center gap-0.5">
-                            {activeReactions.length > 0 && (
-                              <div className="flex -space-x-1 items-center mr-0.5 text-[8px]">
-                                {activeReactions.map((emoji, idx) => (
-                                  <span key={idx} className="z-[2] scale-100 select-none">
-                                    {emoji}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                            <span className="text-[10px] font-bold">{c.likes_count || 0}</span>
-                          </div>
-                        </button>
-                      </div>
+                return (
+                  <div
+                    key={c.id}
+                    className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300 relative z-10"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center shrink-0 overflow-hidden text-slate-500 dark:text-slate-400 text-sm">
+                      👻
                     </div>
-                  <p className="text-slate-800 dark:text-zinc-200 text-sm mt-0.5 break-words whitespace-pre-wrap">
-                    {c.text}
-                  </p>
-                </div>
-              </div>
-            );
-            }) : (
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-xs text-slate-700 dark:text-slate-300">
+                            Anonymous
+                          </p>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                            {timeAgo(c.createdAt)}
+                          </span>
+                        </div>
+
+                        <ReactionButton
+                          targetId={c.id}
+                          userReaction={userReaction}
+                          reactions={c.reactions}
+                          likesCount={c.likes_count}
+                          onReact={handleLikeComment}
+                          size="sm"
+                          showCount={true}
+                          pickerPlacement="right"
+                          activeEmojis={activeReactions}
+                        />
+                      </div>
+                      <p className="text-slate-800 dark:text-zinc-200 text-sm mt-0.5 break-words whitespace-pre-wrap">
+                        {c.text}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
               <div className="flex flex-col items-center justify-center h-40 text-slate-400 dark:text-slate-500">
                 <p className="text-sm">No comments yet.</p>
                 <p className="text-xs mt-1">Be the first to share your thoughts!</p>

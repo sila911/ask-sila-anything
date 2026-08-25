@@ -9,37 +9,8 @@ import CoverBanner from "./CoverBanner";
 import Profile from "./Profile";
 import QuestionForm from "./QuestionForm";
 import FAQSection from "./FAQSection";
-
-const REACTION_TYPES = [
-  { type: "heart", emoji: "❤️", label: "Love" },
-  { type: "laugh", emoji: "😂", label: "Haha" },
-  { type: "think", emoji: "🤔", label: "Hmm" },
-  { type: "gasp", emoji: "😮", label: "Wow" },
-  { type: "fire", emoji: "🔥", label: "Hot" }
-];
-
-const getEmojiForType = (type) => {
-  const found = REACTION_TYPES.find(r => r.type === type);
-  return found ? found.emoji : "❤️";
-};
-
-const triggerEmojiBurst = (e, emoji) => {
-  let x = e.clientX;
-  let y = e.clientY;
-
-  // Touch fallback or keyboard trigger: use center coordinates of the target
-  if (!x && !y && e.currentTarget) {
-    const rect = e.currentTarget.getBoundingClientRect();
-    x = rect.left + rect.width / 2;
-    y = rect.top + rect.height / 2;
-  }
-
-  if (x !== undefined && y !== undefined) {
-    window.dispatchEvent(new CustomEvent("trigger-emoji-burst", {
-      detail: { x, y, emoji }
-    }));
-  }
-};
+import ReactionButton, { getEmojiForType, triggerEmojiBurst, REACTION_TYPES } from "./ReactionButton";
+import { sounds } from "../utils/soundEffects";
 
 function QuestionSEO({ question, answer }) {
   const title = question ? `"${question}" - Ask Sila` : "Ask Sila Anything";
@@ -226,7 +197,6 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
   const tags = ["General", "Personal", "Ask Sila", "Curiosity"];
   
   const userReaction = likedQuestions && !Array.isArray(likedQuestions) ? likedQuestions[q.id] || null : (likedQuestions?.includes?.(q.id) ? "heart" : null);
-  const isLiked = !!userReaction;
 
   const activeReactions = useMemo(() => {
     const counts = q.reactions || { heart: 0, laugh: 0, think: 0, gasp: 0, fire: 0 };
@@ -246,40 +216,7 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
       .slice(0, 3);
   }, [q.reactions]);
 
-  const renderReactionIcon = () => {
-    if (!isLiked) {
-      return <Heart size={18} className="group-heart:fill-rose-400/20" />;
-    }
-    switch (userReaction) {
-      case "heart":
-        return <Heart size={18} className="fill-red-500 text-red-500" />;
-      case "laugh":
-        return <span className="text-lg leading-none">😂</span>;
-      case "think":
-        return <span className="text-lg leading-none">🤔</span>;
-      case "gasp":
-        return <span className="text-lg leading-none">😮</span>;
-      case "fire":
-        return <span className="text-lg leading-none">🔥</span>;
-      default:
-        return <Heart size={18} className="fill-red-500 text-red-500" />;
-    }
-  };
-
-  const getReactionColorClass = () => {
-    if (!isLiked) return "text-slate-600 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400";
-    switch (userReaction) {
-      case "heart": return "text-red-500";
-      case "laugh": return "text-amber-500";
-      case "think": return "text-indigo-400";
-      case "gasp": return "text-cyan-500";
-      case "fire": return "text-orange-500";
-      default: return "text-red-500";
-    }
-  };
-
   const userAnswerReaction = likedAnswers && !Array.isArray(likedAnswers) ? likedAnswers[q.id] || null : (likedAnswers?.includes?.(q.id) ? "heart" : null);
-  const isAnswerLiked = !!userAnswerReaction;
 
   const activeAnswerReactions = useMemo(() => {
     const counts = q.answer_reactions || { heart: 0, laugh: 0, think: 0, gasp: 0, fire: 0 };
@@ -298,38 +235,6 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
       })
       .slice(0, 3);
   }, [q.answer_reactions]);
-
-  const renderAnswerReactionIcon = () => {
-    if (!isAnswerLiked) {
-      return <Heart size={16} className="group-reply-heart:fill-rose-400/20" />;
-    }
-    switch (userAnswerReaction) {
-      case "heart":
-        return <Heart size={16} className="fill-red-500 text-red-500" />;
-      case "laugh":
-        return <span className="text-sm leading-none">😂</span>;
-      case "think":
-        return <span className="text-sm leading-none">🤔</span>;
-      case "gasp":
-        return <span className="text-sm leading-none">😮</span>;
-      case "fire":
-        return <span className="text-sm leading-none">🔥</span>;
-      default:
-        return <Heart size={16} className="fill-red-500 text-red-500" />;
-    }
-  };
-
-  const getAnswerReactionColorClass = () => {
-    if (!isAnswerLiked) return "text-slate-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400";
-    switch (userAnswerReaction) {
-      case "heart": return "text-red-500";
-      case "laugh": return "text-amber-500";
-      case "think": return "text-indigo-400";
-      case "gasp": return "text-cyan-500";
-      case "fire": return "text-orange-500";
-      default: return "text-red-500";
-    }
-  };
 
   const handleShare = (e) => {
     if (isLocked) return;
@@ -416,79 +321,19 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
                 </div>
               </div>
               
-              {/* Sila Answer Likes Reaction (Idea 2: Top-Right) */}
-              <div 
-                className="relative"
-                onMouseEnter={() => !isLocked && setShowAnswerPicker(true)}
-                onMouseLeave={() => setShowAnswerPicker(false)}
-              >
-                <AnimatePresence>
-                  {showAnswerPicker && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute bottom-full right-0 mb-2 bg-white/30 dark:bg-slate-900/40 backdrop-blur-xl rounded-full px-3 py-2 flex items-center gap-2.5 shadow-xl border border-white/50 dark:border-white/10 z-30 whitespace-nowrap"
-                    >
-                      {REACTION_TYPES.map((react) => (
-                        <motion.button
-                          key={react.type}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            triggerEmojiBurst(e, react.emoji);
-                            handleLikeAnswer?.(q.id, react.type);
-                            setShowAnswerPicker(false);
-                          }}
-                          whileHover={{ scale: 1.4, y: -5 }}
-                          whileTap={{ scale: 0.85 }}
-                          className="text-2xl leading-none transition-transform select-none"
-                          title={react.label}
-                        >
-                          {react.emoji}
-                        </motion.button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                <button
-                  onClick={(e) => {
-                    if (isLocked) return;
-                    triggerEmojiBurst(e, getEmojiForType(userAnswerReaction || "heart"));
-                    handleLikeAnswer?.(q.id, userAnswerReaction || "heart");
-                  }}
-                  onTouchStart={handleAnswerTouchStart}
-                  onTouchEnd={handleAnswerTouchEnd}
-                  className={`flex items-center gap-1.5 text-xs sm:text-sm font-semibold transition-colors duration-200 group/reply-heart ${getAnswerReactionColorClass()}`}
-                >
-                  <motion.div
-                    key={userAnswerReaction || "unliked-ans"}
-                    initial={isAnswerLiked ? { scale: 0.85 } : { scale: 1 }}
-                    animate={isAnswerLiked ? { scale: [1, 1.4, 0.9, 1], rotate: [0, 15, -15, 0] } : { scale: 1 }}
-                    whileTap={{ scale: 0.8 }}
-                    transition={{ duration: 0.4, ease: "easeInOut" }}
-                    className="flex items-center justify-center"
-                  >
-                    {renderAnswerReactionIcon()}
-                  </motion.div>
-                  <div className="flex items-center gap-1">
-                    {activeAnswerReactions.length > 0 && (
-                      <div className="flex -space-x-1.5 items-center mr-0.5 text-[10px] sm:text-xs">
-                        {activeAnswerReactions.map((emoji, idx) => (
-                          <span key={idx} className="z-[2] scale-100 select-none">
-                            {emoji}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    <span className={`text-xs sm:text-sm font-semibold ${isAnswerLiked ? getAnswerReactionColorClass() : "text-slate-500 dark:text-slate-400"}`}>
-                      {q.answer_likes_count || 0}
-                    </span>
-                  </div>
-                </button>
-              </div>
+              {/* Sila Answer Likes Reaction */}
+              <ReactionButton
+                targetId={q.id}
+                userReaction={userAnswerReaction}
+                reactions={q.answer_reactions}
+                likesCount={q.answer_likes_count}
+                onReact={handleLikeAnswer}
+                isLocked={isLocked}
+                size="sm"
+                showCount={true}
+                pickerPlacement="top"
+                activeEmojis={activeAnswerReactions}
+              />
             </div>
             <ExpandableText
               text={designWithAnswer.answerText || (designWithAnswer.text && designWithAnswer.text.includes('\nA: ') ? designWithAnswer.text.split('\nA: ')[1] : designWithAnswer.text)}
@@ -535,78 +380,18 @@ export function QuestionCard({ q, designs, comments, onAddComment, likedQuestion
         )}
 
         <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-around">
-          <div 
-            className="relative"
-            onMouseEnter={() => !isLocked && setShowPicker(true)}
-            onMouseLeave={() => setShowPicker(false)}
-          >
-            <AnimatePresence>
-              {showPicker && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute bottom-full left-[-12px] mb-2 bg-white/30 dark:bg-slate-900/40 backdrop-blur-xl rounded-full px-3 py-2 flex items-center gap-2.5 shadow-xl border border-white/50 dark:border-white/10 z-30 whitespace-nowrap"
-                >
-                  {REACTION_TYPES.map((react) => (
-                    <motion.button
-                      key={react.type}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        triggerEmojiBurst(e, react.emoji);
-                        handleLike(q.id, react.type);
-                        setShowPicker(false);
-                      }}
-                      whileHover={{ scale: 1.4, y: -5 }}
-                      whileTap={{ scale: 0.85 }}
-                      className="text-2xl leading-none transition-transform select-none"
-                      title={react.label}
-                    >
-                      {react.emoji}
-                    </motion.button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <button 
-              onClick={(e) => {
-                if (isLocked) return;
-                triggerEmojiBurst(e, getEmojiForType(userReaction || "heart"));
-                handleLike(q.id, userReaction || "heart");
-              }}
-              onTouchStart={handleTouchStart}
-              onTouchEnd={handleTouchEnd}
-              className={`flex items-center gap-2 transition-colors duration-200 group/heart ${getReactionColorClass()}`}
-            >
-              <motion.div
-                key={userReaction || "unliked"}
-                initial={isLiked ? { scale: 0.85 } : { scale: 1 }}
-                animate={isLiked ? { scale: [1, 1.45, 0.9, 1], rotate: [0, 15, -15, 0] } : { scale: 1 }}
-                whileTap={{ scale: 0.8 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-                className="flex items-center justify-center"
-              >
-                {renderReactionIcon()}
-              </motion.div>
-              <div className="flex items-center gap-1">
-                {activeReactions.length > 0 && (
-                  <div className="flex -space-x-1.5 items-center mr-1 text-[11px] sm:text-xs">
-                    {activeReactions.map((emoji, idx) => (
-                      <span key={idx} className="z-[2] scale-100 select-none">
-                        {emoji}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <span className={`text-sm md:text-base font-semibold ${isLiked ? getReactionColorClass() : "text-slate-700 dark:text-slate-300"}`}>
-                  {q.likes_count || 0}
-                </span>
-              </div>
-            </button>
-          </div>
+          <ReactionButton
+            targetId={q.id}
+            userReaction={userReaction}
+            reactions={q.reactions}
+            likesCount={q.likes_count}
+            onReact={handleLike}
+            isLocked={isLocked}
+            size="md"
+            showCount={true}
+            pickerPlacement="top"
+            activeEmojis={activeReactions}
+          />
           
           <button 
             onClick={() => !isLocked && setIsCommentModalOpen(true)}
