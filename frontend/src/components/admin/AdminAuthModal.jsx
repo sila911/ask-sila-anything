@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Eye, EyeSlash, CloseCircle } from 'iconsax-react'
+import { Eye, EyeSlash } from 'iconsax-react'
 import { requestPasswordReset, submitPasswordReset } from '../../lib/adminAccess'
 
 export default function AdminAuthModal({
@@ -17,6 +17,9 @@ export default function AdminAuthModal({
   const [message, setMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const [animationState, setAnimationState] = useState('hidden-top') // 'hidden-top', 'visible', 'hidden-bottom'
+  const [shouldRender, setShouldRender] = useState(false)
+
   useEffect(() => {
     if (isOpen) {
       setView('login')
@@ -25,10 +28,47 @@ export default function AdminAuthModal({
       setCode('')
       setError('')
       setMessage('')
+      setShouldRender(true)
+      const frame = requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setAnimationState('visible')
+        })
+      })
+      return () => cancelAnimationFrame(frame)
+    } else {
+      setAnimationState('hidden-bottom')
+      const timer = setTimeout(() => {
+        setShouldRender(false)
+        setAnimationState('hidden-top')
+      }, 500)
+      return () => clearTimeout(timer)
     }
   }, [isOpen])
 
-  if (!isOpen) return null
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose()
+    }
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = 'hidden'
+    }
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = 'unset'
+    }
+  }, [isOpen, onClose])
+
+  if (!shouldRender) return null
+
+  const isVisible = animationState === 'visible'
+
+  let transformClass = 'translate-y-0 scale-100'
+  if (animationState === 'hidden-top') {
+    transformClass = '-translate-y-[100vh] scale-95'
+  } else if (animationState === 'hidden-bottom') {
+    transformClass = 'translate-y-[100vh] scale-95'
+  }
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -78,19 +118,16 @@ export default function AdminAuthModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/45 backdrop-blur-[2px] flex items-center justify-center px-4" onClick={onClose}>
+    <div 
+      className={`fixed inset-0 z-50 overflow-x-hidden flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-all duration-500 ${
+        isVisible ? "opacity-100 visible" : "opacity-0 invisible"
+      }`}
+      onClick={onClose}
+    >
       <div
-        className="glass-shell w-full max-w-md rounded-3xl p-6 relative"
+        className={`glass-shell w-full max-w-md rounded-[2.5rem] p-6 sm:p-8 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] relative transition-transform duration-500 ease-in-out transform ${transformClass}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <button 
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 text-[color:var(--app-muted)] transition-colors"
-          aria-label="Close modal"
-        >
-          <CloseCircle size={20} />
-        </button>
-
         {view === 'login' && (
           <>
             <h3 className="text-xl font-bold">Admin Login</h3>
@@ -123,14 +160,14 @@ export default function AdminAuthModal({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full rounded-xl h-11 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold disabled:opacity-50"
+                  className="w-full rounded-xl h-11 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold disabled:opacity-50 cursor-pointer"
                 >
                   {isSubmitting ? 'Checking...' : 'Login'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setView('forgot')}
-                  className="text-sm text-cyan-600 dark:text-cyan-400 hover:underline text-center"
+                  className="text-sm text-cyan-600 dark:text-cyan-400 hover:underline text-center cursor-pointer"
                 >
                   Forgot Password?
                 </button>
@@ -148,11 +185,11 @@ export default function AdminAuthModal({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full rounded-xl h-11 bg-cyan-600 text-white font-bold disabled:opacity-50"
+                className="w-full rounded-xl h-11 bg-cyan-600 text-white font-bold disabled:opacity-50 cursor-pointer"
               >
                 {isSubmitting ? 'Sending...' : 'Send Reset Code'}
               </button>
-              <button type="button" onClick={() => setView('login')} className="w-full text-sm text-[color:var(--app-muted)]">
+              <button type="button" onClick={() => setView('login')} className="w-full text-sm text-[color:var(--app-muted)] cursor-pointer">
                 Back to Login
               </button>
             </form>
@@ -203,11 +240,11 @@ export default function AdminAuthModal({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full rounded-xl h-11 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold disabled:opacity-50"
+                className="w-full rounded-xl h-11 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold disabled:opacity-50 cursor-pointer"
               >
                 {isSubmitting ? 'Resetting...' : 'Update Password'}
               </button>
-              <button type="button" onClick={() => setView('login')} className="w-full text-sm text-[color:var(--app-muted)]">
+              <button type="button" onClick={() => setView('login')} className="w-full text-sm text-[color:var(--app-muted)] cursor-pointer">
                 Back to Login
               </button>
             </form>

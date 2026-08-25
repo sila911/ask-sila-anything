@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Copy, Check } from 'iconsax-react';
+import { sounds } from '../utils/soundEffects';
 
 export default function ShareModal({ isOpen, onClose, url, questionText }) {
   const [copied, setCopied] = useState(false);
@@ -10,7 +11,6 @@ export default function ShareModal({ isOpen, onClose, url, questionText }) {
   useEffect(() => {
     if (isOpen) {
       setShouldRender(true);
-      // Small delay to allow the DOM element to mount before adding transition classes
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           setIsVisible(true);
@@ -18,7 +18,6 @@ export default function ShareModal({ isOpen, onClose, url, questionText }) {
       });
     } else {
       setIsVisible(false);
-      // Wait for the slide-out animation to complete before unmounting
       const timer = setTimeout(() => setShouldRender(false), 300);
       return () => clearTimeout(timer);
     }
@@ -43,6 +42,7 @@ export default function ShareModal({ isOpen, onClose, url, questionText }) {
 
   const handleCopy = () => {
     navigator.clipboard.writeText(url).then(() => {
+      sounds.playPop(580);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -80,9 +80,11 @@ export default function ShareModal({ isOpen, onClose, url, questionText }) {
         className={`glass-shell relative w-full max-w-2xl rounded-t-3xl p-5 sm:p-6 shadow-2xl text-center transition-transform duration-300 ease-out transform ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}
         onClick={(e) => e.stopPropagation()}
       >
-
+        <div className="w-full flex flex-col items-center justify-center pb-2 shrink-0">
+          <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mb-3" />
+        </div>
         
-        <h1 className="text-lg font-bold mb-4 text-slate-800 dark:text-white">Share Question</h1>
+        <h2 className="text-base font-bold mb-4 text-slate-800 dark:text-white">Share Question</h2>
         
         <div className="grid grid-cols-4 gap-2 mb-4">
           {shareLinks.map((link) => (
@@ -99,22 +101,24 @@ export default function ShareModal({ isOpen, onClose, url, questionText }) {
           ))}
         </div>
 
-        <div className="relative">
+        <div className="relative my-2">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-200 dark:border-slate-700/50"></div>
+            <div className="w-full border-t border-slate-200/50 dark:border-white/10"></div>
           </div>
           <div className="relative flex justify-center text-xs">
-            <span className="px-2 bg-[#fcfcfd] dark:bg-[#131b2b] text-slate-500 dark:text-slate-400 rounded-full">Or copy link</span>
+            <span className="px-3 py-0.5 rounded-full bg-[color:var(--bg-base)] border border-[color:var(--card-border)] text-slate-500 dark:text-slate-400">
+              Or copy link
+            </span>
           </div>
         </div>
         
         <div className="mt-4 flex items-center gap-2">
-          <div className="glass-subpane flex-1 truncate rounded-xl px-3 py-2.5 text-sm text-slate-600 dark:text-slate-300 text-left">
+          <div className="glass-subpane flex-1 truncate rounded-xl px-3 py-2.5 text-sm text-slate-600 dark:text-slate-300 text-left select-all">
             {url}
           </div>
           <button
             onClick={handleCopy}
-            className="flex items-center justify-center w-11 h-11 shrink-0 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white transition-colors border border-cyan-400/20 shadow-sm"
+            className="flex items-center justify-center w-11 h-11 shrink-0 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-white transition-all active:scale-90 border border-cyan-400/20 shadow-sm cursor-pointer"
             title="Copy link"
           >
             {copied ? <Check size={20} /> : <Copy size={20} />}

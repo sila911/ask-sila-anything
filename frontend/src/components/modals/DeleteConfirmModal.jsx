@@ -3,20 +3,24 @@ import { createPortal } from 'react-dom';
 import { Danger } from 'iconsax-react';
 
 export default function DeleteConfirmModal({ isOpen, onClose, onConfirm, questionText }) {
-  const [isVisible, setIsVisible] = useState(false);
+  const [animationState, setAnimationState] = useState('hidden-top'); // 'hidden-top', 'visible', 'hidden-bottom'
   const [shouldRender, setShouldRender] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setShouldRender(true);
-      requestAnimationFrame(() => {
+      const frame = requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          setIsVisible(true);
+          setAnimationState('visible');
         });
       });
+      return () => cancelAnimationFrame(frame);
     } else {
-      setIsVisible(false);
-      const timer = setTimeout(() => setShouldRender(false), 300);
+      setAnimationState('hidden-bottom');
+      const timer = setTimeout(() => {
+        setShouldRender(false);
+        setAnimationState('hidden-top');
+      }, 500);
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
@@ -37,13 +41,24 @@ export default function DeleteConfirmModal({ isOpen, onClose, onConfirm, questio
 
   if (!shouldRender) return null;
 
+  const isVisible = animationState === 'visible';
+
+  let transformClass = 'translate-y-0 scale-100';
+  if (animationState === 'hidden-top') {
+    transformClass = '-translate-y-[100vh] scale-95';
+  } else if (animationState === 'hidden-bottom') {
+    transformClass = 'translate-y-[100vh] scale-95';
+  }
+
   return createPortal(
     <div 
-      className={`fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ease-out ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+      className={`fixed inset-0 z-[200] overflow-x-hidden flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-all duration-500 ${
+        isVisible ? "opacity-100 visible" : "opacity-0 invisible"
+      }`}
       onClick={onClose}
     >
       <div 
-        className={`glass-shell relative w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl text-center transition-all duration-300 ease-out transform ${isVisible ? 'scale-100 translate-y-0' : 'scale-95 translate-y-4'}`}
+        className={`glass-shell relative w-full max-w-md rounded-[2.5rem] p-6 sm:p-8 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] text-center transition-transform duration-500 ease-in-out transform ${transformClass}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-16 h-16 rounded-full bg-rose-500/10 flex items-center justify-center mx-auto mb-4 border border-rose-500/20">
@@ -51,14 +66,14 @@ export default function DeleteConfirmModal({ isOpen, onClose, onConfirm, questio
         </div>
         
         <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Confirm Delete</h2>
-        <p className="text-slate-600 dark:text-slate-400 mb-6 px-2">
+        <p className="text-slate-600 dark:text-slate-400 mb-6 px-2 text-sm leading-relaxed">
           Are you sure you want to delete <span className="font-semibold text-slate-800 dark:text-slate-200">"{questionText}"</span>? This action will hide the question from all feeds.
         </p>
         
         <div className="grid grid-cols-2 gap-3">
           <button
             onClick={onClose}
-            className="py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 font-bold transition-colors"
+            className="py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 font-bold transition-colors cursor-pointer"
           >
             No
           </button>
@@ -67,7 +82,7 @@ export default function DeleteConfirmModal({ isOpen, onClose, onConfirm, questio
               onConfirm();
               onClose();
             }}
-            className="py-3 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-bold transition-all shadow-lg shadow-rose-500/20 transform active:scale-95"
+            className="py-3 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-bold transition-all shadow-lg shadow-rose-500/20 transform active:scale-95 cursor-pointer"
           >
             Yes
           </button>

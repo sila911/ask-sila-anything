@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowDown2, InfoCircle } from "iconsax-react";
 import { ContainerScroll } from "./ui/container-scroll-animation";
+import { sounds } from "../utils/soundEffects";
 
 const faqData = [
   {
@@ -50,6 +51,7 @@ export default function FAQSection() {
   const [openIndex, setOpenIndex] = useState(null);
 
   const toggleAccordion = (index) => {
+    sounds.playClick();
     setOpenIndex(openIndex === index ? null : index);
   };
 
@@ -58,7 +60,7 @@ export default function FAQSection() {
       <ContainerScroll
         titleComponent={
           <div className="flex items-center justify-center mb-6 w-full px-2">
-            <h2 className="flex items-center justify-center gap-1.5 sm:gap-2.5 text-[15px] min-[360px]:text-[16px] min-[390px]:text-[18px] sm:text-3xl md:text-4xl lg:text-5xl tracking-tight text-[color:var(--app-text)] whitespace-nowrap mali-bold">
+            <h2 className="flex items-center justify-center gap-1.5 sm:gap-2.5 text-[18px] min-[360px]:text-[20px] min-[390px]:text-[22px] sm:text-3xl md:text-4xl lg:text-5xl tracking-tight text-[color:var(--app-text)] whitespace-nowrap font-bold">
               <InfoCircle className="text-cyan-500 w-5 h-5 sm:w-8 sm:h-8 md:w-10 md:h-10 animate-pulse shrink-0" />
               <span>
                 Frequently Asked <span className="text-cyan-500">Questions</span>

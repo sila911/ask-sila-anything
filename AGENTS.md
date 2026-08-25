@@ -43,10 +43,12 @@ Always use project design classes to maintain 100% visual consistency:
 
 ## 3. Motion & Audio Feedback Guidelines
 
-### Framer Motion Animations
-- Use spring transitions (`type: "spring", damping: 22, stiffness: 350`) for floating popups and modals.
-- When elements appear, use subtle fade & slide: `initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}`.
-- Use `whileTap={{ scale: 0.92 }}` for responsive tactile button clicks.
+### Motion & Modal Guidelines
+- **Center Dialog Modals** (`BuyMeCoffeeModal`, `ThankYouModal`, `DeleteConfirmModal`, `AdminAuthModal`):
+  - **Animation**: Open from top to center (`-translate-y-[100vh]` $\rightarrow$ `translate-y-0 scale-100`) and close by exiting to bottom (`translate-y-[100vh] scale-95`) with `duration-500 ease-in-out`.
+  - **Close Button**: Do **NOT** generate close icons on the top right. Modals dismiss via backdrop tap, ESC key, or action buttons.
+- **Bottom Sheet Modals** (`ShareModal`, `CommentModal`, `NotifySheetModal`):
+  - Slide up from bottom with top drag handle indicator.
 
 ### Sound Synthesizer (`utils/soundEffects.js`)
 All sound effects are synthesized dynamically via Web Audio API:

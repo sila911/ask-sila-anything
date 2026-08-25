@@ -29,7 +29,6 @@ import {
   Edit,
   Category,
 } from "iconsax-react";
-import { Sparkles } from "lucide-react";
 import { dataUrlToBlob, renderTextToImage } from "../../lib/imageRenderer";
 import { supabase } from "../../lib/supabase";
 import { AI_TONE_PRESETS, generateAnswerDrafts } from "../../lib/aiAssistant";
@@ -859,7 +858,7 @@ export default function CreateDesignPage({
                       }}
                       className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold text-purple-300 bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 transition-all"
                     >
-                      <Sparkles size={11} className="text-purple-400" />
+                      <Magicpen size={11} className="text-purple-400" />
                       <span>AI Drafts</span>
                     </button>
                   </div>

@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiShare2 } from "react-icons/fi";
-import { Heart, Send2, Refresh, Message } from "iconsax-react";
+import { Heart, Send2, Refresh, Message, ArrowLeft2, Share } from "iconsax-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QuestionCard } from "../components/RecentlyAsked";
 import ReactionButton from "../components/ReactionButton";
@@ -190,6 +189,7 @@ export default function SingleQuestionPage({
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href).then(() => {
+      sounds.playPop(580);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -229,7 +229,7 @@ export default function SingleQuestionPage({
           onClick={() => navigate(-1)}
           className="group flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/60 dark:bg-white/5 hover:bg-white dark:hover:bg-white/10 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:text-cyan-500 dark:hover:text-cyan-400 transition-all font-semibold text-sm backdrop-blur-xl cursor-pointer shadow-sm active:scale-95"
         >
-          <FiArrowLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
+          <ArrowLeft2 size={18} className="group-hover:-translate-x-0.5 transition-transform" />
           <span>Back</span>
         </button>
 
@@ -238,7 +238,7 @@ export default function SingleQuestionPage({
           onClick={handleShare}
           className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-white/60 dark:bg-white/5 hover:bg-cyan-500/10 border border-slate-200/80 dark:border-white/10 hover:border-cyan-500/30 text-slate-700 dark:text-slate-200 hover:text-cyan-500 transition-all font-semibold text-xs backdrop-blur-xl cursor-pointer shadow-sm active:scale-95"
         >
-          <FiShare2 size={15} />
+          <Share size={15} />
           <span>{copied ? "Link copied!" : "Share Question"}</span>
         </button>
       </div>

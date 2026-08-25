@@ -30,3 +30,8 @@ Whenever generating or modifying UI components in this repository, strictly adhe
 
 5. **Reactions**:
    - Always reuse `<ReactionButton />` from `src/components/ReactionButton.jsx`.
+
+6. **Modals & Dialogs**:
+   - **Center Dialog Modals**: Animate in from top (`-translate-y-[100vh]`) to center (`translate-y-0`) and exit to bottom (`translate-y-[100vh]`).
+   - **No Top-Right Close Button**: Do not render close 'X' buttons on top right for center modals. Close via backdrop tap, ESC, or bottom action buttons.
+   - **Sheet Modals**: Bottom sheets slide up from bottom with drag handle.
