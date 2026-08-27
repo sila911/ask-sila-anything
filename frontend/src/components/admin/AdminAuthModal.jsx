@@ -16,6 +16,7 @@ export default function AdminAuthModal({
   const [view, setView] = useState('login') // 'login', 'otp', 'forgot', 'reset'
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [lastFailedPassword, setLastFailedPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [code, setCode] = useState('')
@@ -39,6 +40,7 @@ export default function AdminAuthModal({
     if (isOpen) {
       setView('login')
       setPassword('')
+      setLastFailedPassword('')
       setNewPassword('')
       setCode('')
       setOtp(['', '', '', '', '', ''])
@@ -80,7 +82,14 @@ export default function AdminAuthModal({
     let timer
     if (view === 'otp' && timeLeft > 0) {
       timer = setInterval(() => {
-        setTimeLeft((prev) => (prev <= 1 ? 0 : prev - 1))
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer)
+            setError('')
+            return 0
+          }
+          return prev - 1
+        })
       }, 1000)
     }
     return () => clearInterval(timer)
@@ -94,6 +103,7 @@ export default function AdminAuthModal({
         setCooldown((prev) => {
           if (prev <= 1) {
             setCanResend(true)
+            clearInterval(cdTimer)
             return 0
           }
           return prev - 1
@@ -113,23 +123,21 @@ export default function AdminAuthModal({
     }
   }, [view])
 
-  if (!shouldRender) return null
-
-  const isVisible = animationState === 'visible'
-
-  let transformClass = 'translate-y-0 scale-100'
-  if (animationState === 'hidden-top') {
-    transformClass = '-translate-y-[100vh] scale-95'
-  } else if (animationState === 'hidden-bottom') {
-    transformClass = 'translate-y-[100vh] scale-95'
-  }
-
   const handleLogin = async (e) => {
     e.preventDefault()
+    if (!password) return
+    if (password.length < 4) {
+      setError('Password must be at least 4 characters.')
+      return
+    }
+    if (lastFailedPassword && password === lastFailedPassword) {
+      return
+    }
     setIsSubmitting(true)
     setError('')
     try {
       const res = await onSubmit(password)
+      setLastFailedPassword('')
       if (res?.requires2FA) {
         setOtpToken(res.token)
         setTimeLeft(60)
@@ -141,12 +149,14 @@ export default function AdminAuthModal({
       }
     } catch (err) {
       setError(err.message || 'Incorrect password')
+      setLastFailedPassword(password)
     } finally {
       setIsSubmitting(false)
     }
   }
 
   const handleOtpChange = (index, value) => {
+    if (timeLeft <= 0) return
     const cleanVal = value.replace(/[^0-9]/g, '')
     if (!cleanVal && value !== '') return
 
@@ -166,6 +176,7 @@ export default function AdminAuthModal({
   }
 
   const handleOtpKeyDown = (index, e) => {
+    if (timeLeft <= 0) return
     if (e.key === 'Backspace' && otp[index] === '' && index > 0) {
       otpInputRefs.current[index - 1]?.focus()
     } else if (e.key === 'ArrowLeft' && index > 0) {
@@ -176,6 +187,7 @@ export default function AdminAuthModal({
   }
 
   const handleOtpPaste = (e) => {
+    if (timeLeft <= 0) return
     e.preventDefault()
     const pasted = e.clipboardData.getData('text').trim().replace(/[^0-9]/g, '')
     if (pasted.length >= 6) {
@@ -207,7 +219,7 @@ export default function AdminAuthModal({
   }
 
   const handleResend = async () => {
-    if (!canResend || isResending) return
+    if ((timeLeft > 0 && !canResend) || isResending) return
     setIsResending(true)
     setError('')
     try {
@@ -253,12 +265,13 @@ export default function AdminAuthModal({
     setMessage('')
     try {
       await submitPasswordReset(code, newPassword)
-      setMessage('Password updated successfully. Logging in...')
-      setTimeout(async () => {
-        await onSubmit(newPassword)
-      }, 1500)
+      setMessage('Password reset successful! Logging in...')
+      setTimeout(() => {
+        setView('login')
+        setMessage('')
+      }, 2000)
     } catch (err) {
-      setError(err.message || 'Reset failed')
+      setError(err.message || 'Failed to reset password')
     } finally {
       setIsSubmitting(false)
     }
@@ -270,6 +283,17 @@ export default function AdminAuthModal({
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`
   }
 
+  if (!shouldRender) return null
+
+  const isVisible = animationState === 'visible'
+
+  let transformClass = 'translate-y-0 scale-100'
+  if (animationState === 'hidden-top') {
+    transformClass = '-translate-y-[100vh] scale-95'
+  } else if (animationState === 'hidden-bottom') {
+    transformClass = 'translate-y-[100vh] scale-95'
+  }
+
   return (
     <div 
       className={`fixed inset-0 z-50 overflow-x-hidden flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-all duration-500 ${
@@ -278,14 +302,48 @@ export default function AdminAuthModal({
       onClick={onClose}
     >
       <div
-        className={`glass-shell w-full max-w-md rounded-[2.5rem] p-6 sm:p-8 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] relative transition-transform duration-500 ease-in-out transform ${transformClass}`}
+        className={`glass-shell w-full max-w-md rounded-[2.5rem] p-6 sm:p-8 relative transition-transform duration-500 ease-in-out transform ${transformClass}`}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Top-Left Back Icon (<) */}
+        <button
+          type="button"
+          onClick={() => {
+            if (view === 'otp' || view === 'forgot' || view === 'reset') {
+              setView('login')
+              setError('')
+              setMessage('')
+              sounds.playClick()
+            } else {
+              onClose()
+            }
+          }}
+          className="absolute left-5 top-5 w-9 h-9 rounded-full theme-toggle-btn flex items-center justify-center cursor-pointer text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-all active:scale-90 shadow-sm z-10"
+          aria-label="Back"
+        >
+          <ArrowLeft2 size={16} />
+        </button>
+
         {view === 'login' && (
           <>
-            <h3 className="text-xl font-bold">Admin Login</h3>
-            <p className="text-sm text-[color:var(--app-muted)] mt-1">Enter your admin password to open dashboard.</p>
-            <form onSubmit={handleLogin} className="mt-4 space-y-4">
+            <div className="flex flex-col items-center justify-center text-center pt-2 mb-6">
+              <div className="relative mb-3 flex items-center justify-center">
+                <div className="absolute inset-0 bg-cyan-500/20 rounded-full blur-xl scale-125 pointer-events-none" />
+                <img
+                  src="https://img.icons8.com/3d-fluency/188/lock-2.png"
+                  alt="Admin Access"
+                  className="w-18 h-18 sm:w-20 sm:h-20 object-contain relative drop-shadow-2xl hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+              <h3 className="text-2xl font-bold font-['Racing_Sans_One',sans-serif] tracking-wide text-[color:var(--app-text)]">
+                Admin Login
+              </h3>
+              <p className="text-xs sm:text-sm text-[color:var(--app-muted)] mt-1 max-w-xs">
+                Enter your admin password to open dashboard
+              </p>
+            </div>
+
+            <form onSubmit={handleLogin} className="space-y-4">
               <label className="block text-sm">
                 <span className="text-[color:var(--app-muted)] font-medium">Password</span>
                 <div className="relative mt-1">
@@ -294,6 +352,13 @@ export default function AdminAuthModal({
                     autoFocus
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault()
+                        handleLogin(e)
+                      }
+                    }}
+                    enterKeyHint="go"
                     className="h-11 w-full rounded-xl pl-3 pr-10 bg-[color:var(--input-bg)] border border-[color:var(--input-border)] focus:outline-none focus:ring-2 focus:ring-cyan-500/30"
                     required
                   />
@@ -310,13 +375,23 @@ export default function AdminAuthModal({
               {error && <p className="text-sm text-rose-500">{error}</p>}
 
               <div className="flex flex-col gap-2">
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full rounded-xl h-11 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold disabled:opacity-50 cursor-pointer"
-                >
-                  {isSubmitting ? 'Checking...' : 'Login'}
-                </button>
+                {(() => {
+                  const isPasswordBlocked = !!(lastFailedPassword && password === lastFailedPassword);
+                  return (
+                    <button
+                      type="submit"
+                      onMouseDown={(e) => e.preventDefault()}
+                      disabled={isSubmitting || !password || isPasswordBlocked}
+                      className={`w-full rounded-xl h-11 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold text-base transition-all ${
+                        isPasswordBlocked
+                          ? "opacity-30 cursor-not-allowed filter blur-[1px] pointer-events-none"
+                          : "disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                      }`}
+                    >
+                      {isSubmitting ? 'Checking...' : 'Login'}
+                    </button>
+                  );
+                })()}
                 <button
                   type="button"
                   onClick={() => setView('forgot')}
@@ -331,28 +406,38 @@ export default function AdminAuthModal({
 
         {view === 'otp' && (
           <>
-            <div className="flex items-center gap-2.5 mb-2">
-              <div className="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center border border-cyan-500/30">
-                <ShieldTick size={20} className="text-cyan-500" variant="Bold" />
+            <div className="flex flex-col items-center justify-center text-center pt-2 mb-5">
+              <div className="relative mb-3 flex items-center justify-center">
+                <div className="absolute inset-0 bg-cyan-500/20 rounded-full blur-xl scale-125 pointer-events-none" />
+                <img
+                  src="https://img.icons8.com/3d-fluency/188/shield.png"
+                  alt="Security Verification"
+                  className="w-18 h-18 sm:w-20 sm:h-20 object-contain relative drop-shadow-2xl hover:scale-105 transition-transform duration-300"
+                />
               </div>
-              <h3 className="text-xl font-bold">
-                Security Verification
+              <h3 className="text-2xl font-bold font-['Racing_Sans_One',sans-serif] tracking-wide text-[color:var(--app-text)]">
+                Verification
               </h3>
+              <p className="text-xs sm:text-sm text-[color:var(--app-muted)] mt-1 max-w-xs">
+                Enter the 6-digit verification code to proceed
+              </p>
             </div>
-            <p className="text-sm text-[color:var(--app-muted)]">
-              Enter the 6-digit verification code to proceed.
-            </p>
 
-            {message && (
-              <p className="text-xs text-cyan-600 dark:text-cyan-400 mt-2">{message}</p>
-            )}
+            {/* Status message */}
+            {timeLeft <= 0 ? (
+              <p className="text-xs text-rose-500 font-medium text-center">
+                Verification code has expired. Tap resend below.
+              </p>
+            ) : message ? (
+              <p className="text-xs text-cyan-600 dark:text-cyan-400 text-center">{message}</p>
+            ) : null}
 
             <form
               onSubmit={(e) => {
                 e.preventDefault()
                 handleOtpVerify(otp.join(''))
               }}
-              className="mt-5 space-y-4"
+              className="mt-4 space-y-4"
             >
               <div className="flex justify-between gap-1.5">
                 {otp.map((digit, idx) => (
@@ -364,11 +449,14 @@ export default function AdminAuthModal({
                     pattern="[0-9]*"
                     maxLength={1}
                     value={digit}
+                    disabled={timeLeft <= 0 || isSubmitting}
                     onChange={(e) => handleOtpChange(idx, e.target.value)}
                     onKeyDown={(e) => handleOtpKeyDown(idx, e)}
                     onPaste={handleOtpPaste}
                     className={`w-11 h-13 text-center text-xl font-bold font-mono rounded-xl border transition-all ${
-                      digit
+                      timeLeft <= 0
+                        ? 'opacity-35 cursor-not-allowed bg-slate-100/40 dark:bg-white/5 border-slate-200 dark:border-white/5 pointer-events-none'
+                        : digit
                         ? 'bg-cyan-500/10 border-cyan-500/60 text-cyan-500 ring-2 ring-cyan-500/20'
                         : 'bg-[color:var(--input-bg)] border-[color:var(--input-border)] text-[color:var(--app-text)]'
                     } focus:outline-none focus:ring-2 focus:ring-cyan-500/50`}
@@ -376,41 +464,34 @@ export default function AdminAuthModal({
                 ))}
               </div>
 
-              <div className="flex items-center justify-between text-xs text-[color:var(--app-muted)]">
-                <span>Expires in: {formatTimer(timeLeft)}</span>
+              {timeLeft > 0 && (
+                <div className="flex items-center justify-center text-xs px-1">
+                  <span className={`font-mono text-sm tracking-widest font-bold ${timeLeft < 20 ? 'text-rose-500 animate-pulse' : 'text-cyan-600/80 dark:text-cyan-400/80'}`}>
+                    {formatTimer(timeLeft)}
+                  </span>
+                </div>
+              )}
+
+              {timeLeft > 0 && error && <p className="text-sm text-rose-500 text-center">{error}</p>}
+
+              {timeLeft <= 0 ? (
                 <button
                   type="button"
                   onClick={handleResend}
-                  disabled={!canResend || isResending}
-                  className="flex items-center gap-1 text-cyan-600 dark:text-cyan-400 hover:underline disabled:opacity-50 disabled:no-underline font-medium cursor-pointer"
+                  disabled={isResending}
+                  className="w-full rounded-xl h-11 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-base disabled:opacity-50 cursor-pointer"
                 >
-                  <Refresh2 size={12} className={isResending ? 'animate-spin' : ''} />
-                  {isResending ? 'Sending...' : canResend ? 'Resend' : `Resend (${cooldown}s)`}
+                  {isResending ? 'Sending...' : 'Resend'}
                 </button>
-              </div>
-
-              {error && <p className="text-sm text-rose-500">{error}</p>}
-
-              <button
-                type="submit"
-                disabled={isSubmitting || otp.some((d) => d === '') || timeLeft <= 0}
-                className="w-full rounded-xl h-11 bg-cyan-600 hover:bg-cyan-500 text-white font-bold disabled:opacity-50 cursor-pointer"
-              >
-                {isSubmitting ? 'Verifying...' : 'Verify & Unlock'}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setView('login')
-                  setError('')
-                  setMessage('')
-                }}
-                className="w-full flex items-center justify-center gap-1.5 text-xs text-[color:var(--app-muted)] cursor-pointer"
-              >
-                <ArrowLeft size={14} />
-                Back to Password
-              </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={isSubmitting || otp.some((d) => d === '')}
+                  className="w-full rounded-xl h-11 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-base disabled:opacity-50 cursor-pointer"
+                >
+                  {isSubmitting ? 'Verifying...' : 'Verify'}
+                </button>
+              )}
             </form>
           </>
         )}
