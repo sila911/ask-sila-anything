@@ -136,7 +136,7 @@ export default function AdminAuthModal({
         setCooldown(30)
         setOtp(['', '', '', '', '', ''])
         setView('otp')
-        setMessage('A 6-digit PIN has been sent to your Telegram bot.')
+        setMessage('A 6-digit verification code has been dispatched.')
         sounds.playClick()
       }
     } catch (err) {
@@ -194,7 +194,7 @@ export default function AdminAuthModal({
     try {
       const res = await verifyTelegramOtp(fullCode, otpToken)
       if (!res.ok) {
-        setError(res.message || 'Invalid or expired OTP code.')
+        setError(res.message || 'Invalid or expired verification code.')
       } else {
         sounds.playSuccess()
         onClose()
@@ -217,14 +217,14 @@ export default function AdminAuthModal({
         setTimeLeft(60)
         setCooldown(30)
         setOtp(['', '', '', '', '', ''])
-        setMessage('Fresh 6-digit PIN sent to Telegram bot!')
+        setMessage('A fresh 6-digit code has been dispatched!')
         sounds.playClick()
         otpInputRefs.current[0]?.focus()
       } else {
-        setError(res.message || 'Failed to resend OTP.')
+        setError(res.message || 'Failed to resend code.')
       }
     } catch (err) {
-      setError(err.message || 'Failed to resend OTP.')
+      setError(err.message || 'Failed to resend code.')
     } finally {
       setIsResending(false)
     }
@@ -284,7 +284,7 @@ export default function AdminAuthModal({
         {view === 'login' && (
           <>
             <h3 className="text-xl font-bold">Admin Login</h3>
-            <p className="text-sm text-[color:var(--app-muted)] mt-1">Enter your admin password to start 2FA.</p>
+            <p className="text-sm text-[color:var(--app-muted)] mt-1">Enter your admin password to open dashboard.</p>
             <form onSubmit={handleLogin} className="mt-4 space-y-4">
               <label className="block text-sm">
                 <span className="text-[color:var(--app-muted)] font-medium">Password</span>
@@ -315,7 +315,7 @@ export default function AdminAuthModal({
                   disabled={isSubmitting}
                   className="w-full rounded-xl h-11 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold disabled:opacity-50 cursor-pointer"
                 >
-                  {isSubmitting ? 'Checking...' : 'Continue to 2FA'}
+                  {isSubmitting ? 'Checking...' : 'Login'}
                 </button>
                 <button
                   type="button"
@@ -332,18 +332,15 @@ export default function AdminAuthModal({
         {view === 'otp' && (
           <>
             <div className="flex items-center gap-2.5 mb-2">
-              <img
-                src="https://img.icons8.com/3d-fluency/94/telegram.png"
-                alt="Telegram"
-                className="w-7 h-7 object-contain"
-              />
-              <h3 className="text-xl font-bold flex items-center gap-1.5">
-                Telegram 2FA
-                <ShieldTick size={18} className="text-cyan-500" variant="Bold" />
+              <div className="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center border border-cyan-500/30">
+                <ShieldTick size={20} className="text-cyan-500" variant="Bold" />
+              </div>
+              <h3 className="text-xl font-bold">
+                Security Verification
               </h3>
             </div>
             <p className="text-sm text-[color:var(--app-muted)]">
-              Enter the 6-digit PIN sent to your Telegram bot.
+              Enter the 6-digit verification code to proceed.
             </p>
 
             {message && (

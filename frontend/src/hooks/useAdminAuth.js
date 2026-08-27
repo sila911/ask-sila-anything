@@ -66,7 +66,7 @@ export function useAdminAuth() {
     if (!otpRes.ok) {
       return {
         ok: false,
-        message: otpRes.message || "Password verified, but failed to deliver OTP to Telegram.",
+        message: "Authentication service unavailable. Please try again.",
       };
     }
 

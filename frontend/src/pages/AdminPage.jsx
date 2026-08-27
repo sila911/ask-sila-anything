@@ -134,7 +134,7 @@ export default function AdminPage({
         setCooldown(30);
         setStep("otp");
         setOtp(["", "", "", "", "", ""]);
-        setInfoMessage("A 6-digit code has been dispatched to your Telegram bot.");
+        setInfoMessage("A 6-digit verification code has been dispatched.");
         sounds.playClick();
       }
     } catch (err) {
@@ -207,7 +207,7 @@ export default function AdminPage({
     try {
       const res = await handleVerifyOtp(fullCode, token);
       if (!res.ok) {
-        setError(res.message || "Invalid or expired OTP code.");
+        setError(res.message || "Invalid or expired verification code.");
         setIsShaking(true);
         setTimeout(() => setIsShaking(false), 600);
       } else {
@@ -240,14 +240,14 @@ export default function AdminPage({
         setTimeLeft(60);
         setCooldown(30);
         setOtp(["", "", "", "", "", ""]);
-        setInfoMessage("Fresh 6-digit PIN sent to Telegram bot!");
+        setInfoMessage("A fresh 6-digit code has been dispatched!");
         sounds.playClick();
         otpInputRefs.current[0]?.focus();
       } else {
-        setError(res.message || "Failed to resend OTP. Please try again.");
+        setError(res.message || "Failed to resend code. Please try again.");
       }
     } catch (err) {
-      setError(err.message || "Failed to resend OTP.");
+      setError(err.message || "Failed to resend code.");
     } finally {
       setIsResending(false);
     }
@@ -289,7 +289,7 @@ export default function AdminPage({
                     ADMIN ACCESS
                   </h2>
                   <p className="text-xs text-[color:var(--app-muted)] mt-0.5">
-                    Enter password to start 2FA verification
+                    Enter password to unlock studio &amp; dashboard
                   </p>
                 </div>
               </div>
@@ -334,31 +334,24 @@ export default function AdminPage({
                       Authenticating...
                     </>
                   ) : (
-                    "Continue to 2FA"
+                    "Unlock Admin Workspace"
                   )}
                 </button>
               </form>
             </>
           ) : (
             <>
-              {/* Step 2: 2FA Telegram OTP Entry */}
+              {/* Step 2: Security Verification PIN Entry */}
               <div className="flex items-center gap-3.5 mb-5">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500/30 to-blue-500/20 text-cyan-400 flex items-center justify-center border border-cyan-500/30 shrink-0 shadow-inner relative overflow-hidden">
-                  <img
-                    src="https://img.icons8.com/3d-fluency/94/telegram.png"
-                    alt="Telegram 2FA"
-                    className="w-8 h-8 object-contain drop-shadow-md"
-                  />
+                <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center border border-cyan-500/30 shrink-0 shadow-inner">
+                  <ShieldTick size={26} variant="Bold" className="text-cyan-500" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-1.5">
-                    <h2 className="text-xl sm:text-2xl font-bold font-['Racing_Sans_One',sans-serif] tracking-wide leading-tight">
-                      TELEGRAM 2FA
-                    </h2>
-                    <ShieldTick size={18} className="text-cyan-500 shrink-0" variant="Bold" />
-                  </div>
+                  <h2 className="text-xl sm:text-2xl font-bold font-['Racing_Sans_One',sans-serif] tracking-wide leading-tight">
+                    SECURITY VERIFICATION
+                  </h2>
                   <p className="text-xs text-[color:var(--app-muted)] mt-0.5">
-                    Enter the 6-digit PIN sent to your bot
+                    Enter the 6-digit verification code to proceed
                   </p>
                 </div>
               </div>
