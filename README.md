@@ -1,89 +1,121 @@
-# Ask Sila Story Studio
+# Ask Sila Anything
 
-A full-stack application where users submit questions and admins create styled answer images for social media stories.
+An interactive, real-time anonymous Q&A web platform and social media story creator built with **React**, **Tailwind CSS**, and **Supabase**.
 
-## Architecture & Features
+---
 
-The project is built with a **React frontend** and uses **Supabase** for a robust, real-time backend-as-a-service (BaaS) architecture.
+## ✨ Features & Highlights
 
-### User Flow
-- **Submit Questions**: Users can ask anything through a simple, sleek interface.
-- **Curiosity Lock**: The public list of recent questions is blurred and locked until the user asks their own question.
-- **Recently Asked**: A public list of recent questions with real-time updates and sorting/filtering options. 
-- **Auto-Answers**: Once an admin replies, the answer is displayed directly under the question in the public list.
-- **Engagement**: Users can like, comment, and share questions they find interesting.
+### 💬 Interactive Q&A
 
-### Admin Flow
-- **Secured Access**: Admin login is hidden behind the `Sila` footer trigger and secured by **Supabase Auth**.
-- **Answer Creator**: Admins select a user question, write an answer, and can style a beautiful image for Instagram/Facebook stories.
-- **Persistent Storage**: All questions, events, and designs are stored in **Supabase Database**.
+- **Anonymous Submissions**: Anyone can ask questions anonymously with instant submission feedback.
+- **Curiosity Lock**: Interactive unlock mechanic that reveals the community question feed once an inquiry is submitted.
+- **Real-Time Feed & Live Typing**: Real-time synchronization for new questions, answers, and live typing simulations.
+- **Interactive Reactions & Audio**: Multi-reaction buttons (Heart, Haha, Think, Wow, Fire) with emoji particle bursts and synthesized Web Audio effects.
+- **Rich Comments & Discussion**: Nested discussion threads with real-time updates and reaction feedback.
 
-### UI & UX
-- **Default Dark Mode**: The application defaults to a sleek dark mode theme optimized for readability, with a glassmorphism light mode alternative.
-- **Modern Profile Card**: Features a beautiful cover banner and an overlapping profile avatar for a professional look.
-- **Optimized for Mobile**: Responsive layout with minimized margins and optimized font sizes for better readability on phone devices.
-- **Glassmorphism Design**: Sleek, modern UI with frosted glass effects and smooth transitions.
-- **Consolidated Typography**: The application uses exactly two premium font families: **Racing Sans One** (headers) and **Mali** (body & Sila's answers).
-- **Premium Iconography**: Integrated **IconSax** (`iconsax-react`) across all pages and modals for a unified, high-quality, and modern style.
+### 🎨 Visual Story Studio
 
-### Story Generator
-- Renders question (top) and answer (bottom) in one high-quality image.
-- Supports instant **Copy to Clipboard** (browser permitting) or **Download**.
-- Quick-open links to Instagram and Facebook story creation pages.
+- **High-Quality Story Card Generator**: Generates styled visual story graphics combining questions and handwritten-style answers.
+- **Instant Export & Sharing**: 1-click high-resolution image download, direct clipboard copy, and quick share links for Instagram and Facebook Stories.
+- **Dynamic Theming**: Customizable background gradients, typography, and card stylings.
 
-## Tech Stack
+### 💎 Design System & Micro-Interactions
 
-### Frontend
-- **React 18** + **Vite**
-- **Tailwind CSS**
-- **IconSax React** (`iconsax-react`)
+- **Glassmorphism Aesthetic**: Translucent frosted glass cards (`glass-shell` and `glass-subpane`) with fluid light and dark mode toggling.
+- **Curated Typography**: Headers rendered with **Racing Sans One** paired with handwritten **Mali** cursive for answers.
+- **Zero-Asset Sound Synthesizer**: Procedural Web Audio API sound effects for pops, sparkles, tab clicks, and success chimes.
+- **Mobile-First Responsive Layout**: Smooth gesture interactions, swipeable reactions, and touch-optimized bottom sheets.
 
-### Backend (BaaS)
-- **Supabase** (Authentication, Database, Real-time)
-- **PostgreSQL** (Managed by Supabase)
+---
 
-## Project Structure
+## 🛠️ Tech Stack
+
+| Layer                    | Technology                                                                   |
+| :----------------------- | :--------------------------------------------------------------------------- |
+| **Frontend Framework**   | [React 18](https://react.dev/) + [Vite](https://vitejs.dev/)                 |
+| **Styling & UI**         | [Tailwind CSS](https://tailwindcss.com/) + Custom Glassmorphism System       |
+| **Motion & Animation**   | [Framer Motion](https://www.framer.com/motion/)                              |
+| **Iconography**          | [Iconsax React](https://iconsax-react.pages.dev/)                            |
+| **Audio Engine**         | Web Audio API Synthesizer (Zero asset dependencies)                          |
+| **Backend as a Service** | [Supabase](https://supabase.com/) (PostgreSQL, Realtime, Row Level Security) |
+
+---
+
+## 📁 Project Structure
 
 ```text
-/frontend         # Vite + React application
-supabase_setup.sql # Database schema and RLS policies for Supabase
+├── frontend/
+│   ├── src/
+│   │   ├── assets/        # Static imagery & brand assets
+│   │   ├── components/    # Reusable UI cards, modals, sheets & reactions
+│   │   ├── hooks/         # Custom React hooks (theming, audio, realtime)
+│   │   ├── lib/           # Supabase client, storage layer & utilities
+│   │   ├── pages/         # Application views & Story Studio
+│   │   └── utils/         # Sound synthesizer & time formatters
+│   └── package.json
+├── package.json           # Root workspace scripts
+└── supabase_setup.sql     # Database schema, tables, and RLS policies
 ```
 
-## Setup & Installation
+---
 
-### Supabase Setup
+## 🚀 Getting Started
 
-1. Create a new project on [Supabase](https://supabase.com/).
-2. Run the SQL in `supabase_setup.sql` in your Supabase SQL Editor to set up tables and Row Level Security (RLS) policies.
-3. Obtain your `SUPABASE_URL` and `SUPABASE_ANON_KEY` from the project settings.
+### Prerequisites
 
-### Frontend Setup (Vite)
+- **Node.js** (v18 or higher)
+- **npm** (or `pnpm` / `yarn`)
+- A [Supabase](https://supabase.com/) project
 
-1.  Navigate to `frontend/`.
-2.  Install dependencies:
-    ```bash
-    npm install
-    ```
-3.  Configure environment:
-    Create a `.env` file in `frontend/` with:
-    ```text
-    VITE_SUPABASE_URL=your_supabase_url
-    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-    ```
-4.  Start development server:
-    ```bash
-    npm run dev
-    ```
+### 1. Clone & Install
 
-## Admin Access
+```bash
+git clone https://github.com/sila911/ask-sila.git
+cd ask-sila
+npm install
+npm install --prefix frontend
+```
 
-1. Open the app and click `Sila` in the footer.
-2. If it's your first time, you'll be prompted to set up an admin password.
-3. Workspace includes:
-   - `Create`: Answer generator and persistent reply tool.
-   - `Library`: Gallery of saved answers.
-   - `Admin`: Analytics dashboard for metrics (questions, views, shares).
+### 2. Configure Environment Variables
 
-## License
+Create a `.env` file inside the `frontend/` directory:
 
-MIT
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_public_key
+```
+
+### 3. Initialize Database
+
+Execute the SQL statements from `supabase_setup.sql` in your Supabase SQL Editor to configure tables, indexes, and Row Level Security (RLS) policies.
+
+### 4. Run Development Server
+
+```bash
+npm run dev
+```
+
+Visit `http://localhost:5173` in your browser.
+
+---
+
+## 📦 Production Build
+
+To build the frontend for production:
+
+```bash
+npm run build
+```
+
+To preview the production build locally:
+
+```bash
+npm run preview
+```
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
