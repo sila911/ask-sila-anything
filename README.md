@@ -46,7 +46,6 @@ The project is built with a **React frontend** and uses **Supabase** for a robus
 
 ```text
 /frontend         # Vite + React application
-/backend          # (Legacy) Laravel application
 supabase_setup.sql # Database schema and RLS policies for Supabase
 ```
 
