@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, EyeSlash, Lock, ShieldTick, Refresh2, ArrowLeft } from "iconsax-react";
+import { Eye, EyeSlash, Refresh2, ArrowLeft2 } from "iconsax-react";
 import { sounds } from "../utils/soundEffects";
 import CreateDesign from "../components/admin/CreateDesign";
 import Library from "../components/admin/Library";
@@ -46,6 +47,8 @@ export default function AdminPage({
   setSeedDesign,
   linkMessage,
 }) {
+  const navigate = useNavigate();
+
   // ─── Step Management: 'password' | 'otp' ──────────────────────────────────
   const [step, setStep] = useState("password");
   const [password, setPassword] = useState("");
@@ -115,7 +118,18 @@ export default function AdminPage({
   // ─── Step 1: Submit Password ──────────────────────────────────────────────
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
-    if (!password) return;
+    if (!password) {
+      const msg = "Please enter your admin password.";
+      setError(msg);
+      showAdminToast?.("Validation Error", msg, "error");
+      return;
+    }
+    if (password.length < 4) {
+      const msg = "Password must be at least 4 characters.";
+      setError(msg);
+      showAdminToast?.("Validation Error", msg, "error");
+      return;
+    }
     setIsLoading(true);
     setError("");
     setInfoMessage("");
@@ -123,7 +137,9 @@ export default function AdminPage({
     try {
       const res = await handleAdminAuth(password);
       if (!res.ok) {
-        setError(res.message || "Invalid admin password.");
+        const msg = res.message || "Invalid admin password.";
+        setError(msg);
+        showAdminToast?.("Authentication Failed", msg, "error");
         setIsLoading(false);
         return;
       }
@@ -135,10 +151,13 @@ export default function AdminPage({
         setStep("otp");
         setOtp(["", "", "", "", "", ""]);
         setInfoMessage("A 6-digit verification code has been dispatched.");
+        showAdminToast?.("Code Dispatched", "A 6-digit verification code has been dispatched.", "info");
         sounds.playClick();
       }
     } catch (err) {
-      setError(err.message || "Authentication error occurred.");
+      const msg = err.message || "Authentication error occurred.";
+      setError(msg);
+      showAdminToast?.("Authentication Error", msg, "error");
     } finally {
       setIsLoading(false);
     }
@@ -193,11 +212,15 @@ export default function AdminPage({
 
   const triggerVerify = async (fullCode) => {
     if (!fullCode || fullCode.length !== 6) {
-      setError("Please enter the complete 6-digit PIN.");
+      const msg = "Please enter the complete 6-digit PIN.";
+      setError(msg);
+      showAdminToast?.("PIN Incomplete", msg, "error");
       return;
     }
     if (timeLeft <= 0) {
-      setError("Verification code has expired. Please request a new code.");
+      const msg = "Verification code has expired. Please request a new code.";
+      setError(msg);
+      showAdminToast?.("Code Expired", msg, "error");
       return;
     }
 
@@ -207,14 +230,18 @@ export default function AdminPage({
     try {
       const res = await handleVerifyOtp(fullCode, token);
       if (!res.ok) {
-        setError(res.message || "Invalid or expired verification code.");
+        const msg = res.message || "Invalid or expired verification code.";
+        setError(msg);
+        showAdminToast?.("Verification Failed", msg, "error");
         setIsShaking(true);
         setTimeout(() => setIsShaking(false), 600);
       } else {
         sounds.playSuccess();
       }
     } catch (err) {
-      setError(err.message || "Verification failed. Please try again.");
+      const msg = err.message || "Verification failed. Please try again.";
+      setError(msg);
+      showAdminToast?.("Verification Error", msg, "error");
       setIsShaking(true);
       setTimeout(() => setIsShaking(false), 600);
     } finally {
@@ -241,13 +268,18 @@ export default function AdminPage({
         setCooldown(30);
         setOtp(["", "", "", "", "", ""]);
         setInfoMessage("A fresh 6-digit code has been dispatched!");
+        showAdminToast?.("Code Dispatched", "A fresh 6-digit code has been dispatched!", "info");
         sounds.playClick();
         otpInputRefs.current[0]?.focus();
       } else {
-        setError(res.message || "Failed to resend code. Please try again.");
+        const msg = res.message || "Failed to resend code. Please try again.";
+        setError(msg);
+        showAdminToast?.("Resend Failed", msg, "error");
       }
     } catch (err) {
-      setError(err.message || "Failed to resend code.");
+      const msg = err.message || "Failed to resend code.";
+      setError(msg);
+      showAdminToast?.("Resend Failed", msg, "error");
     } finally {
       setIsResending(false);
     }
@@ -274,24 +306,48 @@ export default function AdminPage({
     return (
       <div className="w-full max-w-md mx-auto p-4 animate-in fade-in zoom-in duration-300">
         <div
-          className={`glass-shell rounded-3xl p-6 sm:p-8 border border-white/20 shadow-2xl transition-all duration-300 ${
+          className={`glass-shell relative rounded-[2.5rem] p-6 sm:p-8 border border-white/20 shadow-2xl transition-all duration-300 ${
             isShaking ? "animate-shake" : ""
           }`}
         >
+          {/* Top-Left Back Icon (<) */}
+          <button
+            type="button"
+            onClick={() => {
+              if (step === "otp") {
+                setStep("password");
+                setError("");
+                setInfoMessage("");
+                sounds.playClick();
+              } else {
+                navigate("/");
+              }
+            }}
+            className="absolute left-5 top-5 w-9 h-9 sm:w-10 sm:h-10 rounded-full theme-toggle-btn flex items-center justify-center cursor-pointer text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-all active:scale-90 shadow-sm z-10"
+            aria-label="Back"
+            title={step === "otp" ? "Back to Password" : "Back to Home"}
+          >
+            <ArrowLeft2 size={18} />
+          </button>
+
           {step === "password" ? (
             <>
-              <div className="flex items-center gap-3.5 mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-500 flex items-center justify-center border border-cyan-500/30 shrink-0 shadow-inner">
-                  <Lock size={24} variant="Bold" />
+              {/* Big 3D Lock Icon on Top */}
+              <div className="flex flex-col items-center justify-center text-center pt-2 mb-6">
+                <div className="relative mb-3 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-cyan-500/20 rounded-full blur-xl scale-125 pointer-events-none" />
+                  <img
+                    src="https://img.icons8.com/3d-fluency/188/lock-2.png"
+                    alt="Admin Access"
+                    className="w-20 h-20 sm:w-24 sm:h-24 object-contain relative drop-shadow-2xl hover:scale-105 transition-transform duration-300"
+                  />
                 </div>
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-bold font-['Racing_Sans_One',sans-serif] tracking-wide leading-tight">
-                    ADMIN ACCESS
-                  </h2>
-                  <p className="text-xs text-[color:var(--app-muted)] mt-0.5">
-                    Enter password to unlock studio &amp; dashboard
-                  </p>
-                </div>
+                <h2 className="text-2xl sm:text-3xl font-bold font-['Racing_Sans_One',sans-serif] tracking-wide text-[color:var(--app-text)]">
+                  ADMIN ACCESS
+                </h2>
+                <p className="text-xs sm:text-sm text-[color:var(--app-muted)] mt-1 max-w-xs">
+                  Enter password to unlock studio &amp; dashboard
+                </p>
               </div>
 
               <form onSubmit={handlePasswordSubmit} className="space-y-4">
@@ -326,38 +382,41 @@ export default function AdminPage({
                 <button
                   type="submit"
                   disabled={isLoading || !password}
-                  className="w-full h-12 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-sm shadow-lg shadow-cyan-600/30 active:scale-95 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                  className="w-full h-12 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-base shadow-lg shadow-cyan-600/30 active:scale-95 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
                 >
                   {isLoading ? (
                     <>
                       <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Authenticating...
+                      Checking...
                     </>
                   ) : (
-                    "Unlock Admin Workspace"
+                    "Unlock"
                   )}
                 </button>
               </form>
             </>
           ) : (
             <>
-              {/* Step 2: Security Verification PIN Entry */}
-              <div className="flex items-center gap-3.5 mb-5">
-                <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center border border-cyan-500/30 shrink-0 shadow-inner">
-                  <ShieldTick size={26} variant="Bold" className="text-cyan-500" />
+              {/* Step 2: Big 3D Shield Icon on Top */}
+              <div className="flex flex-col items-center justify-center text-center pt-2 mb-5">
+                <div className="relative mb-3 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-cyan-500/20 rounded-full blur-xl scale-125 pointer-events-none" />
+                  <img
+                    src="https://img.icons8.com/3d-fluency/188/shield.png"
+                    alt="Security Verification"
+                    className="w-20 h-20 sm:w-24 sm:h-24 object-contain relative drop-shadow-2xl hover:scale-105 transition-transform duration-300"
+                  />
                 </div>
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-bold font-['Racing_Sans_One',sans-serif] tracking-wide leading-tight">
-                    SECURITY VERIFICATION
-                  </h2>
-                  <p className="text-xs text-[color:var(--app-muted)] mt-0.5">
-                    Enter the 6-digit verification code to proceed
-                  </p>
-                </div>
+                <h2 className="text-2xl sm:text-3xl font-bold font-['Racing_Sans_One',sans-serif] tracking-wide text-[color:var(--app-text)]">
+                  SECURITY VERIFICATION
+                </h2>
+                <p className="text-xs sm:text-sm text-[color:var(--app-muted)] mt-1 max-w-xs">
+                  Enter the 6-digit verification code to proceed
+                </p>
               </div>
 
               {infoMessage && (
-                <div className="mb-4 p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 text-xs flex items-center gap-2 animate-in fade-in">
+                <div className="mb-4 p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 text-xs flex items-center justify-center gap-2 animate-in fade-in">
                   <span className="w-2 h-2 rounded-full bg-cyan-500 shrink-0 animate-ping" />
                   <span>{infoMessage}</span>
                 </div>
@@ -390,7 +449,7 @@ export default function AdminPage({
 
                 {/* Expiry and Cooldown Bar */}
                 <div className="flex items-center justify-between text-xs text-[color:var(--app-muted)] px-1">
-                  <span className={`font-mono font-medium ${timeLeft < 60 ? "text-rose-500 animate-pulse" : ""}`}>
+                  <span className={`font-mono font-medium ${timeLeft < 20 ? "text-rose-500 animate-pulse" : ""}`}>
                     ⏱️ Expires in: {formatTimer(timeLeft)}
                   </span>
                   <button
@@ -417,30 +476,16 @@ export default function AdminPage({
                 <button
                   type="submit"
                   disabled={isLoading || otp.some((d) => d === "") || timeLeft <= 0}
-                  className="w-full h-12 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-sm shadow-lg shadow-cyan-600/30 active:scale-95 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                  className="w-full h-12 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-base shadow-lg shadow-cyan-600/30 active:scale-95 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
                 >
                   {isLoading ? (
                     <>
                       <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Verifying PIN...
+                      Verifying...
                     </>
                   ) : (
-                    "Verify & Unlock"
+                    "Verify"
                   )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStep("password");
-                    setError("");
-                    setInfoMessage("");
-                    sounds.playClick();
-                  }}
-                  className="w-full flex items-center justify-center gap-1.5 text-xs text-[color:var(--app-muted)] hover:text-slate-800 dark:hover:text-zinc-200 transition-colors pt-1 cursor-pointer"
-                >
-                  <ArrowLeft size={14} />
-                  Back to Password
                 </button>
               </form>
             </>

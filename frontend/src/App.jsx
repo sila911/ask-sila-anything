@@ -215,7 +215,7 @@ export default function App() {
 
       <ThankYouModal isOpen={showModal} onClose={() => setShowModal(false)} />
 
-      {isCurrentlyAdmin && (
+      {adminToast && (
         <AdminToastCard
           toast={adminToast}
           onClose={() => setAdminToast(null)}
