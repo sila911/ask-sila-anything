@@ -100,6 +100,39 @@ function apiDevPlugin() {
           }
         }
 
+        if (url === '/api/telegram-otp') {
+          try {
+            let body = '';
+            req.on('data', chunk => { body += chunk; });
+            req.on('end', async () => {
+              try {
+                req.body = body ? JSON.parse(body) : {};
+              } catch (e) {
+                req.body = {};
+              }
+
+              res.status = (code) => {
+                res.statusCode = code;
+                return res;
+              };
+              res.json = (data) => {
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify(data));
+              };
+
+              const { default: handler } = await import('./api/telegram-otp.js');
+              await handler(req, res);
+            });
+            return;
+          } catch (err) {
+            console.error('API Telegram OTP Dev Server error:', err);
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: err.message }));
+            return;
+          }
+        }
+
         if (url === '/api/telegram-webhook') {
           try {
             let body = '';

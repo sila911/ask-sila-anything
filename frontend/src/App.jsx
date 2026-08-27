@@ -54,7 +54,15 @@ export default function App() {
 
   // ─── Hooks ────────────────────────────────────────────────────────────────
   const { adminToast, setAdminToast, showAdminToast } = useAdminToast();
-  const { isAdminUnlocked, setIsAdminUnlocked, isAuthChecking, handleAdminAuth, handleLogout } = useAdminAuth();
+  const {
+    isAdminUnlocked,
+    setIsAdminUnlocked,
+    isAuthChecking,
+    handleAdminAuth,
+    handleVerifyOtp,
+    handleResendOtp,
+    handleLogout,
+  } = useAdminAuth();
   const {
     designs, events, questions, setQuestions, comments, setComments,
     isLoading, fetchError, hasNewQuestions, hasAskedQuestion,
@@ -78,13 +86,12 @@ export default function App() {
   // ─── Derived ─────────────────────────────────────────────────────────────
   const isCurrentlyAdmin = location.pathname === "/fuckoff" && isAdminUnlocked;
 
-  const handleAdminAuthWithNav = async (password) => {
-    const res = await handleAdminAuth(password);
+  const handleVerifyOtpWithNav = async (otp, token) => {
+    const res = await handleVerifyOtp(otp, token);
     if (res.ok) {
       changeTabWithDirection("create");
-      if (location.pathname !== "/fuckoff") navigate("/");
-      trackEvent("admin_login");
-      showAdminToast("Admin unlocked", "Welcome back to admin workspace.", "success");
+      trackEvent("admin_login_2fa");
+      showAdminToast("Admin Unlocked", "Welcome back to admin workspace.", "success");
     }
     return res;
   };
@@ -152,7 +159,9 @@ export default function App() {
               <AdminPage
                 isAdminUnlocked={isAdminUnlocked}
                 isAuthChecking={isAuthChecking}
-                handleAdminAuth={handleAdminAuthWithNav}
+                handleAdminAuth={handleAdminAuth}
+                handleVerifyOtp={handleVerifyOtpWithNav}
+                handleResendOtp={handleResendOtp}
                 activeTab={activeTab}
                 tabDirection={tabDirection}
                 changeTabWithDirection={changeTabWithDirection}
