@@ -13,6 +13,7 @@ import AdminForgotResetView from "./auth/AdminForgotResetView";
 
 export default function AdminAuthModal({ isOpen, onClose, onSubmit }) {
   const [view, setView] = useState("login"); // 'login', 'otp', 'forgot', 'reset'
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [lastFailedPassword, setLastFailedPassword] = useState("");
@@ -251,34 +252,50 @@ export default function AdminAuthModal({ isOpen, onClose, onSubmit }) {
   };
 
   const handleForgot = async (e) => {
-    e.preventDefault();
+    e?.preventDefault?.();
+    if (!email) {
+      setError("Please enter your admin Gmail address.");
+      return;
+    }
     setIsSubmitting(true);
     setError("");
     setMessage("");
     try {
-      await requestPasswordReset();
+      const res = await requestPasswordReset(email);
+      setMessage(res.message || "6-digit reset code sent to your Gmail!");
       setView("reset");
     } catch (err) {
-      setError(err.message || "Failed to send reset code");
+      setError(err.message || "Failed to send reset code.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleReset = async (e) => {
-    e.preventDefault();
+    e?.preventDefault?.();
+    if (!code || code.length < 6) {
+      setError("Please enter the complete 6-digit code.");
+      return;
+    }
+    if (!newPassword || newPassword.length < 4) {
+      setError("Password must be at least 4 characters.");
+      return;
+    }
     setIsSubmitting(true);
     setError("");
     setMessage("");
     try {
-      await submitPasswordReset(code, newPassword);
-      setMessage("Password reset successful! Logging in...");
+      const res = await submitPasswordReset(code, newPassword, email);
+      setMessage(res.message || "Password reset successful! Logging in...");
+      sounds.playSuccess();
       setTimeout(() => {
         setView("login");
         setMessage("");
+        setCode("");
+        setNewPassword("");
       }, 2000);
     } catch (err) {
-      setError(err.message || "Failed to reset password");
+      setError(err.message || "Failed to reset password.");
     } finally {
       setIsSubmitting(false);
     }
@@ -316,7 +333,12 @@ export default function AdminAuthModal({ isOpen, onClose, onSubmit }) {
         <button
           type="button"
           onClick={() => {
-            if (view === "otp" || view === "forgot" || view === "reset") {
+            if (view === "reset") {
+              setView("forgot");
+              setError("");
+              setMessage("");
+              sounds.playClick();
+            } else if (view === "otp" || view === "forgot") {
               setView("login");
               setError("");
               setMessage("");
@@ -341,7 +363,11 @@ export default function AdminAuthModal({ isOpen, onClose, onSubmit }) {
             error={error}
             isSubmitting={isSubmitting}
             handleLogin={handleLogin}
-            onForgotPassword={() => setView("forgot")}
+            onForgotPassword={() => {
+              setView("forgot");
+              setError("");
+              setMessage("");
+            }}
           />
         )}
 
@@ -367,6 +393,8 @@ export default function AdminAuthModal({ isOpen, onClose, onSubmit }) {
           <AdminForgotResetView
             view={view}
             setView={setView}
+            email={email}
+            setEmail={setEmail}
             code={code}
             setCode={setCode}
             newPassword={newPassword}

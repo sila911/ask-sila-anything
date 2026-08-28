@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Eye, EyeSlash, ArrowLeft2 } from "iconsax-react";
 import { sounds } from "../../../utils/soundEffects";
+import { requestPasswordReset, submitPasswordReset } from "../../../lib/adminAccess";
 
 export default function AdminLockScreen({
   handleAdminAuth,
@@ -10,14 +11,52 @@ export default function AdminLockScreen({
   showAdminToast,
 }) {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // ─── Step Management: 'password' | 'otp' ──────────────
-  const [step, setStep] = useState("password");
+  const basePath = location.pathname.startsWith("/admin") ? "/admin" : "/fuckoff";
+
+  // Determine initial step from current URL pathname
+  const getStepFromPath = (path) => {
+    if (path.endsWith("/2fa") || path.endsWith("/otp")) return "otp";
+    if (path.endsWith("/forgot")) return "forgot";
+    if (path.endsWith("/reset")) return "reset";
+    return "password";
+  };
+
+  // ─── Step Management: 'password' | 'otp' | 'forgot' | 'reset' ─────────────
+  const [step, setStep] = useState(() => getStepFromPath(location.pathname));
+
+  useEffect(() => {
+    const matchedStep = getStepFromPath(location.pathname);
+    if (matchedStep !== step) {
+      setStep(matchedStep);
+    }
+  }, [location.pathname]);
+
+  const changeStep = (nextStep) => {
+    setStep(nextStep);
+    if (nextStep === "otp") {
+      navigate(`${basePath}/2fa`);
+    } else if (nextStep === "forgot") {
+      navigate(`${basePath}/forgot`);
+    } else if (nextStep === "reset") {
+      navigate(`${basePath}/reset`);
+    } else {
+      navigate(basePath);
+    }
+  };
+
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [lastFailedPassword, setLastFailedPassword] = useState("");
 
-  // ─── 2FA OTP State ───────────────────────────
+  // ─── Forgot / Reset State ─────────────────────────────────────────────────
+  const [email, setEmail] = useState("");
+  const [resetCode, setResetCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+
+  // ─── 2FA OTP State ────────────────────────────────────────────────────────
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [token, setToken] = useState("");
   const [timeLeft, setTimeLeft] = useState(60); // 60s in seconds
@@ -32,7 +71,7 @@ export default function AdminLockScreen({
 
   const otpInputRefs = useRef([]);
 
-  // ─── Timer & Cooldown Handlers ────────────────
+  // ─── Timer & Cooldown Handlers ────────────────────────────────────────────
   useEffect(() => {
     let timer;
     if (step === "otp" && timeLeft > 0) {
@@ -79,7 +118,7 @@ export default function AdminLockScreen({
     }
   }, [step]);
 
-  // ─── Step 1: Submit Password ──────────────────
+  // ─── Step 1: Submit Password ──────────────────────────────────────────────
   const handlePasswordSubmit = async (e) => {
     e?.preventDefault?.();
     if (!password) {
@@ -117,7 +156,7 @@ export default function AdminLockScreen({
         setToken(res.token);
         setTimeLeft(60);
         setCooldown(30);
-        setStep("otp");
+        changeStep("otp");
         setOtp(["", "", "", "", "", ""]);
         setInfoMessage("A 6-digit verification code has been dispatched.");
         showAdminToast?.("Code Dispatched", "A 6-digit verification code has been dispatched.", "info");
@@ -133,7 +172,7 @@ export default function AdminLockScreen({
     }
   };
 
-  // ─── Step 2: OTP Pin Handling ───────────────
+  // ─── Step 2: OTP Pin Handling ─────────────────────────────────────────────
   const handleOtpChange = (index, value) => {
     if (timeLeft <= 0) return;
     const cleanVal = value.replace(/[^0-9]/g, "");
@@ -145,12 +184,10 @@ export default function AdminLockScreen({
     setOtp(newOtp);
     if (error) setError("");
 
-    // Auto-advance to next input
     if (cleanVal && index < 5) {
       otpInputRefs.current[index + 1]?.focus();
     }
 
-    // Auto-verify if all 6 digits are filled
     if (cleanVal && newOtp.every((d) => d !== "")) {
       const fullCode = newOtp.join("");
       triggerVerify(fullCode);
@@ -258,6 +295,73 @@ export default function AdminLockScreen({
     }
   };
 
+  // ─── Step 3: Forgot Password (Input Gmail & Request Code) ───────────────────
+  const handleForgot = async (e) => {
+    e?.preventDefault?.();
+    if (!email) {
+      const msg = "Please enter your Gmail address.";
+      setError(msg);
+      showAdminToast?.("Input Required", msg, "error");
+      return;
+    }
+    setIsLoading(true);
+    setError("");
+    setInfoMessage("");
+    try {
+      const res = await requestPasswordReset(email);
+      const msg = res.message || "6-digit reset code sent to your Gmail!";
+      setInfoMessage(msg);
+      showAdminToast?.("Code Sent", msg, "info");
+      sounds.playSuccess();
+      changeStep("reset");
+    } catch (err) {
+      const msg = err.message || "Failed to send reset code.";
+      setError(msg);
+      showAdminToast?.("Verification Failed", msg, "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ─── Step 4: Reset Password (Input Code & New Password) ───────────────────
+  const handleReset = async (e) => {
+    e?.preventDefault?.();
+    if (!resetCode || resetCode.length < 6) {
+      const msg = "Please enter the complete 6-digit reset code.";
+      setError(msg);
+      showAdminToast?.("Code Incomplete", msg, "error");
+      return;
+    }
+    if (!newPassword || newPassword.length < 4) {
+      const msg = "New password must be at least 4 characters.";
+      setError(msg);
+      showAdminToast?.("Invalid Password", msg, "error");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+    setInfoMessage("");
+    try {
+      const res = await submitPasswordReset(resetCode, newPassword, email);
+      const msg = res.message || "Password reset successful! Please unlock.";
+      showAdminToast?.("Success", msg, "success");
+      sounds.playSuccess();
+      changeStep("password");
+      setPassword("");
+      setResetCode("");
+      setNewPassword("");
+      setError("");
+      setInfoMessage("");
+    } catch (err) {
+      const msg = err.message || "Failed to reset password.";
+      setError(msg);
+      showAdminToast?.("Reset Failed", msg, "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const formatTimer = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -275,8 +379,13 @@ export default function AdminLockScreen({
         <button
           type="button"
           onClick={() => {
-            if (step === "otp") {
-              setStep("password");
+            if (step === "reset") {
+              changeStep("forgot");
+              setError("");
+              setInfoMessage("");
+              sounds.playClick();
+            } else if (step === "otp" || step === "forgot") {
+              changeStep("password");
               setError("");
               setInfoMessage("");
               sounds.playClick();
@@ -286,14 +395,14 @@ export default function AdminLockScreen({
           }}
           className="absolute left-5 top-5 w-9 h-9 sm:w-10 sm:h-10 rounded-full theme-toggle-btn flex items-center justify-center cursor-pointer text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-all active:scale-90 shadow-sm z-10"
           aria-label="Back"
-          title={step === "otp" ? "Back to Password" : "Back to Home"}
+          title={step === "reset" ? "Back to Email" : step === "otp" || step === "forgot" ? "Back to Password" : "Back to Home"}
         >
           <ArrowLeft2 size={18} />
         </button>
 
-        {step === "password" ? (
+        {/* ─── Step: Password Login ─── */}
+        {step === "password" && (
           <>
-            {/* Big 3D Lock Icon on Top */}
             <div className="flex flex-col items-center justify-center text-center pt-2 mb-6">
               <div className="relative mb-3 flex items-center justify-center">
                 <div className="absolute inset-0 bg-cyan-500/20 rounded-full blur-xl scale-125 pointer-events-none" />
@@ -353,7 +462,6 @@ export default function AdminLockScreen({
                   <button
                     type="submit"
                     onMouseDown={(e) => {
-                      // Prevent virtual keyboard dismiss layout shift from canceling click
                       e.preventDefault();
                     }}
                     disabled={isLoading || !password || isPasswordBlocked}
@@ -374,11 +482,197 @@ export default function AdminLockScreen({
                   </button>
                 );
               })()}
+
+              <div className="flex justify-center pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    changeStep("forgot");
+                    setError("");
+                    setInfoMessage("");
+                    sounds.playClick();
+                  }}
+                  className="text-xs text-cyan-600 dark:text-cyan-400 hover:underline cursor-pointer font-medium"
+                >
+                  Forgot Password?
+                </button>
+              </div>
             </form>
           </>
-        ) : (
+        )}
+
+        {/* ─── Step: Forgot Password (Enter Admin Gmail) ─── */}
+        {step === "forgot" && (
           <>
-            {/* Step 2: Big 3D Shield Icon on Top */}
+            <div className="flex flex-col items-center justify-center text-center pt-2 mb-6">
+              <div className="relative mb-3 flex items-center justify-center">
+                <div className="absolute inset-0 bg-cyan-500/20 rounded-full blur-xl scale-125 pointer-events-none" />
+                <img
+                  src="https://img.icons8.com/3d-fluency/188/mail.png"
+                  alt="Admin Gmail Verification"
+                  className="w-20 h-20 sm:w-24 sm:h-24 object-contain relative drop-shadow-2xl hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold font-['Racing_Sans_One',sans-serif] tracking-wide text-[color:var(--app-text)]">
+                VERIFY GMAIL
+              </h2>
+              <p className="text-xs sm:text-sm text-[color:var(--app-muted)] mt-1 max-w-xs">
+                Enter your Gmail to verify
+              </p>
+            </div>
+
+            {infoMessage && (
+              <div className="mb-4 p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 text-xs flex items-center justify-center gap-2 animate-in fade-in">
+                <span className="w-2 h-2 rounded-full bg-cyan-500 shrink-0 animate-ping" />
+                <span>{infoMessage}</span>
+              </div>
+            )}
+
+            {error && (
+              <p className="text-xs text-rose-500 font-medium px-1 mb-4 text-center animate-in fade-in">
+                {error}
+              </p>
+            )}
+
+            <form onSubmit={handleForgot} className="space-y-4">
+              <div className="relative">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (error) setError("");
+                  }}
+                  placeholder="Enter admin Gmail address..."
+                  className="w-full h-12 pl-4 pr-4 rounded-2xl bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/40"
+                  autoFocus
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading || !email}
+                className="w-full h-12 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-base shadow-lg shadow-cyan-600/30 active:scale-95 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+              >
+                {isLoading ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Sending Code...
+                  </>
+                ) : (
+                  "Send Code"
+                )}
+              </button>
+            </form>
+          </>
+        )}
+
+        {/* ─── Step: Reset Password (Enter Code & New Password) ─── */}
+        {step === "reset" && (
+          <>
+            <div className="flex flex-col items-center justify-center text-center pt-2 mb-5">
+              <div className="relative mb-3 flex items-center justify-center">
+                <div className="absolute inset-0 bg-cyan-500/20 rounded-full blur-xl scale-125 pointer-events-none" />
+                <img
+                  src="https://img.icons8.com/3d-fluency/188/key.png"
+                  alt="Reset Password"
+                  className="w-20 h-20 sm:w-24 sm:h-24 object-contain relative drop-shadow-2xl hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold font-['Racing_Sans_One',sans-serif] tracking-wide text-[color:var(--app-text)]">
+                RESET PASSWORD
+              </h2>
+              <p className="text-xs sm:text-sm text-[color:var(--app-muted)] mt-1 max-w-xs">
+                Enter the 6-digit code sent to <span className="font-semibold text-cyan-500">{email}</span>
+              </p>
+            </div>
+
+            {infoMessage && (
+              <div className="mb-4 p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 text-xs flex items-center justify-center gap-2 animate-in fade-in">
+                <span className="w-2 h-2 rounded-full bg-cyan-500 shrink-0 animate-ping" />
+                <span>{infoMessage}</span>
+              </div>
+            )}
+
+            {error && (
+              <p className="text-xs text-rose-500 font-medium px-1 mb-4 text-center animate-in fade-in">
+                {error}
+              </p>
+            )}
+
+            <form onSubmit={handleReset} className="space-y-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={resetCode}
+                  onChange={(e) => {
+                    setResetCode(e.target.value.replace(/[^0-9]/g, ""));
+                    if (error) setError("");
+                  }}
+                  placeholder="Enter 6-digit reset code"
+                  className="w-full h-12 px-4 rounded-2xl bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-center font-mono font-bold tracking-widest text-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/40"
+                  autoFocus
+                  required
+                />
+              </div>
+
+              <div className="relative">
+                <input
+                  type={showNewPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => {
+                    setNewPassword(e.target.value);
+                    if (error) setError("");
+                  }}
+                  placeholder="Enter new admin password..."
+                  className="w-full h-12 pl-4 pr-12 rounded-2xl bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/40"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 p-1"
+                  aria-label="Toggle password visibility"
+                >
+                  {showNewPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading || resetCode.length < 6 || !newPassword}
+                className="w-full h-12 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-base shadow-lg shadow-cyan-600/30 active:scale-95 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+              >
+                {isLoading ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Updating Password...
+                  </>
+                ) : (
+                  "Update Password"
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  changeStep("forgot");
+                  setError("");
+                  setInfoMessage("");
+                }}
+                className="w-full text-center text-xs text-[color:var(--app-muted)] hover:text-slate-200 cursor-pointer"
+              >
+                Change Email
+              </button>
+            </form>
+          </>
+        )}
+
+        {/* ─── Step: 2FA Telegram OTP ─── */}
+        {step === "otp" && (
+          <>
             <div className="flex flex-col items-center justify-center text-center pt-2 mb-5">
               <div className="relative mb-3 flex items-center justify-center">
                 <div className="absolute inset-0 bg-cyan-500/20 rounded-full blur-xl scale-125 pointer-events-none" />
@@ -389,18 +683,17 @@ export default function AdminLockScreen({
                 />
               </div>
               <h2 className="text-2xl sm:text-3xl font-bold font-['Racing_Sans_One',sans-serif] tracking-wide text-[color:var(--app-text)]">
-                  VERIFICATION
+                SECURITY VERIFICATION
               </h2>
               <p className="text-xs sm:text-sm text-[color:var(--app-muted)] mt-1 max-w-xs">
-                Enter the 6-digit verification to proceed
+                Enter the 6-digit verification code to proceed
               </p>
             </div>
 
-            {/* Status Message (shows expiration alert when expired) */}
             {timeLeft <= 0 ? (
               <div className="mb-4 p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 dark:text-rose-400 text-xs flex items-center justify-center gap-2 animate-in fade-in">
                 <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0 animate-ping" />
-                <span>Verification code has expired.</span>
+                <span>Verification code has expired. Tap resend below.</span>
               </div>
             ) : infoMessage ? (
               <div className="mb-4 p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 text-xs flex items-center justify-center gap-2 animate-in fade-in">
@@ -410,7 +703,6 @@ export default function AdminLockScreen({
             ) : null}
 
             <form onSubmit={handleOtpSubmit} className="space-y-5">
-              {/* 6 PIN Input Grid */}
               <div className="flex justify-between gap-1.5 sm:gap-2">
                 {otp.map((digit, idx) => (
                   <input
@@ -437,7 +729,6 @@ export default function AdminLockScreen({
                 ))}
               </div>
 
-              {/* Expiry Bar (shows time only, hidden when expired) */}
               {timeLeft > 0 && (
                 <div className="flex items-center justify-center text-xs px-1">
                   <span className={`font-mono text-sm tracking-widest font-bold ${timeLeft < 20 ? "text-rose-500 animate-pulse" : "text-cyan-600/80 dark:text-cyan-400/80"}`}>
@@ -452,7 +743,6 @@ export default function AdminLockScreen({
                 </p>
               )}
 
-              {/* Main Action Button: switches to Resend when expired */}
               {timeLeft <= 0 ? (
                 <button
                   type="button"

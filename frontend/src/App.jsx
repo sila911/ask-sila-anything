@@ -84,7 +84,8 @@ export default function App() {
   }, []);
 
   // ─── Derived ─────────────────────────────────────────────────────────────
-  const isCurrentlyAdmin = location.pathname === "/fuckoff" && isAdminUnlocked;
+  const isAdminPath = location.pathname.startsWith("/fuckoff") || location.pathname.startsWith("/admin");
+  const isCurrentlyAdmin = isAdminPath && isAdminUnlocked;
 
   const handleVerifyOtpWithNav = async (otp, token) => {
     const res = await handleVerifyOtp(otp, token);
@@ -102,6 +103,37 @@ export default function App() {
     trackEvent("design_reused", { id: design.id });
     showAdminToast("Loaded in editor", "Answer card opened for update.", "success");
   };
+
+  const adminPageElement = (
+    <AdminPage
+      isAdminUnlocked={isAdminUnlocked}
+      isAuthChecking={isAuthChecking}
+      handleAdminAuth={handleAdminAuth}
+      handleVerifyOtp={handleVerifyOtpWithNav}
+      handleResendOtp={handleResendOtp}
+      activeTab={activeTab}
+      tabDirection={tabDirection}
+      changeTabWithDirection={changeTabWithDirection}
+      seedDesign={seedDesign}
+      addDesign={addDesign}
+      trackEvent={trackEvent}
+      showAdminToast={showAdminToast}
+      questions={questions}
+      comments={comments}
+      markAnswered={markAnswered}
+      designs={designs}
+      orderedDesigns={orderedDesigns}
+      reuseDesign={reuseDesign}
+      removeDesign={removeDesign}
+      events={events}
+      handleToggleVisibility={handleToggleVisibility}
+      handleTogglePin={handleTogglePin}
+      handleSoftDelete={handleSoftDelete}
+      handleUpdateQuestion={handleUpdateQuestion}
+      setSeedDesign={setSeedDesign}
+      linkMessage={linkMessage}
+    />
+  );
 
   return (
     <div className="min-h-screen flex flex-col text-[color:var(--app-text)] relative">
@@ -153,39 +185,8 @@ export default function App() {
             }
           />
 
-          <Route
-            path="/fuckoff"
-            element={
-              <AdminPage
-                isAdminUnlocked={isAdminUnlocked}
-                isAuthChecking={isAuthChecking}
-                handleAdminAuth={handleAdminAuth}
-                handleVerifyOtp={handleVerifyOtpWithNav}
-                handleResendOtp={handleResendOtp}
-                activeTab={activeTab}
-                tabDirection={tabDirection}
-                changeTabWithDirection={changeTabWithDirection}
-                seedDesign={seedDesign}
-                addDesign={addDesign}
-                trackEvent={trackEvent}
-                showAdminToast={showAdminToast}
-                questions={questions}
-                comments={comments}
-                markAnswered={markAnswered}
-                designs={designs}
-                orderedDesigns={orderedDesigns}
-                reuseDesign={reuseDesign}
-                removeDesign={removeDesign}
-                events={events}
-                handleToggleVisibility={handleToggleVisibility}
-                handleTogglePin={handleTogglePin}
-                handleSoftDelete={handleSoftDelete}
-                handleUpdateQuestion={handleUpdateQuestion}
-                setSeedDesign={setSeedDesign}
-                linkMessage={linkMessage}
-              />
-            }
-          />
+          <Route path="/fuckoff/*" element={adminPageElement} />
+          <Route path="/admin/*" element={adminPageElement} />
 
           <Route
             path="/q/:id"
@@ -211,7 +212,7 @@ export default function App() {
         </Routes>
       </main>
 
-      {location.pathname !== "/fuckoff" && <Footer />}
+      {!isAdminPath && <Footer />}
 
       <ThankYouModal isOpen={showModal} onClose={() => setShowModal(false)} />
 
