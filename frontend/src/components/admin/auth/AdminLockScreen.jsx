@@ -13,7 +13,7 @@ export default function AdminLockScreen({
   const navigate = useNavigate();
   const location = useLocation();
 
-  const basePath = location.pathname.startsWith("/admin") ? "/admin" : "/fuckoff";
+  const basePath = "/fuckoff";
 
   // Determine initial step from current URL pathname
   const getStepFromPath = (path) => {

@@ -84,7 +84,7 @@ export default function App() {
   }, []);
 
   // ─── Derived ─────────────────────────────────────────────────────────────
-  const isAdminPath = location.pathname.startsWith("/fuckoff") || location.pathname.startsWith("/admin");
+  const isAdminPath = location.pathname.startsWith("/fuckoff");
   const isCurrentlyAdmin = isAdminPath && isAdminUnlocked;
 
   const handleVerifyOtpWithNav = async (otp, token) => {
@@ -186,7 +186,6 @@ export default function App() {
           />
 
           <Route path="/fuckoff/*" element={adminPageElement} />
-          <Route path="/admin/*" element={adminPageElement} />
 
           <Route
             path="/q/:id"
