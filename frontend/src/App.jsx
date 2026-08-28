@@ -16,6 +16,7 @@ import { DockTabs } from "./components/ui/dock-tabs";
 import HomePage from "./pages/HomePage";
 import AdminPage from "./pages/AdminPage";
 import SingleQuestionPage from "./pages/SingleQuestionPage";
+import NotFound404Page from "./pages/404Page";
 
 export default function App() {
   const navigate = useNavigate();
@@ -54,7 +55,15 @@ export default function App() {
 
   // ─── Hooks ────────────────────────────────────────────────────────────────
   const { adminToast, setAdminToast, showAdminToast } = useAdminToast();
-  const { isAdminUnlocked, setIsAdminUnlocked, isAuthChecking, handleAdminAuth, handleLogout } = useAdminAuth();
+  const {
+    isAdminUnlocked,
+    setIsAdminUnlocked,
+    isAuthChecking,
+    handleAdminAuth,
+    handleVerifyOtp,
+    handleResendOtp,
+    handleLogout,
+  } = useAdminAuth();
   const {
     designs, events, questions, setQuestions, comments, setComments,
     isLoading, fetchError, hasNewQuestions, hasAskedQuestion,
@@ -76,15 +85,15 @@ export default function App() {
   }, []);
 
   // ─── Derived ─────────────────────────────────────────────────────────────
-  const isCurrentlyAdmin = location.pathname === "/fuckoff" && isAdminUnlocked;
+  const isAdminPath = location.pathname.startsWith("/fuckoff");
+  const isCurrentlyAdmin = isAdminPath && isAdminUnlocked;
 
-  const handleAdminAuthWithNav = async (password) => {
-    const res = await handleAdminAuth(password);
+  const handleVerifyOtpWithNav = async (otp, token) => {
+    const res = await handleVerifyOtp(otp, token);
     if (res.ok) {
       changeTabWithDirection("create");
-      if (location.pathname !== "/fuckoff") navigate("/");
-      trackEvent("admin_login");
-      showAdminToast("Admin unlocked", "Welcome back to admin workspace.", "success");
+      trackEvent("admin_login_2fa");
+      showAdminToast("Admin Unlocked", "Welcome back to admin workspace.", "success");
     }
     return res;
   };
@@ -95,6 +104,37 @@ export default function App() {
     trackEvent("design_reused", { id: design.id });
     showAdminToast("Loaded in editor", "Answer card opened for update.", "success");
   };
+
+  const adminPageElement = (
+    <AdminPage
+      isAdminUnlocked={isAdminUnlocked}
+      isAuthChecking={isAuthChecking}
+      handleAdminAuth={handleAdminAuth}
+      handleVerifyOtp={handleVerifyOtpWithNav}
+      handleResendOtp={handleResendOtp}
+      activeTab={activeTab}
+      tabDirection={tabDirection}
+      changeTabWithDirection={changeTabWithDirection}
+      seedDesign={seedDesign}
+      addDesign={addDesign}
+      trackEvent={trackEvent}
+      showAdminToast={showAdminToast}
+      questions={questions}
+      comments={comments}
+      markAnswered={markAnswered}
+      designs={designs}
+      orderedDesigns={orderedDesigns}
+      reuseDesign={reuseDesign}
+      removeDesign={removeDesign}
+      events={events}
+      handleToggleVisibility={handleToggleVisibility}
+      handleTogglePin={handleTogglePin}
+      handleSoftDelete={handleSoftDelete}
+      handleUpdateQuestion={handleUpdateQuestion}
+      setSeedDesign={setSeedDesign}
+      linkMessage={linkMessage}
+    />
+  );
 
   return (
     <div className="min-h-screen flex flex-col text-[color:var(--app-text)] relative">
@@ -146,37 +186,7 @@ export default function App() {
             }
           />
 
-          <Route
-            path="/fuckoff"
-            element={
-              <AdminPage
-                isAdminUnlocked={isAdminUnlocked}
-                isAuthChecking={isAuthChecking}
-                handleAdminAuth={handleAdminAuthWithNav}
-                activeTab={activeTab}
-                tabDirection={tabDirection}
-                changeTabWithDirection={changeTabWithDirection}
-                seedDesign={seedDesign}
-                addDesign={addDesign}
-                trackEvent={trackEvent}
-                showAdminToast={showAdminToast}
-                questions={questions}
-                comments={comments}
-                markAnswered={markAnswered}
-                designs={designs}
-                orderedDesigns={orderedDesigns}
-                reuseDesign={reuseDesign}
-                removeDesign={removeDesign}
-                events={events}
-                handleToggleVisibility={handleToggleVisibility}
-                handleTogglePin={handleTogglePin}
-                handleSoftDelete={handleSoftDelete}
-                handleUpdateQuestion={handleUpdateQuestion}
-                setSeedDesign={setSeedDesign}
-                linkMessage={linkMessage}
-              />
-            }
-          />
+          <Route path="/fuckoff/*" element={adminPageElement} />
 
           <Route
             path="/q/:id"
@@ -199,14 +209,17 @@ export default function App() {
               />
             }
           />
+
+          <Route path="*" element={<NotFound404Page />} />
         </Routes>
       </main>
 
-      {location.pathname !== "/fuckoff" && <Footer />}
+      {/* Show footer only on standard public valid routes (hide on 404 and /fuckoff) */}
+      {(location.pathname === "/" || location.pathname.startsWith("/q/")) && <Footer />}
 
       <ThankYouModal isOpen={showModal} onClose={() => setShowModal(false)} />
 
-      {isCurrentlyAdmin && (
+      {adminToast && (
         <AdminToastCard
           toast={adminToast}
           onClose={() => setAdminToast(null)}
