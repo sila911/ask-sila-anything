@@ -16,6 +16,7 @@ import { DockTabs } from "./components/ui/dock-tabs";
 import HomePage from "./pages/HomePage";
 import AdminPage from "./pages/AdminPage";
 import SingleQuestionPage from "./pages/SingleQuestionPage";
+import NotFound404Page from "./pages/404Page";
 
 export default function App() {
   const navigate = useNavigate();
@@ -208,10 +209,13 @@ export default function App() {
               />
             }
           />
+
+          <Route path="*" element={<NotFound404Page />} />
         </Routes>
       </main>
 
-      {!isAdminPath && <Footer />}
+      {/* Show footer only on standard public valid routes (hide on 404 and /fuckoff) */}
+      {(location.pathname === "/" || location.pathname.startsWith("/q/")) && <Footer />}
 
       <ThankYouModal isOpen={showModal} onClose={() => setShowModal(false)} />
 
